@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer; // <--- ĐÃ THÊM IMPORT NÀY
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -89,32 +90,32 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/admin/**")
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin/login", "/admin/forgot-password").permitAll()
-                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "STAFF")
-            )
-            .formLogin(form -> form
-                .loginPage("/admin/login")
-                .loginProcessingUrl("/admin/login")
-                .defaultSuccessUrl("/admin/dashboard", true)
-                .failureUrl("/admin/login?error=true")
-                .usernameParameter("email")
-                .passwordParameter("password")
-            )
-            .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout"))
-                .logoutSuccessUrl("/admin/login?logout=true")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID", "remember-me")
-            )
-            .exceptionHandling(ex -> ex
-                .accessDeniedPage("/admin/access-denied")
-            )
-            .sessionManagement(session -> session
-                .maximumSessions(1)
-                .expiredUrl("/admin/login?expired=true")
-            );
+                .securityMatcher("/admin/**")
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/admin/login", "/admin/forgot-password").permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "STAFF")
+                )
+                .formLogin(form -> form
+                        .loginPage("/admin/login")
+                        .loginProcessingUrl("/admin/login")
+                        .defaultSuccessUrl("/admin/dashboard", true)
+                        .failureUrl("/admin/login?error=true")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                )
+                .logout(logout -> logout
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout"))
+                        .logoutSuccessUrl("/admin/login?logout=true")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID", "remember-me")
+                )
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/admin/access-denied")
+                )
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                        .expiredUrl("/admin/login?expired=true")
+                );
 
         return http.build();
     }
@@ -128,64 +129,69 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain customerSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(auth -> auth
-                // Public pages
-                .requestMatchers(
-                    "/", "/home",
-                    "/products/**", "/categories/**", "/brands/**",
-                    "/search", "/compare",
-                    "/cart/**",
-                    "/login", "/register", "/forgot-password", "/reset-password",
-                    "/oauth2/**",
-                    "/static/**", "/css/**", "/js/**", "/images/**", "/fonts/**", "/vendor/**",
-                    "/api/public/**",
-                    "/error", "/404", "/500"
-                ).permitAll()
-                // API endpoints
-                .requestMatchers("/api/**").permitAll() // Adjust based on your needs
-                // Authenticated pages
-                .requestMatchers(
-                    "/account/**", "/orders/**", "/wishlist/**",
-                    "/checkout/**", "/payment/**"
-                ).authenticated()
-                .anyRequest().permitAll()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", false)
-                .failureUrl("/login?error=true")
-                .usernameParameter("email")
-                .passwordParameter("password")
-            )
-            // TODO: Enable OAuth2 login once Google Client ID/Secret are configured in application.properties
-            // .oauth2Login(oauth2 -> oauth2
-            //     .loginPage("/login")
-            //     .userInfoEndpoint(userInfo -> userInfo
-            //         .userService(oAuth2UserService)
-            //     )
-            //     .successHandler(oAuth2SuccessHandler)
-            //     .failureUrl("/login?oauth2_error=true")
-            // )
-            .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                .logoutSuccessUrl("/?logout=true")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID", "remember-me")
-            )
-            .rememberMe(remember -> remember
-                .tokenRepository(persistentTokenRepository())
-                .tokenValiditySeconds(7 * 24 * 60 * 60) // 7 days
-                .userDetailsService(userDetailsService)
-                .key("badminton-shop-remember-me-key")
-            )
-            .exceptionHandling(ex -> ex
-                .accessDeniedPage("/access-denied")
-            )
-            .sessionManagement(session -> session
-                .maximumSessions(3)
-                .expiredUrl("/login?expired=true")
-            );
+                // 🔥 ĐÃ THÊM DÒNG NÀY ĐỂ TẮT CSRF CHO BRO TEST API 🔥
+                .csrf(AbstractHttpConfigurer::disable)
+
+                .authorizeHttpRequests(auth -> auth
+                        // Public pages
+                        .requestMatchers(
+                                "/", "/home",
+                                "/products/**", "/categories/**", "/brands/**",
+                                "/search", "/compare",
+                                "/cart/**",  // Đảm bảo dòng này có để API Cart được public
+                                "/login", "/register", "/forgot-password", "/reset-password",
+                                "/oauth2/**",
+                                "/static/**", "/css/**", "/js/**", "/images/**", "/fonts/**", "/vendor/**",
+                                "/api/public/**",
+                                "/error", "/404", "/500"
+                        ).permitAll()
+
+                        // Mở cửa API Cart cho chắc cú (nếu dòng trên chưa đủ)
+                        .requestMatchers("/api/**").permitAll()
+
+                        // Authenticated pages
+                        .requestMatchers(
+                                "/account/**", "/orders/**", "/wishlist/**",
+                                "/checkout/**", "/payment/**"
+                        ).authenticated()
+                        .anyRequest().permitAll()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/", false)
+                        .failureUrl("/login?error=true")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                )
+                // TODO: Enable OAuth2 login once Google Client ID/Secret are configured in application.properties
+                // .oauth2Login(oauth2 -> oauth2
+                //     .loginPage("/login")
+                //     .userInfoEndpoint(userInfo -> userInfo
+                //         .userService(oAuth2UserService)
+                //     )
+                //     .successHandler(oAuth2SuccessHandler)
+                //     .failureUrl("/login?oauth2_error=true")
+                // )
+                .logout(logout -> logout
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                        .logoutSuccessUrl("/?logout=true")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID", "remember-me")
+                )
+                .rememberMe(remember -> remember
+                        .tokenRepository(persistentTokenRepository())
+                        .tokenValiditySeconds(7 * 24 * 60 * 60) // 7 days
+                        .userDetailsService(userDetailsService)
+                        .key("badminton-shop-remember-me-key")
+                )
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/access-denied")
+                )
+                .sessionManagement(session -> session
+                        .maximumSessions(3)
+                        .expiredUrl("/login?expired=true")
+                );
 
         return http.build();
     }
