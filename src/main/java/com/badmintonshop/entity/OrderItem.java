@@ -79,9 +79,10 @@ public class OrderItem {
     @Column(name = "stringing_service_price", precision = 10, scale = 2)
     private BigDecimal stringingServicePrice;
 
+    // Thay thế dòng private BadmintonString badmintonString; bằng:
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "string_id")
-    private StringProduct stringProduct;
+    private StringProduct stringProduct; // <-- Đã đổi tên Entity và Field
 
     @Column(name = "string_name")
     private String stringName;

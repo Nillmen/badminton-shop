@@ -90,10 +90,13 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+//                .csrf(AbstractHttpConfigurer::disable)
                 .securityMatcher("/admin/**")
                 .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/admin/api/payments/**").permitAll() // <-- DÒNG BỔ SUNG
                         .requestMatchers("/admin/login", "/admin/forgot-password").permitAll()
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "STAFF")
+
                 )
                 .formLogin(form -> form
                         .loginPage("/admin/login")

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Entity Order - Đơn hàng - có status stringing cho đơn có vợt cần đan
@@ -112,7 +113,7 @@ public class Order {
     private String cancelledReason;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "cancelled_by")
+    @Column(name = "cancelled_by", columnDefinition = "VARCHAR(50)") // <-- Đảm bảo dòng này đã có
     private CancelledBy cancelledBy;
 
     @Column(name = "cancelled_at")
@@ -143,6 +144,9 @@ public class Order {
     @Column(name = "archived_reason")
     private String archivedReason;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     // Relationships
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -154,6 +158,9 @@ public class Order {
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private OrderTracking tracking;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderStatusHistory> statusHistory;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @Builder.Default
