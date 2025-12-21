@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>My Orders - Badminton Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 font-sans">
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-gray-800">My Orders</h1>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100 border-b">
+                    <tr>
+                        <th class="p-4 font-semibold text-gray-600">Order #</th>
+                        <th class="p-4 font-semibold text-gray-600">Date</th>
+                        <th class="p-4 font-semibold text-gray-600">Status</th>
+                        <th class="p-4 font-semibold text-gray-600">Total</th>
+                        <th class="p-4 font-semibold text-gray-600">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-list">
+                    <!-- Orders will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/orders');
+                const orders = await response.json();
+
+                const container = document.getElementById('orders-list');
+                container.innerHTML = '';
+
+                orders.forEach(order => {
+                    // Fix date parsing for "yyyy-MM-dd HH:mm:ss" format
+                    let dateStr = order.createdAt;
+                    if (dateStr && dateStr.indexOf("T") === -1) {
+                        dateStr = dateStr.replace(" ", "T");
+                    }
+                    const date = new Date(dateStr).toLocaleDateString();
+                    const statusColor = getStatusColor(order.status);
+
+                    const html = `
+                        <tr class="border-b last:border-0 hover:bg-gray-50">
+                            <td class="p-4 font-medium text-gray-800">${order.orderNumber}</td>
+                            <td class="p-4 text-gray-600">${date}</td>
+                            <td class="p-4">
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusColor}">
+                                    ${order.status}
+                                </span>
+                            </td>
+                            <td class="p-4 font-bold text-gray-800">$${order.totalAmount}</td>
+                            <td class="p-4">
+                                <a href="/orders/detail?id=${order.orderId}" class="text-blue-600 hover:underline">View</a>
+                            </td>
+                        </tr>
+                    `;
+                    container.innerHTML += html;
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function getStatusColor(status) {
+            switch (status) {
+                case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+                case 'CONFIRMED': return 'bg-blue-100 text-blue-800';
+                case 'COMPLETED': return 'bg-green-100 text-green-800';
+                case 'CANCELLED': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        loadOrders();
+    </script>
+</body>
+
+</html>

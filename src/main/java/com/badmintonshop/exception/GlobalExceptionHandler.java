@@ -33,10 +33,10 @@ public class GlobalExceptionHandler {
         String uri = request.getRequestURI();
         String accept = request.getHeader("Accept");
         String contentType = request.getContentType();
-        return uri.startsWith("/api/") || 
-               uri.contains("/api/") ||
-               (accept != null && accept.contains("application/json")) ||
-               (contentType != null && contentType.contains("application/json"));
+        return uri.startsWith("/api/") ||
+                uri.contains("/api/") ||
+                (accept != null && accept.contains("application/json")) ||
+                (contentType != null && contentType.contains("application/json"));
     }
 
     /**
@@ -45,12 +45,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public Object handleEntityNotFound(EntityNotFoundException ex, HttpServletRequest request) {
         log.warn("Entity not found: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/404");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -62,12 +62,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public Object handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         log.warn("Resource not found: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/404");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -79,12 +79,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SettingNotFoundException.class)
     public Object handleSettingNotFound(SettingNotFoundException ex, HttpServletRequest request) {
         log.warn("Setting not found: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/404");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -96,12 +96,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailTemplateNotFoundException.class)
     public Object handleEmailTemplateNotFound(EmailTemplateNotFoundException ex, HttpServletRequest request) {
         log.warn("Email template not found: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/404");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -113,12 +113,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(StaffNotFoundException.class)
     public Object handleStaffNotFound(StaffNotFoundException ex, HttpServletRequest request) {
         log.warn("Staff not found: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/404");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -130,12 +130,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public Object handleBadRequest(BadRequestException ex, HttpServletRequest request) {
         log.warn("Bad request: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/400");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -152,9 +152,9 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         log.warn("Validation errors: {}", errors);
-        
+
         if (isApiRequest(request)) {
             Map<String, Object> response = createErrorResponse(
                     HttpStatus.BAD_REQUEST, "Validation failed", request.getRequestURI());
@@ -162,7 +162,7 @@ public class GlobalExceptionHandler {
             response.put("errors", errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        
+
         ModelAndView mav = new ModelAndView("error/400");
         mav.addObject("message", "Dữ liệu không hợp lệ");
         mav.addObject("errors", errors);
@@ -175,14 +175,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public Object handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         log.warn("Illegal argument: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             Map<String, Object> response = createErrorResponse(
                     HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
             response.put("success", false);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-        
+
         ModelAndView mav = new ModelAndView("error/400");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -194,12 +194,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public Object handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
         log.warn("Access denied: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(createErrorResponse(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập", request.getRequestURI()));
+                    .body(createErrorResponse(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập",
+                            request.getRequestURI()));
         }
-        
+
         return new ModelAndView("error/403");
     }
 
@@ -209,14 +210,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
     public Object handleOptimisticLocking(Exception ex, HttpServletRequest request) {
         log.warn("Optimistic locking failure: {}", ex.getMessage());
-        
+
         String message = "Dữ liệu đã bị thay đổi bởi người khác. Vui lòng tải lại trang và thử lại.";
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(createErrorResponse(HttpStatus.CONFLICT, message, request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/409");
         mav.addObject("message", message);
         return mav;
@@ -228,12 +229,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public Object handleBusinessException(BusinessException ex, HttpServletRequest request) {
         log.warn("Business exception: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(createErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request.getRequestURI()));
+                    .body(createErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(),
+                            request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/422");
         mav.addObject("message", ex.getMessage());
         return mav;
@@ -245,7 +247,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientStockException.class)
     public Object handleInsufficientStock(InsufficientStockException ex, HttpServletRequest request) {
         log.warn("Insufficient stock: {}", ex.getMessage());
-        
+
         if (isApiRequest(request)) {
             Map<String, Object> response = createErrorResponse(
                     HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
@@ -254,10 +256,29 @@ public class GlobalExceptionHandler {
             response.put("availableQuantity", ex.getAvailableQuantity());
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
-        
+
         ModelAndView mav = new ModelAndView("error/stock-error");
         mav.addObject("message", ex.getMessage());
         return mav;
+    }
+
+    /**
+     * Handle No Resource Found (Static resources, 404)
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Object handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex,
+            HttpServletRequest request) {
+        // Log at info/debug level as this is often just 404 noise
+        log.info("Resource not found: {}", ex.getResourcePath());
+
+        if (isApiRequest(request)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse(HttpStatus.NOT_FOUND, "Không tìm thấy tài nguyên",
+                            request.getRequestURI()));
+        }
+
+        return new ModelAndView("error/404");
     }
 
     /**
@@ -267,12 +288,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Object handleNotFound(NoHandlerFoundException ex, HttpServletRequest request) {
         log.warn("Page not found: {}", request.getRequestURI());
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(HttpStatus.NOT_FOUND, "Không tìm thấy trang", request.getRequestURI()));
         }
-        
+
         return new ModelAndView("error/404");
     }
 
@@ -282,13 +303,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Object handleAllExceptions(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error: ", ex);
-        
+
         if (isApiRequest(request)) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
+                    .body(createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
                             "Đã xảy ra lỗi. Vui lòng thử lại sau.", request.getRequestURI()));
         }
-        
+
         ModelAndView mav = new ModelAndView("error/500");
         mav.addObject("message", "Đã xảy ra lỗi. Vui lòng thử lại sau.");
         return mav;

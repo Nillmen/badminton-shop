@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Checkout - Badminton Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body class="bg-gray-50 font-sans">
+
+    <!-- Navbar Placeholder -->
+    <nav class="bg-white shadow-sm mb-8">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-primary">Badminton Shop</a>
+            <div class="text-sm text-gray-500">
+                Secure Checkout <i class="fas fa-lock ml-1"></i>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl animate-fadeIn">
+        <h1 class="text-3xl font-bold mb-8 text-gray-800">Checkout</h1>
+
+        <form id="checkout-form" onsubmit="handleCheckout(event)" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Shipping Info -->
+            <div class="lg:col-span-2 space-y-8">
+                <div class="bg-white rounded-xl shadow-soft p-8 card">
+                    <h2 class="text-xl font-bold mb-6 border-b pb-4 flex items-center text-gray-800">
+                        <i class="fas fa-shipping-fast text-primary mr-3"></i> Shipping Information
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Full Name</label>
+                            <input type="text" name="receiverName" class="form-control w-full" placeholder="John Doe"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Phone Number</label>
+                            <input type="text" name="receiverPhone" class="form-control w-full" placeholder="+84 ..."
+                                required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 font-medium mb-2">Delivery Address</label>
+                            <input type="text" name="shippingAddress" class="form-control w-full"
+                                placeholder="123 Street, District, City" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 font-medium mb-2">Notes (Optional)</label>
+                            <textarea name="note" class="form-control w-full h-24"
+                                placeholder="Special delivery instructions..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-soft p-8 card">
+                    <h2 class="text-xl font-bold mb-6 border-b pb-4 flex items-center text-gray-800">
+                        <i class="fas fa-credit-card text-primary mr-3"></i> Payment Method
+                    </h2>
+                    <div class="space-y-4">
+                        <label
+                            class="flex items-center p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50 transition relative group">
+                            <input type="radio" name="paymentMethod" value="COD"
+                                class="form-radio h-5 w-5 text-primary focus:ring-primary" checked>
+                            <div class="ml-4">
+                                <span class="block font-bold text-gray-800">Cash on Delivery (COD)</span>
+                                <span class="text-sm text-gray-500">Pay when you receive your order</span>
+                            </div>
+                            <i
+                                class="fas fa-money-bill-wave text-green-500 text-2xl absolute right-6 opacity-50 group-hover:opacity-100 transition"></i>
+                        </label>
+                        <label
+                            class="flex items-center p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50 transition relative group">
+                            <input type="radio" name="paymentMethod" value="VNPAY"
+                                class="form-radio h-5 w-5 text-primary focus:ring-primary">
+                            <div class="ml-4">
+                                <span class="block font-bold text-gray-800">VNPay Wallet</span>
+                                <span class="text-sm text-gray-500">Fast and secure online payment</span>
+                            </div>
+                            <i
+                                class="fas fa-wallet text-blue-500 text-2xl absolute right-6 opacity-50 group-hover:opacity-100 transition"></i>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-soft p-6 card sticky top-4">
+                    <h2 class="text-xl font-bold mb-6 text-gray-800">Order Summary</h2>
+                    <!-- Items Summary (Stub for simplicity, would loop items in real app) -->
+                    <div class="mb-4 text-sm text-gray-500 bg-gray-50 p-4 rounded-lg">
+                        <p><i class="fas fa-info-circle mr-2"></i>Items will be calculated from your active cart.</p>
+                    </div>
+
+                    <hr class="my-4 border-gray-100">
+
+                    <button type="submit"
+                        class="w-full btn btn-primary py-4 rounded-xl hover:shadow-lg transition font-bold text-lg flex items-center justify-center">
+                        Place Order <i class="fas fa-check-circle ml-2"></i>
+                    </button>
+
+                    <p class="text-xs text-center text-gray-400 mt-4">
+                        By placing an order, you agree to our Terms and Conditions.
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        async function handleCheckout(event) {
+            event.preventDefault();
+            const btn = event.target.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            btn.disabled = true;
+
+            const form = event.target;
+            const data = {
+                receiverName: form.receiverName.value,
+                receiverPhone: form.receiverPhone.value,
+                shippingAddress: form.shippingAddress.value,
+                note: form.note.value,
+                paymentMethod: form.paymentMethod.value
+            };
+
+            try {
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const order = await response.json();
+                    if (data.paymentMethod === 'VNPAY') {
+                        // Create Payment URL
+                        const payRes = await fetch(`/api/payments/vnpay/create?orderId=${order.orderId}`, { method: 'POST' });
+                        const payData = await payRes.json();
+                        window.location.href = payData.url;
+                    } else {
+                        // Success Animation Stub
+                        btn.innerHTML = '<i class="fas fa-check mr-2"></i> Success!';
+                        btn.classList.replace('btn-primary', 'btn-success');
+                        setTimeout(() => {
+                            alert('Order placed successfully! Order: ' + order.orderNumber);
+                            window.location.href = '/orders';
+                        }, 500);
+                    }
+                } else {
+                    const err = await response.json();
+                    alert('Order failed: ' + (err.message || 'Unknown error'));
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please check console.');
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

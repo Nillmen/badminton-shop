@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Shop - Badminton Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/test-shop" class="text-2xl font-bold text-blue-600">S1VVN Shop</a>
+            <div class="space-x-4">
+                <a href="/test-shop" class="text-gray-600 hover:text-blue-600 font-semibold">Shop</a>
+                <a href="/orders" class="text-gray-600 hover:text-blue-600 font-semibold">My Orders</a>
+                <a href="/cart" class="relative text-gray-600 hover:text-blue-600">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">New Arrivals</h1>
+            <div class="flex space-x-2">
+                <button class="px-4 py-2 border rounded hover:bg-gray-50">Filter</button>
+                <button class="px-4 py-2 border rounded hover:bg-gray-50">Sort</button>
+            </div>
+        </div>
+
+        <div id="product-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Products will be loaded here -->
+            <div class="col-span-full text-center py-10">
+                <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+                <p class="mt-2 text-gray-500">Loading products...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadProducts);
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error('Failed to load products');
+                const products = await response.json();
+                renderProducts(products);
+            } catch (error) {
+                document.getElementById('product-container').innerHTML =
+                    `<div class="col-span-full text-center text-red-500">
+                        <p>Error loading products: ${error.message}</p>
+                    </div>`;
+            }
+        }
+
+        function renderProducts(products) {
+            const container = document.getElementById('product-container');
+            if (products.length === 0) {
+                container.innerHTML =
+                    `<div class="col-span-full text-center text-gray-500">
+                        <p>No products available.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = products.map(product => {
+                // Determine Variant ID (Logic: if has variants, need to pick one. For simplicity, pick first if available or null)
+                // Note: The API returns Product entity directly which might not load variants due to lazy loading or serialization.
+                // Assuming simple structure for now. If errors, we debug serialization.
+                // Using variantId = null for simple products, or assuming the backend handles default variant logic.
+                // Ideally we should fetch variants. For now, try passing null variantId if not explicitly supported in UI.
+
+                // Hack: Pass null as variantId for now unless UI supports selection.
+                // If backend requires variant, we might need a better API.
+                // Let's assume the seeded product has variants but we don't have selector.
+                // Let's rely on the user to pick? No, simplify:
+                // If product has variants, we ideally need to pick one.
+                // But let's try passing 'null' for variantId and see if backend handles it or if we need to enable selector.
+
+                // Wait, DataSeeder created a variant. If we pass null, atomicDecrease might fail if it expects variant.
+                // InventoryRepository checks: (:variantId IS NULL OR i.variant.variantId = :variantId)
+                // BUT CartService requires: if (request.getVariantId() != null) ...
+
+                // Let's hardcode fetching variants (User has to select?). 
+                // For this quick test, let's try to grab the first variant ID if it exists in the Product object JSON.
+
+                const variantId = (product.variants && product.variants.length > 0) ? product.variants[0].variantId : null;
+                const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.basePrice);
+
+                return `
+                <div class="bg-white rounded-lg shadow hover:shadow-lg transition duration-300 overflow-hidden group">
+                    <div class="relative">
+                        <img src="${product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'}" 
+                             alt="${product.name}" 
+                             class="w-full h-64 object-cover group-hover:scale-105 transition duration-500">
+                        ${product.status === 'ACTIVE' ? '<div class="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">NEW</div>' : ''}
+                        
+                        <div class="absolute bottom-0 w-full bg-white bg-opacity-90 p-2 transform translate-y-full group-hover:translate-y-0 transition duration-300 flex justify-center opacity-0 group-hover:opacity-100">
+                            <button onclick="addToCart(${product.productId}, ${variantId})" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full font-semibold">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="text-xs text-gray-500 mb-1">${product.category ? product.category.name : 'Badminton'}</div>
+                        <h3 class="font-bold text-lg mb-1 truncate">${product.name}</h3>
+                        <div class="flex justify-between items-center mt-2">
+                            <div class="text-blue-600 font-bold text-xl">${price}</div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function addToCart(productId, variantId) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            try {
+                const response = await fetch('/api/cart/items', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify({ productId, variantId, quantity: 1 })
+                });
+
+                if (response.ok) {
+                    // Show success toast
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded shadow-lg transform transition-all duration-300 translate-y-20 z-50';
+                    toast.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Added to cart!';
+                    document.body.appendChild(toast);
+
+                    setTimeout(() => toast.classList.remove('translate-y-20'), 10);
+                    setTimeout(() => {
+                        toast.classList.add('translate-y-20', 'opacity-0');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+
+                } else {
+                    const error = await response.text();
+                    alert('Failed to add: ' + (error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection error');
+            }
+        }
+    </script>
+</body>
+
+</html>

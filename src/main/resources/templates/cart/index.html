@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Shopping Cart - Badminton Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css"> <!-- Link to main.css -->
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body class="bg-gray-50 font-sans">
+
+    <!-- Navbar Placeholder (In real app, use fragment) -->
+    <nav class="bg-white shadow-sm mb-8">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-primary">Badminton Shop</a>
+            <div>
+                <a href="/cart" class="text-gray-600 hover:text-primary relative">
+                    <i class="fas fa-shopping-cart fa-lg"></i>
+                    <!-- <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">3</span> -->
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 animate-fadeIn">
+        <h1 class="text-3xl font-bold mb-8 text-gray-800">Your Shopping Cart</h1>
+
+        <div id="cart-container" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-soft p-6 card">
+                <div id="cart-items">
+                    <!-- Items will be loaded here -->
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fas fa-spinner fa-spin fa-3x mb-4 text-primary"></i>
+                        <p>Loading your cart...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-soft p-6 h-fit card sticky top-4">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">Order Summary</h2>
+                    <div class="flex justify-between mb-2 text-gray-600">
+                        <span>Subtotal</span>
+                        <span id="subtotal" class="font-bold text-gray-800">$0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2 text-gray-600">
+                        <span>Shipping</span>
+                        <span class="text-green-600">Free</span>
+                    </div>
+                    <hr class="my-4 border-gray-100">
+                    <div class="flex justify-between mb-6 text-xl font-bold">
+                        <span>Total</span>
+                        <span id="total" class="text-primary">$0.00</span>
+                    </div>
+                    <button onclick="window.location.href='/checkout'"
+                        class="w-full btn btn-primary py-3 rounded-lg hover:shadow-lg transition font-semibold">
+                        Proceed to Checkout <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <div class="mt-4 text-center">
+                        <a href="/" class="text-sm text-gray-500 hover:text-primary transition">Continue Shopping</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch Cart
+        async function loadCart() {
+            try {
+                const response = await fetch('/api/cart');
+                const cart = await response.json();
+                renderCart(cart);
+            } catch (error) {
+                console.error('Error loading cart:', error);
+                document.getElementById('cart-items').innerHTML = '<p class="text-center text-red-500 py-8">Failed to load cart.</p>';
+            }
+        }
+
+        function renderCart(cart) {
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+
+            let subtotal = 0;
+
+            if (!cart.items || cart.items.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 animate-slideUp">
+                        <div class="mb-6 text-gray-300">
+                            <i class="fas fa-shopping-basket fa-5x"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-700 mb-2">Your cart is empty</h3>
+                        <p class="text-gray-500 mb-8">Looks like you haven't added anything to your cart yet.</p>
+                        <a href="/test-shop" class="btn btn-primary inline-block">Start Shopping</a>
+                    </div>
+                `;
+                document.getElementById('subtotal').innerText = '$0.00';
+                document.getElementById('total').innerText = '$0.00';
+                return;
+            }
+
+            cart.items.forEach((item, index) => {
+                const itemTotal = item.quantity * item.priceAtAdd;
+                subtotal += itemTotal;
+                const delay = index * 100;
+
+                const html = `
+                    <div class="flex items-center justify-between border-b border-gray-100 py-6 last:border-0 hover:bg-gray-50 transition rounded-lg px-4 animate-slideUp" style="animation-delay: ${delay}ms">
+                        <div class="flex items-center">
+                            <div class="w-24 h-24 bg-gray-100 rounded-lg mr-6 flex items-center justify-center text-gray-400 overflow-hidden shadow-sm">
+                                ${item.productImage ? `<img src="${item.productImage}" alt="${item.productName}" class="w-full h-full object-cover">` : '<i class="fas fa-image fa-2x"></i>'}
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-800 mb-1">${item.productName}</h3>
+                                <div class="text-sm text-gray-500 mb-2">Variant: ${item.variantName || 'Standard'}</div>
+                                <div class="text-primary font-bold text-lg">$${item.priceAtAdd}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center border border-gray-200 rounded-lg">
+                                <button class="px-3 py-1 text-gray-600 hover:text-primary transition" onclick="updateQty(${item.cartItemId}, -1)">-</button>
+                                <span id="qty-${item.cartItemId}" class="px-2 text-gray-800 font-medium">${item.quantity}</span>
+                                <button class="px-3 py-1 text-gray-600 hover:text-primary transition" onclick="updateQty(${item.cartItemId}, 1)">+</button>
+                            </div>
+                            <div class="text-right min-w-[80px]">
+                                <div class="font-bold text-gray-800 mb-1">$${itemTotal.toFixed(2)}</div>
+                                <button onclick="removeItem(${item.cartItemId})" class="text-red-400 hover:text-red-600 text-sm transition flex items-center justify-end w-full gap-1">
+                                    <i class="fas fa-trash-alt"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            document.getElementById('subtotal').innerText = '$' + subtotal.toFixed(2);
+            document.getElementById('total').innerText = '$' + subtotal.toFixed(2);
+        }
+
+        async function removeItem(itemId) {
+            if (!confirm('Remove this item?')) return;
+            try {
+                // Fetch CSRF
+                const csrfToken = document.querySelector('meta[name="_csrf"]') ? document.querySelector('meta[name="_csrf"]').getAttribute('content') : '';
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]') ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content') : '';
+
+                const headers = {};
+                if (csrfToken) headers[csrfHeader] = csrfToken;
+
+                await fetch(`/api/cart/items/${itemId}`, {
+                    method: 'DELETE',
+                    headers: headers
+                });
+                loadCart();
+            } catch (e) {
+                console.error(e);
+                alert('Error removing item');
+            }
+        }
+
+        async function updateQty(itemId, change) {
+            try {
+                const qtySpan = document.getElementById(`qty-${itemId}`);
+                if (!qtySpan) return;
+
+                let currentQty = parseInt(qtySpan.innerText);
+                let newQty = currentQty + change;
+
+                if (newQty < 1) return;
+
+                // Optimistic update
+                qtySpan.innerText = newQty;
+
+                const csrfToken = document.querySelector('meta[name="_csrf"]') ? document.querySelector('meta[name="_csrf"]').getAttribute('content') : '';
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]') ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content') : '';
+
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                if (csrfToken) headers[csrfHeader] = csrfToken;
+
+                // Send quantity as param as configured in Controller
+                const response = await fetch(`/api/cart/items/${itemId}?quantity=${newQty}`, {
+                    method: 'PUT',
+                    headers: headers
+                });
+
+                if (response.ok) {
+                    loadCart();
+                } else {
+                    console.error("Update failed");
+                    qtySpan.innerText = currentQty;
+                    alert('Failed to update quantity');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        loadCart();
+    </script>
+</body>
+
+</html>
