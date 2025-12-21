@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
         
         if (isApiRequest(request)) {
             Map<String, Object> response = createErrorResponse(
-                    HttpStatus.BAD_REQUEST, "Validation failed", request.getRequestURI());
+                    HttpStatus.BAD_REQUEST, "Validation FAILED", request.getRequestURI());
             response.put("errors", errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }

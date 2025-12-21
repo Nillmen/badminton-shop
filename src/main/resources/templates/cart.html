@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+
+<head>
+    <title>Shopping Cart</title>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <h2 class="mb-4">Shopping Cart</h2>
+
+        <div id="cart-loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>Loading your cart...</p>
+        </div>
+
+        <div id="cart-container" style="display:none;">
+            <!-- Empty Cart State -->
+            <div id="empty-cart-message" class="text-center py-5" style="display:none;">
+                <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+                <h3>Your cart is empty</h3>
+                <a href="/products" class="btn btn-primary mt-3">Continue Shopping</a>
+            </div>
+
+            <!-- Cart Items -->
+            <div id="cart-content" class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Price</th>
+                                            <th>Quantity</th>
+                                            <th>Total</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cart-items-body">
+                                        <!-- Items will be injected here via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-danger" onclick="clearCart()">
+                        <i class="fas fa-trash"></i> Clear Cart
+                    </button>
+                </div>
+
+                <!-- Summary -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Order Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Items:</span>
+                                <span id="summary-count" class="fw-bold">0</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-4">
+                                <span class="h5">Total Price:</span>
+                                <span id="summary-total" class="h5 text-primary">0 ₫</span>
+                            </div>
+                            <a href="/checkout" class="btn btn-success w-100 py-2 fw-bold">PROCEED TO CHECKOUT</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // Định dạng tiền tệ
+            const currencyFormatter = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            });
+
+            $(document).ready(function () {
+                loadCart();
+            });
+
+            function loadCart() {
+                const sessionId = getSessionId();
+                $.get(`/api/cart?sessionId=${sessionId}`, function (cart) {
+                    $('#cart-loading').hide();
+                    $('#cart-container').show();
+
+                    const items = cart.items || [];
+
+                    if (items.length === 0) {
+                        $('#empty-cart-message').show();
+                        $('#cart-content').hide();
+                        return;
+                    }
+
+                    $('#empty-cart-message').hide();
+                    $('#cart-content').show();
+                    renderItems(items);
+                    updateSummary(cart);
+                    updateCartBadge(); // global func from layout
+                }).fail(function () {
+                    alert("Error loading cart");
+                });
+            }
+
+            function renderItems(items) {
+                let html = '';
+                items.forEach(item => {
+                    let stringingInfo = '';
+                    if (item.productName && item.productName.toLowerCase().includes('racket')) { // Giả sử check stringing
+                        stringingInfo = `<br><small class="text-muted">
+                    <i class="fas fa-ruler-horizontal"></i> Stringing: ${item.lbs} Lbs
+                 </small>`;
+                    }
+
+                    html += `
+                <tr id="row-${item.cartItemId}">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <!-- Placeholder image nếu ko có -->
+                            <div class="ms-2">
+                                <h6 class="mb-0">${item.productName}</h6>
+                                ${item.variantName ? `<small class="text-muted">Variant: ${item.variantName}</small>` : ''}
+                                ${stringingInfo}
+                            </div>
+                        </div>
+                    </td>
+                    <td>${currencyFormatter.format(item.price)}</td>
+                    <td>
+                        <div class="input-group input-group-sm" style="width: 100px;">
+                            <button class="btn btn-outline-secondary" onclick="updateQty(${item.cartItemId}, ${item.quantity - 1})">-</button>
+                            <input type="text" class="form-control text-center" value="${item.quantity}" readonly>
+                            <button class="btn btn-outline-secondary" onclick="updateQty(${item.cartItemId}, ${item.quantity + 1})">+</button>
+                        </div>
+                    </td>
+                    <td>${currencyFormatter.format(item.price * item.quantity)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-link text-danger" onclick="removeItem(${item.cartItemId})">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+                });
+                $('#cart-items-body').html(html);
+            }
+
+            function updateSummary(cart) {
+                $('#summary-count').text(cart.totalItems);
+                $('#summary-total').text(currencyFormatter.format(cart.totalPrice));
+            }
+
+            function updateQty(id, newQty) {
+                if (newQty < 1) return;
+
+                $.ajax({
+                    // Sent quantity as Query Param
+                    url: `/api/cart/items/${id}?sessionId=${getSessionId()}&quantity=${newQty}`,
+                    type: 'PUT',
+                    success: function (cart) {
+                        loadCart(); // Reload toàn bộ cho sync
+                    },
+                    error: function (err) {
+                        alert('Cannot update quantity: ' + err.responseJSON.message);
+                    }
+                });
+            }
+
+            function removeItem(id) {
+                if (!confirm('Remove this item?')) return;
+                $.ajax({
+                    url: `/api/cart/items/${id}?sessionId=${getSessionId()}`,
+                    type: 'DELETE',
+                    success: function () {
+                        loadCart();
+                    }
+                });
+            }
+
+            function clearCart() {
+                if (!confirm('Clear all items?')) return;
+                $.ajax({
+                    url: `/api/cart?sessionId=${getSessionId()}`, // DELETE /api/cart
+                    type: 'DELETE',
+                    success: function () {
+                        loadCart();
+                    }
+                });
+            }
+        </script>
+    </th:block>
+
+</body>
+
+</html>

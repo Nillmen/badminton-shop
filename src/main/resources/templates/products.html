@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+
+<head>
+    <title>Products</title>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <!-- Hero Banner -->
+        <div class="bg-dark text-white p-5 rounded mb-4" style="background: linear-gradient(45deg, #1a1a1a, #4a4a4a);">
+            <h1>Welcome to Badminton Shop</h1>
+            <p>Premium Equipment for Professionals</p>
+        </div>
+
+        <!-- Product Grid -->
+        <h3 class="mb-4">Latest Products</h3>
+
+        <div th:if="${products.empty}" class="alert alert-info text-center">
+            No products found. Please ask Admin to add some products via Database.
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4" th:unless="${products.empty}">
+            <div class="col" th:each="product : ${products}">
+                <div class="card h-100 shadow-sm product-card">
+                    <!-- Image Placeholder -->
+                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-image fa-3x text-muted"></i>
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title text-truncate" th:text="${product.name}">Product Name</h5>
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-primary fw-bold"
+                                    th:text="${#numbers.formatCurrency(product.basePrice)}">0 đ</span>
+                                <span class="badge bg-success" th:if="${product.isAvailable()}">In Stock</span>
+                                <span class="badge bg-secondary" th:unless="${product.isAvailable()}">Out of
+                                    Stock</span>
+                            </div>
+
+                            <!-- Variant Select (Simplified for UI Test) -->
+                            <div class="mb-2" th:if="${not #lists.isEmpty(product.variants)}">
+                                <select class="form-select form-select-sm variant-select"
+                                    th:data-product-id="${product.productId}">
+                                    <option th:each="v : ${product.variants}" th:value="${v.variantId}"
+                                        th:text="${v.variantName} + ' (' + ${#numbers.formatCurrency(v.getFinalPrice())} + ')'">
+                                        Variant 1
+                                    </option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-outline-primary w-100 btn-add-cart" th:data-id="${product.productId}"
+                                th:data-has-variants="${not #lists.isEmpty(product.variants)}">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            $(document).ready(function () {
+                $('.btn-add-cart').click(function () {
+                    const btn = $(this);
+                    const productId = btn.data('id');
+                    const hasVariants = btn.data('has-variants');
+                    let variantId = null;
+
+                    if (hasVariants) {
+                        // Find selector in same card
+                        const selector = btn.closest('.card-body').find('.variant-select');
+                        variantId = selector.val();
+                        if (!variantId) {
+                            alert("Please select a variant!");
+                            return;
+                        }
+                    } else {
+                        // If no variants, we need logic to handle non-variant product
+                        // But current CartItemRequest requires variantId usually? 
+                        // Let's assume for this test setup we pick the first variant or handle null
+                        // Based on previous code, variantId is required for CartItemRequest.
+                        // If product has no variants, maybe pass null? 
+                        // Checking logic: CartService handles variantId.
+                        // For simplified UI, only supporting products with variants or creating dummy variant logic.
+                        // But let's try sending null if no variant.
+                    }
+
+                    addToCart(productId, variantId);
+                });
+            });
+
+            function addToCart(productId, variantId) {
+                const payload = {
+                    productId: productId,
+                    variantId: variantId,
+                    quantity: 1
+                };
+
+                const sessionId = getSessionId(); // Defined in layout.html
+
+                $.ajax({
+                    url: `/api/cart/items?sessionId=${sessionId}`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        // Animation or Toast could be nice here
+                        alert("Added to cart!");
+                        updateCartBadge(); // Global function
+                    },
+                    error: function (err) {
+                        console.error("Cart Error:", err);
+                        alert("Failed to add: " + (err.responseJSON ? err.responseJSON.message : "Error"));
+                    }
+                });
+            }
+        </script>
+    </th:block>
+
+</body>
+
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+
+<head>
+    <title>My Orders</title>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <h2 class="mb-4">My Orders</h2>
+
+        <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+
+        <div class="table-responsive" id="orders-container" style="display:none;">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-body">
+                    <!-- Orders -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
+            $(document).ready(function () {
+                const sid = getSessionId(); // From layout.html
+                $.get(`/api/orders?sessionId=${sid}`, function (orders) {
+                    $('#loading').hide();
+                    $('#orders-container').show();
+                    renderOrders(orders);
+                });
+            });
+
+            function renderOrders(orders) {
+                if (!orders || orders.length === 0) {
+                    $('#orders-body').html(`<tr><td colspan="6" class="text-center">No orders found.</td></tr>`);
+                    return;
+                }
+
+                let html = '';
+                orders.forEach(o => {
+                    let statusBadge = getStatusBadge(o.status);
+                    let payBadge = getPaymentBadge(o.paymentStatus);
+
+                    html += `
+                <tr style="cursor: pointer;" onclick="window.location.href='/orders/${o.orderNumber}'">
+                    <td><b>${o.orderNumber}</b></td>
+                    <td>${new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
+                    <td>${statusBadge}</td>
+                    <td>${currencyFormatter.format(o.totalAmount)}</td>
+                    <td>${payBadge} <small class="text-muted">(${o.paymentMethod})</small></td>
+                    <td><a href="/orders/${o.orderNumber}" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+            `;
+                });
+                $('#orders-body').html(html);
+            }
+
+            function getStatusBadge(status) {
+                switch (status) {
+                    case 'PENDING': return '<span class="badge bg-warning text-dark">Pending</span>';
+                    case 'CONFIRMED': return '<span class="badge bg-info">Confirmed</span>';
+                    case 'SHIPPING': return '<span class="badge bg-primary">Shipping</span>';
+                    case 'COMPLETED': return '<span class="badge bg-success">Completed</span>';
+                    case 'CANCELLED': return '<span class="badge bg-danger">Cancelled</span>';
+                    default: return `<span class="badge bg-secondary">${status}</span>`;
+                }
+            }
+
+            function getPaymentBadge(status) {
+                switch (status) {
+                    case 'PAID': return '<span class="badge bg-success">PAID</span>';
+                    case 'PENDING': return '<span class="badge bg-warning text-dark">UNPAID</span>';
+                    case 'FAILED': return '<span class="badge bg-danger">FAILED</span>';
+                    default: return `<span class="badge bg-secondary">${status}</span>`;
+                }
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

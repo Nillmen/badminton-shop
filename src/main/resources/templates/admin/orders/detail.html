@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+
+<head>
+    <title>Admin - Order Detail</title>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div
+            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Order Detail: <span id="order-number">...</span></h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <a href="/admin/orders" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+
+        <div id="loading" class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+
+        <div id="order-content" style="display: none;">
+            <div class="row">
+                <!-- Left Column: Order Info -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header">Items</div>
+                        <div class="card-body">
+                            <table class="table" id="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Qty</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Status & Actions -->
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header">Status Actions</div>
+                        <div class="card-body">
+                            <p><strong>Current Status:</strong> <span id="current-status" class="badge"></span></p>
+                            <p><strong>Payment:</strong> <span id="payment-status"></span></p>
+
+                            <hr>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success" onclick="updateStatus('CONFIRMED')">Confirm
+                                    Order</button>
+                                <button class="btn btn-primary" onclick="updateStatus('SHIPPED')">Mark Shipped</button>
+                                <button class="btn btn-success" onclick="updateStatus('DELIVERED')">Mark
+                                    Delivered</button>
+                                <button class="btn btn-danger" onclick="updateStatus('CANCELLED')">Cancel Order</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">Customer Info</div>
+                        <div class="card-body">
+                            <p><strong>Name:</strong> <span id="customer-name"></span></p>
+                            <p><strong>Email:</strong> <span id="customer-email"></span></p>
+                            <p><strong>Phone:</strong> <span id="customer-phone"></span></p>
+                            <p><strong>Address:</strong> <span id="shipping-address"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:inline="javascript">
+            // Extract ID from URL path: /admin/orders/{id}
+            const pathSegments = window.location.pathname.split('/');
+            const orderId = pathSegments[pathSegments.length - 1];
+
+            const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
+            $(document).ready(function () {
+                loadDetail();
+            });
+
+            function loadDetail() {
+                $.getJSON(`/admin/api/orders/${orderId}`, function (order) {
+                    // Header
+                    $('#order-number').text(order.orderNumber);
+                    $('#current-status').text(order.status).addClass(`bg-${getStatusBadge(order.status)}`);
+                    $('#payment-status').text(`${order.paymentMethod} (${order.paymentStatus})`);
+
+                    // Customer
+                    $('#customer-name').text(order.shippingRecipientName || order.customerFullName);
+                    $('#customer-email').text(order.customerEmail);
+                    $('#customer-phone').text(order.shippingPhone);
+                    $('#shipping-address').text(`${order.shippingAddress}, ${order.shippingWard}, ${order.shippingDistrict}, ${order.shippingCity}`);
+
+                    // Items
+                    let itemsHtml = '';
+                    order.items.forEach(item => {
+                        itemsHtml += `
+                        <tr>
+                            <td>
+                                <div><strong>${item.productName}</strong></div>
+                                <small class="text-muted">${item.variantName || ''}</small>
+                                ${item.hasStringingService ? '<br><span class="badge bg-info">Căng vợt</span>' : ''}
+                            </td>
+                            <td>${currencyFormatter.format(item.unitPrice)}</td>
+                            <td>${item.quantity}</td>
+                            <td>${currencyFormatter.format(item.subtotal)}</td>
+                        </tr>
+                    `;
+                    });
+                    $('#items-table tbody').html(itemsHtml);
+
+                    $('#loading').hide();
+                    $('#order-content').fadeIn();
+                }).fail(function () {
+                    alert('Order not found or Error loading detail.');
+                });
+            }
+
+            function updateStatus(newStatus) {
+                if (!confirm(`Change order status to ${newStatus}?`)) return;
+
+                const data = {
+                    newStatus: newStatus,
+                    staffNote: "Updated via Admin UI"
+                };
+
+                $.ajax({
+                    url: `/admin/api/orders/${orderId}/status`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        alert('Status updated successfully!');
+                        location.reload();
+                    },
+                    error: function (err) {
+                        alert('Error updating status: ' + (err.responseJSON ? err.responseJSON.message : 'Unknown error'));
+                    }
+                });
+            }
+
+            function getStatusBadge(status) {
+                switch (status) {
+                    case 'PENDING': return 'warning';
+                    case 'CONFIRMED': return 'info';
+                    case 'SUCCESS': return 'success';
+                    case 'PAID': return 'success';
+                    case 'CANCELLED': return 'danger';
+                    case 'DELIVERED': return 'success';
+                    default: return 'secondary';
+                }
+            }
+        </script>
+    </div>
+</body>
+
+</html>

@@ -16,13 +16,14 @@ import java.util.Optional;
  */
 @Entity
 @Table(name = "orders", indexes = {
-    @Index(name = "idx_orders_user", columnList = "user_id"),
-    @Index(name = "idx_orders_status", columnList = "status"),
-    @Index(name = "idx_orders_payment_status", columnList = "payment_status"),
-    @Index(name = "idx_orders_payment_method", columnList = "payment_method"),
-    @Index(name = "idx_orders_created", columnList = "created_at"),
-    @Index(name = "idx_orders_deleted", columnList = "deleted_at"),
-    @Index(name = "idx_orders_user_deleted", columnList = "user_id, deleted_at")
+        @Index(name = "idx_orders_user", columnList = "user_id"),
+        @Index(name = "idx_orders_status", columnList = "status"),
+        @Index(name = "idx_orders_payment_status", columnList = "payment_status"),
+        @Index(name = "idx_orders_payment_method", columnList = "payment_method"),
+        @Index(name = "idx_orders_created", columnList = "created_at"),
+        @Index(name = "idx_orders_deleted", columnList = "deleted_at"),
+        @Index(name = "idx_orders_user_deleted", columnList = "user_id, deleted_at"),
+        @Index(name = "idx_orders_session", columnList = "session_id") // Add detailed index
 })
 @Getter
 @Setter
@@ -40,6 +41,9 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(name = "session_id", length = 100)
+    private String sessionId; // For Guest Users
 
     @Column(name = "order_number", nullable = false, unique = true, length = 50)
     private String orderNumber; // VD: ORD20250104001
@@ -79,8 +83,8 @@ public class Order {
     @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    @Column(name = "PAID_at")
+    private LocalDateTime PAIDAt;
 
     // Shipping Information
     @Column(name = "shipping_recipient_name", nullable = false)
@@ -109,32 +113,32 @@ public class Order {
     private String adminNotes;
 
     // Cancellation
-    @Column(name = "cancelled_reason", columnDefinition = "TEXT")
-    private String cancelledReason;
+    @Column(name = "CANCELLED_reason", columnDefinition = "TEXT")
+    private String CANCELLEDReason;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "cancelled_by", columnDefinition = "VARCHAR(50)") // <-- Đảm bảo dòng này đã có
-    private CancelledBy cancelledBy;
+    @Column(name = "CANCELLED_by") // Bỏ columnDefinition đi
+    private CancelledBy CANCELLEDBy;
 
-    @Column(name = "cancelled_at")
-    private LocalDateTime cancelledAt;
+    @Column(name = "CANCELLED_at")
+    private LocalDateTime CANCELLEDAt;
 
     // Timestamps
     @Column(name = "created_at")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "confirmed_at")
-    private LocalDateTime confirmedAt;
+    @Column(name = "CONFIRMED_at")
+    private LocalDateTime CONFIRMEDAt;
 
-    @Column(name = "processing_at")
-    private LocalDateTime processingAt;
+    @Column(name = "PROCESSING_at")
+    private LocalDateTime PROCESSINGAt;
 
-    @Column(name = "shipped_at")
-    private LocalDateTime shippedAt;
+    @Column(name = "SHIPPED_at")
+    private LocalDateTime SHIPPEDAt;
 
-    @Column(name = "delivered_at")
-    private LocalDateTime deliveredAt;
+    @Column(name = "DELIVERED_at")
+    private LocalDateTime DELIVEREDAt;
 
     // Soft delete
     @Column(name = "deleted_at")
@@ -144,8 +148,8 @@ public class Order {
     @Column(name = "archived_reason")
     private String archivedReason;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    // @Column(name = "updated_at")
+    // private LocalDateTime updatedAt;
 
     // Relationships
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -174,9 +178,9 @@ public class Order {
 
     public void cancel(CancelledBy by, String reason) {
         this.status = OrderStatus.CANCELLED;
-        this.cancelledBy = by;
-        this.cancelledReason = reason;
-        this.cancelledAt = LocalDateTime.now();
+        this.CANCELLEDBy = by;
+        this.CANCELLEDReason = reason;
+        this.CANCELLEDAt = LocalDateTime.now();
     }
 
     public boolean isCancellable() {
@@ -201,10 +205,15 @@ public class Order {
     public void updateStatus(OrderStatus newStatus) {
         this.status = newStatus;
         switch (newStatus) {
-            case CONFIRMED -> this.confirmedAt = LocalDateTime.now();
-            case PROCESSING -> this.processingAt = LocalDateTime.now();
-            case SHIPPED -> this.shippedAt = LocalDateTime.now();
-            case DELIVERED -> this.deliveredAt = LocalDateTime.now();
+            case CONFIRMED -> this.CONFIRMEDAt = LocalDateTime.now();
+            case PROCESSING -> this.PROCESSINGAt = LocalDateTime.now();
+            case SHIPPED -> this.SHIPPEDAt = LocalDateTime.now();
+            case DELIVERED -> this.DELIVEREDAt = LocalDateTime.now();
+            case CANCELLED -> this.CANCELLEDAt = LocalDateTime.now();
+            case STRINGING -> {
+                /* No specific timestamp field yet */ }
+            case WAITING_FOR_PAYMENT_VERIFICATION -> {
+                /* No specific timestamp field yet */ }
         }
     }
 }

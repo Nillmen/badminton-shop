@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+
+<head>
+    <title>Order Detail</title>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Order <span id="order-number-title" class="text-primary">#...</span></h2>
+            <a href="/orders" class="btn btn-outline-secondary">Back to List</a>
+        </div>
+
+        <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+
+        <div id="order-content" style="display:none;">
+            <div class="row">
+                <!-- Left: Items -->
+                <div class="col-lg-8">
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Items</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Price</th>
+                                            <th>Qty</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="order-items-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tracking Info (Optional) -->
+                    <div class="card mb-4 shadow-sm" id="tracking-card" style="display:none;">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Tracking Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Carrier:</strong> <span id="carrier"></span></p>
+                            <p><strong>Tracking Code:</strong> <span id="trackingCode"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Info -->
+                <div class="col-lg-4">
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Customer Info</h5>
+                            <p class="mb-1"><i class="fas fa-user"></i> <span id="customer-name"></span></p>
+                            <p class="mb-1"><i class="fas fa-phone"></i> <span id="customer-phone"></span></p>
+                            <p class="mb-1"><i class="fas fa-map-marker-alt"></i> <span id="customer-address"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Order Status</h5>
+                            <div class="mb-2" id="order-status-badge"></div>
+                            <p class="text-muted small" id="order-date"></p>
+
+                            <hr>
+                            <h5 class="card-title">Payment</h5>
+                            <p class="mb-1">Method: <strong id="payment-method"></strong></p>
+                            <p class="mb-2">Status: <span id="payment-status-badge"></span></p>
+
+                            <!-- Bank Transfer Info if Unpaid -->
+                            <div id="bank-info" class="alert alert-info" style="display:none;">
+                                <strong>Please transfer to:</strong><br>
+                                Bank: Vietcombank<br>
+                                Account: 1234567890<br>
+                                Content: <b id="transfer-content"></b>
+                            </div>
+
+                            <!-- Cancel Button -->
+                            <button id="btn-cancel" class="btn btn-danger w-100" style="display:none;"
+                                onclick="cancelOrder()">Cancel Order</button>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3 shadow-sm bg-light">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <span class="h5 mb-0">Total:</span>
+                            <span class="h4 text-primary mb-0" id="order-total"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            var currentOrderNumber = /*[[${orderNumber}]]*/ '';
+            /*]]>*/
+
+            const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+            let currentOrderId = null;
+
+            $(document).ready(function () {
+                if (currentOrderNumber) {
+                    loadDetail(currentOrderNumber);
+                }
+            });
+
+            function loadDetail(orderNumber) {
+                const sid = getSessionId();
+                $.get(`/api/orders/${orderNumber}?sessionId=${sid}`, function (order) {
+                    currentOrderId = order.orderId;
+                    $('#loading').hide();
+                    $('#order-content').show();
+                    renderOrder(order);
+                }).fail(function () {
+                    alert('Order not found or Access Denied');
+                    window.location.href = '/orders';
+                });
+            }
+
+            function renderOrder(order) {
+                $('#order-number-title').text('#' + order.orderNumber);
+                $('#customer-name').text(order.fullName);
+                $('#customer-phone').text(order.phone);
+                $('#customer-address').text(order.address);
+                $('#order-date').text('Created: ' + new Date(order.createdAt).toLocaleString('vi-VN'));
+                $('#order-total').text(currencyFormatter.format(order.totalAmount));
+                $('#payment-method').text(order.paymentMethod);
+                $('#transfer-content').text(order.orderNumber);
+
+                // Status
+                $('#order-status-badge').html(getStatusBadge(order.status));
+                $('#payment-status-badge').html(getPaymentBadge(order.paymentStatus));
+
+                // Logic display
+                if (order.status === 'PENDING' || order.status === 'CONFIRMED') {
+                    $('#btn-cancel').show();
+                }
+
+                if (order.paymentMethod === 'BANK_TRANSFER' && order.paymentStatus === 'PENDING') {
+                    $('#bank-info').show();
+                }
+
+                // Tracking
+                if (order.trackingCode) {
+                    $('#tracking-card').show();
+                    $('#carrier').text(order.carrier || 'N/A');
+                    $('#trackingCode').text(order.trackingCode);
+                }
+
+                // Items
+                let html = '';
+                order.items.forEach(item => {
+                    html += `
+                <tr>
+                    <td>${item.productName} <br><small class="text-muted">Variant: ${item.variantName}</small></td>
+                    <td>${currencyFormatter.format(item.unitPrice)}</td>
+                    <td>${item.quantity}</td>
+                    <td>${currencyFormatter.format(item.unitPrice * item.quantity)}</td>
+                </tr>
+            `;
+                });
+                $('#order-items-body').html(html);
+            }
+
+            function cancelOrder() {
+                if (!confirm('Are you sure you want to cancel this order?')) return;
+                const sid = getSessionId();
+                $.post(`/api/orders/${currentOrderId}/cancel?reason=UserRequest&sessionId=${sid}`, function () {
+                    alert('Order cancelled');
+                    loadDetail(currentOrderNumber);
+                }).fail(function (err) {
+                    alert("Failed to cancel: " + (err.responseJSON ? err.responseJSON.message : "Unknown Error"));
+                });
+            }
+
+            function getStatusBadge(status) {
+                return `<span class="badge bg-secondary">${status}</span>`; // Simplified reuse
+            }
+            function getPaymentBadge(status) {
+                return `<span class="badge bg-secondary">${status}</span>`; // Simplified reuse
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

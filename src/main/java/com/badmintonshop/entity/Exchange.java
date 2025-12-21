@@ -86,7 +86,7 @@ public class Exchange extends BaseEntity {
     @Column(name = "old_item_received_at")
     private LocalDateTime oldItemReceivedAt; // Thời điểm nhận hàng cũ
 
-    @Column(name = "new_item_shipped_at")
+    @Column(name = "new_item_SHIPPED_at")
     private LocalDateTime newItemShippedAt; // Thời điểm gửi hàng mới
 
     // Notes

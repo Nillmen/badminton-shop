@@ -1,4 +1,4 @@
-package com.badmintonshop.dto.request;
+package com.badmintonshop.dto;
 
 import lombok.Data;
 import java.math.BigDecimal;
@@ -12,6 +12,6 @@ public class OrderItemRequest {
     // Thông tin đan vợt (nếu có)
     private Boolean hasStringingService;
     private Long stringingServiceId; // ID dịch vụ đan (công đan)
-    private Long stringId;           // ID loại cước (lưới)
-    private BigDecimal tension;      // Số ký (kg/lbs)
+    private Long stringId; // ID loại cước (lưới)
+    private BigDecimal tension; // Số ký (kg/lbs)
 }

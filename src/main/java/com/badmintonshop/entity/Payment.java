@@ -68,29 +68,29 @@ public class Payment {
     private String transferProofUrl;
 
     // Timestamps
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    @Column(name = "PAID_at")
+    private LocalDateTime PaidAt;
 
-    @Column(name = "failed_at")
-    private LocalDateTime failedAt;
+    @Column(name = "FAILED_at")
+    private LocalDateTime FailedAt;
 
-    @Column(name = "refunded_at")
-    private LocalDateTime refundedAt;
+    @Column(name = "REFUNDED_at")
+    private LocalDateTime RefundedAt;
 
     // Helper methods
     public void markAsPaid(String transactionId) {
         this.status = PaymentStatus.PAID;
         this.transactionId = transactionId;
-        this.paidAt = LocalDateTime.now();
+        this.PaidAt = LocalDateTime.now();
     }
 
     public void markAsFailed() {
         this.status = PaymentStatus.FAILED;
-        this.failedAt = LocalDateTime.now();
+        this.FailedAt = LocalDateTime.now();
     }
 
     public void markAsRefunded() {
         this.status = PaymentStatus.REFUNDED;
-        this.refundedAt = LocalDateTime.now();
+        this.RefundedAt = LocalDateTime.now();
     }
 }

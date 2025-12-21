@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+
+<head>
+    <title>Checkout</title>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-lg-8">
+                <h4 class="mb-3">Shipping Address</h4>
+                <form id="checkout-form" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="fullName" required>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" id="phone" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address" placeholder="1234 Main St" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="email" class="form-label">Email <span
+                                    class="text-muted">(Optional)</span></label>
+                            <input type="email" class="form-control" id="email" placeholder="you@example.com">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h4 class="mb-3">Payment Method</h4>
+                    <div class="my-3" id="payment-methods-container">
+                        <!-- Methods injected via JS -->
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span>Loading payment methods...</span>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <button class="w-100 btn btn-primary btn-lg" type="submit" id="btn-place-order">Place Order</button>
+                </form>
+            </div>
+
+            <div class="col-lg-4">
+                <h4 class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-primary">Your cart</span>
+                    <span class="badge bg-primary rounded-pill" id="cart-count">0</span>
+                </h4>
+                <ul class="list-group mb-3" id="cart-summary-list">
+                    <!-- Cart items summary -->
+                </ul>
+                <div class="card p-2 bg-light">
+                    <div class="d-flex justify-content-between">
+                        <span>Total (VND)</span>
+                        <strong id="final-total">0 ₫</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+            let currentCart = null;
+
+            $(document).ready(function () {
+                loadPrepareCheckout();
+            });
+
+            function loadPrepareCheckout() {
+                // 1. Load Cart
+                const sessionId = getSessionId(); // From layout.html
+                $.get(`/api/cart?sessionId=${sessionId}`, function (cart) {
+                    currentCart = cart;
+                    renderCartSummary(cart);
+                });
+
+                // 2. Load Payment Methods
+                $.get('/api/payment/methods', function (methods) {
+                    renderPaymentMethods(methods);
+                });
+            }
+
+            function renderCartSummary(cart) {
+                if (!cart || !cart.items || cart.items.length === 0) {
+                    // Redirect if empty
+                    window.location.href = '/cart';
+                    return;
+                }
+                $('#cart-count').text(cart.totalItems);
+                $('#final-total').text(currencyFormatter.format(cart.totalPrice));
+                let html = '';
+                cart.items.forEach(item => {
+                    html += `
+                <li class="list-group-item d-flex justify-content-between lh-sm">
+                    <div>
+                        <h6 class="my-0">${item.productName}</h6>
+                        <small class="text-muted">x${item.quantity}</small>
+                    </div>
+                    <span class="text-muted">${currencyFormatter.format(item.price * item.quantity)}</span>
+                </li>
+             `;
+                });
+                $('#cart-summary-list').html(html);
+            }
+
+            function renderPaymentMethods(methods) {
+                let html = '';
+                methods.forEach((m, index) => {
+                    const checked = index === 0 ? 'checked' : '';
+                    html += `
+                <div class="form-check">
+                    <input id="${m.code}" name="paymentMethod" type="radio" class="form-check-input" value="${m.code}" ${checked} required>
+                    <label class="form-check-label" for="${m.code}">
+                        ${m.name} <span class="text-muted">- ${m.description}</span>
+                    </label>
+                </div>
+            `;
+                });
+                $('#payment-methods-container').html(html);
+            }
+
+            $('#checkout-form').on('submit', function (e) {
+                e.preventDefault();
+
+                // Basic Validate
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
+                const orderData = {
+                    // User / Guest Info
+                    fullName: $('#fullName').val(),
+                    phone: $('#phone').val(),
+                    email: $('#email').val(),
+
+                    // Shipping Info
+                    shippingRecipientName: $('#fullName').val(),
+                    shippingPhone: $('#phone').val(),
+                    shippingAddress: $('#address').val(),
+                    // Hardcode/Optional for now as UI doesn't have these inputs yet
+                    shippingCity: "HCM",
+                    shippingDistrict: "Thu Duc",
+                    shippingWard: "Linh Trung",
+
+                    customerNotes: "Order from Web UI",
+                    paymentMethod: $('input[name="paymentMethod"]:checked').val(),
+                    sessionId: getSessionId() // Add Session ID for Guest Checkout
+                };
+
+                // Disable button
+                $('#btn-place-order').prop('disabled', true).text('Processing...');
+
+                // Call Create Order API
+                $.ajax({
+                    url: '/api/orders/create',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(orderData),
+                    success: function (response) {
+                        handleOrderSuccess(response, orderData.paymentMethod);
+                    },
+                    error: function (err) {
+                        alert("Order Failed: " + (err.responseJSON ? err.responseJSON.message : "Unknown error"));
+                        $('#btn-place-order').prop('disabled', false).text('Place Order');
+                    }
+                });
+            });
+
+            function handleOrderSuccess(orderResponse, paymentMethod) {
+                const orderId = orderResponse.orderId;
+                const orderNumber = orderResponse.orderNumber;
+
+                if (paymentMethod === 'VNPAY') {
+                    // Initiate VNPay
+                    $.post(`/api/payment/vnpay/create/${orderId}`, function (response) {
+                        if (response.status === 'SUCCESS') {
+                            window.location.href = response.paymentUrl;
+                        } else {
+                            alert("Payment Init Failed: " + response.message);
+                            window.location.href = `/orders/${orderNumber}`;
+                        }
+                    }).fail(function () {
+                        alert("Could not generate VNPay URL. Order created but payment failed.");
+                        window.location.href = `/orders/${orderNumber}`;
+                    });
+                } else {
+                    // COD or Bank Transfer -> Go to Detail
+                    window.location.href = `/orders/${orderNumber}`;
+                }
+            }
+        </script>
+    </th:block>
+
+</body>
+
+</html>

@@ -4,12 +4,11 @@ import com.badmintonshop.entity.enums.ChangedByType;
 import com.badmintonshop.entity.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import com.badmintonshop.entity.Staff;
-import com.badmintonshop.entity.User;
 import java.time.LocalDateTime;
 
 /**
  * Entity OrderStatusHistory - Lịch sử thay đổi trạng thái đơn hàng
+ * Đã sửa để khớp với Database gốc của nhóm
  */
 @Entity
 @Table(name = "order_status_history", indexes = {
@@ -32,42 +31,36 @@ public class OrderStatusHistory {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    // 🛑 SỬA: Đổi từ String sang OrderStatus Enum và đổi tên field
-    @Enumerated(EnumType.STRING)
+    // 🛑 SỬA: Dùng String để khớp với VARCHAR(50) trong DB gốc của nhóm
+    // Logic Enum sẽ được xử lý ở tầng Service (gọi .name() hoặc .toString())
     @Column(name = "from_status", length = 50)
-    private OrderStatus oldStatus; // <-- Khớp với history.getOldStatus() trong Service
+    private String oldStatus;
 
-    // 🛑 SỬA: Đổi từ String sang OrderStatus Enum và đổi tên field
-    @Enumerated(EnumType.STRING)
     @Column(name = "to_status", nullable = false, length = 50)
-    private OrderStatus newStatus; // <-- Khớp với history.getNewStatus() trong Service
+    private String newStatus;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "changed_by_type", nullable = false)
-    private ChangedByType changedByType; // <-- Khớp với history.getChangedByType()
+    private ChangedByType changedByType;
 
-    // 🛑 THAY THẾ changedById BẰNG MỐI QUAN HỆ STAFF
-    // @Column(name = "changed_by_id")
-    // private Long changedById;
-
-    // Mối quan hệ Staff (nếu changedByType là STAFF)
+    // 🛑 CHIÊU QUAN TRỌNG: Map 2 quan hệ vào chung 1 cột vật lý changed_by_id
+    // insertable = false và updatable = false để tránh xung đột khi lưu
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "staff_id") // Hoặc cột tương ứng trong DB (ví dụ: changed_by_staff_id)
-    private Staff staff; // <-- Khớp với history.getStaff()
+    @JoinColumn(name = "changed_by_id", insertable = false, updatable = false)
+    private Staff staff;
 
-    // Mối quan hệ User (nếu changedByType là USER, ví dụ: khách hàng hủy)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // Hoặc cột tương ứng trong DB
+    @JoinColumn(name = "changed_by_id", insertable = false, updatable = false)
     private User user;
 
+    // Đây là cột thực tế trong DB gốc của nhóm
+    @Column(name = "changed_by_id")
+    private Long changedById;
 
     @Column(name = "changed_at")
     @Builder.Default
     private LocalDateTime changedAt = LocalDateTime.now();
-
-    // 🛑 ĐÃ XÓA TẤT CẢ HÀM GETTER THỦ CÔNG (getOldStatus, getStaff,...)
-    // VÌ ĐÃ CÓ @Getter CỦA LOMBOK.
 }
