@@ -43,6 +43,9 @@ public class DTOMapper {
             String paymentUrl) {
         return com.badmintonshop.dto.order.OrderResponse.builder()
                 .orderId(order.getOrderId())
+                .userId(order.getUser() != null ? order.getUser().getUserId() : null)
+                .customerName(order.getUser() != null ? order.getUser().getFullName()
+                        : "Guest (" + order.getShippingRecipientName() + ")")
                 .orderNumber(order.getOrderNumber())
                 .status(order.getStatus())
                 .subtotal(order.getSubtotal())

@@ -14,4 +14,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByOrderNumber(String orderNumber);
 
     List<Order> findAllByStatus(com.badmintonshop.entity.enums.OrderStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product LEFT JOIN FETCH i.variant WHERE o.status = :status ORDER BY o.createdAt DESC")
+    List<Order> findAllByStatusWithDetails(com.badmintonshop.entity.enums.OrderStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product LEFT JOIN FETCH i.variant ORDER BY o.createdAt DESC")
+    List<Order> findAllWithDetails();
 }

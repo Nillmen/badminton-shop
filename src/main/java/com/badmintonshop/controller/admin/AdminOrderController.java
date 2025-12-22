@@ -8,6 +8,7 @@ import com.badmintonshop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/admin/api/orders")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AdminOrderController {
 
     private final OrderRepository orderRepository;
@@ -24,9 +26,9 @@ public class AdminOrderController {
     public ResponseEntity<List<OrderResponse>> getAllOrders(@RequestParam(required = false) OrderStatus status) {
         List<Order> orders;
         if (status != null) {
-            orders = orderRepository.findAllByStatus(status);
+            orders = orderRepository.findAllByStatusWithDetails(status);
         } else {
-            orders = orderRepository.findAll();
+            orders = orderRepository.findAllWithDetails();
         }
         return ResponseEntity.ok(orders.stream()
                 .map(dtoMapper::toOrderResponse)

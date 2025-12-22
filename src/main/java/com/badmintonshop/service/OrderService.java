@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+// Updated for Inventory Debugging
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -128,12 +129,15 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         logStatusHistory(savedOrder, "Order created", com.badmintonshop.entity.enums.ChangedByType.CUSTOMER, userId);
 
-        // Decrease Inventory
+        // Check and decrease stock
         for (CartItem item : cart.getItems()) {
-            inventoryService.decreaseStock(
-                    item.getProduct().getProductId(),
-                    item.getVariant() != null ? item.getVariant().getVariantId() : null,
-                    item.getQuantity());
+            if (!inventoryService.decreaseStock(item.getProduct().getProductId(),
+                    item.getVariant() != null ? item.getVariant().getVariantId() : null, item.getQuantity())) {
+                throw new RuntimeException("Product out of stock: " + item.getProduct().getName()
+                        + " (ID: " + item.getProduct().getProductId()
+                        + ", Variant: " + (item.getVariant() != null ? item.getVariant().getVariantId() : "None")
+                        + ", Qty: " + item.getQuantity() + ")");
+            }
         }
 
         // Clear Cart

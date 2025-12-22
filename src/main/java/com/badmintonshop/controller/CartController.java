@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.Authentication;
 import com.badmintonshop.security.CustomUserDetails;
+import com.badmintonshop.security.CustomOAuth2User;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,8 +35,13 @@ public class CartController {
 
     private Long getUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
-            return ((CustomUserDetails) authentication.getPrincipal()).getUserId();
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof CustomUserDetails) {
+                return ((CustomUserDetails) principal).getUserId();
+            } else if (principal instanceof CustomOAuth2User) {
+                return ((CustomOAuth2User) principal).getUserId();
+            }
         }
         return null;
     }

@@ -77,11 +77,47 @@
             <p class="text-muted">Không tìm thấy đơn hàng nào</p>
         </div>
 
+        <!-- Update Status Modal -->
+        <div class="modal fade" id="updateStatusModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cập nhật trạng thái đơn hàng</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="updateStatusForm">
+                            <input type="hidden" id="updateOrderId">
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái mới</label>
+                                <select class="form-select" id="newStatus">
+                                    <option value="PENDING">Chờ xử lý</option>
+                                    <option value="CONFIRMED">Đã xác nhận</option>
+                                    <option value="SHIPPING">Đang giao</option>
+                                    <option value="DELIVERED">Đã giao</option>
+                                    <option value="CANCELLED">Đã hủy</option>
+                                    <option value="RETURNED">Hoàn trả</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-primary" onclick="submitStatusUpdate()">Lưu thay
+                            đổi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div layout:fragment="scripts">
         <script>
+            let updateModal;
+
             document.addEventListener('DOMContentLoaded', function () {
+                updateModal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
                 loadOrders();
             });
 
@@ -117,18 +153,53 @@
                 container.innerHTML = orders.map(o => `
                     <tr>
                         <td class="ps-4 fw-bold">#${o.orderNumber || o.orderId}</td>
-                        <td><small>ID: ${o.userId}</small></td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold text-dark">${o.customerName || 'Unknown'}</span>
+                                <small class="text-muted">${o.userId ? 'ID: ' + o.userId : '<span class="badge bg-light text-dark border">Guest</span>'}</small>
+                            </div>
+                        </td>
                         <td>${new Date(o.createdAt).toLocaleString('vi-VN')}</td>
                         <td class="fw-bold text-primary">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(o.totalAmount)}</td>
                         <td><span class="badge ${getPaymentStatusClass(o.paymentStatus)}">${o.paymentStatus}</span></td>
                         <td><span class="badge ${getStatusClass(o.status)}">${getStatusName(o.status)}</span></td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-primary" onclick="alert('Chi tiết đơn hàng ID ' + ${o.orderId})">
-                                Chi tiết
+                            <button class="btn btn-sm btn-outline-primary" onclick="openUpdateModal(${o.orderId}, '${o.status}')">
+                                <i class="fas fa-edit me-1"></i>Cập nhật
                             </button>
                         </td>
                     </tr>
                 `).join('');
+            }
+
+            function openUpdateModal(orderId, currentStatus) {
+                document.getElementById('updateOrderId').value = orderId;
+                document.getElementById('newStatus').value = currentStatus;
+                updateModal.show();
+            }
+
+            async function submitStatusUpdate() {
+                const orderId = document.getElementById('updateOrderId').value;
+                const status = document.getElementById('newStatus').value;
+
+                if (!confirm('Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng?')) return;
+
+                try {
+                    const response = await fetch(`/admin/api/orders/${orderId}/status?status=${status}`, {
+                        method: 'PUT'
+                    });
+
+                    if (response.ok) {
+                        alert('Cập nhật thành công!');
+                        updateModal.hide();
+                        loadOrders();
+                    } else {
+                        alert('Cập nhật thất bại. Vui lòng thử lại.');
+                    }
+                } catch (error) {
+                    console.error('Error updating order:', error);
+                    alert('Lỗi kết nối.');
+                }
             }
 
             function getStatusName(status) {

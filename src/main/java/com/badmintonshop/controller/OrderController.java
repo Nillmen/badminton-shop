@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.Authentication;
 import com.badmintonshop.security.CustomUserDetails;
+import com.badmintonshop.security.CustomOAuth2User;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import com.badmintonshop.service.PaymentService;
 import com.badmintonshop.entity.enums.PaymentMethod;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
+@Transactional
 public class OrderController {
 
     private final OrderService orderService;
@@ -31,8 +34,13 @@ public class OrderController {
 
     private Long getUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
-            return ((CustomUserDetails) authentication.getPrincipal()).getUserId();
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal(); // Allow safe casting
+            if (principal instanceof CustomUserDetails) {
+                return ((CustomUserDetails) principal).getUserId();
+            } else if (principal instanceof CustomOAuth2User) {
+                return ((CustomOAuth2User) principal).getUserId();
+            }
         }
         return null;
     }

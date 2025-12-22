@@ -13,6 +13,8 @@ import java.util.List;
 @Builder
 public class OrderResponse {
     private Long orderId;
+    private Long userId; // Added for Admin
+    private String customerName; // Added for Admin
     private String orderNumber;
     private OrderStatus status;
     private BigDecimal subtotal;
