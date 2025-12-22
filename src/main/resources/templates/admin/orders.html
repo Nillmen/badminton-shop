@@ -32,10 +32,13 @@
                         <option value="">Tất cả trạng thái</option>
                         <option value="PENDING">Chờ xử lý</option>
                         <option value="CONFIRMED">Đã xác nhận</option>
-                        <option value="SHIPPING">Đang giao</option>
-                        <option value="DELIVERED">Đã giao</option>
+                        <option value="PROCESSING">Đang xử lý</option>
+                        <option value="STRINGING">Đang đan vợt</option>
+                        <option value="READY_TO_SHIP">Sẵn sàng giao</option>
+                        <option value="SHIPPED">Ðang giao hàng</option>
+                        <option value="DELIVERED">Đã giao thành công</option>
                         <option value="CANCELLED">Đã hủy</option>
-                        <option value="RETURNED">Hoàn trả</option>
+                        <option value="REFUNDED">Đã hoàn tiền</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -93,10 +96,13 @@
                                 <select class="form-select" id="newStatus">
                                     <option value="PENDING">Chờ xử lý</option>
                                     <option value="CONFIRMED">Đã xác nhận</option>
-                                    <option value="SHIPPING">Đang giao</option>
-                                    <option value="DELIVERED">Đã giao</option>
+                                    <option value="PROCESSING">Đang xử lý</option>
+                                    <option value="STRINGING">Đang đan vợt</option>
+                                    <option value="READY_TO_SHIP">Sẵn sàng giao</option>
+                                    <option value="SHIPPED">Ðang giao hàng</option>
+                                    <option value="DELIVERED">Đã giao thành công</option>
                                     <option value="CANCELLED">Đã hủy</option>
-                                    <option value="RETURNED">Hoàn trả</option>
+                                    <option value="REFUNDED">Đã hoàn tiền</option>
                                 </select>
                             </div>
                         </form>
@@ -206,10 +212,13 @@
                 const names = {
                     'PENDING': 'Chờ xử lý',
                     'CONFIRMED': 'Đã xác nhận',
-                    'SHIPPING': 'Đang giao',
-                    'DELIVERED': 'Đã giao',
+                    'PROCESSING': 'Đang xử lý',
+                    'STRINGING': 'Đang đan vợt',
+                    'READY_TO_SHIP': 'Sẵn sàng giao',
+                    'SHIPPED': 'Đang giao hàng',
+                    'DELIVERED': 'Đã giao thành công',
                     'CANCELLED': 'Đã hủy',
-                    'RETURNED': 'Hoàn trả'
+                    'REFUNDED': 'Đã hoàn tiền'
                 };
                 return names[status] || status;
             }
@@ -218,10 +227,13 @@
                 const classes = {
                     'PENDING': 'bg-secondary',
                     'CONFIRMED': 'bg-primary',
-                    'SHIPPING': 'bg-info',
+                    'PROCESSING': 'bg-info',
+                    'STRINGING': 'bg-warning text-dark',
+                    'READY_TO_SHIP': 'bg-primary',
+                    'SHIPPED': 'bg-info',
                     'DELIVERED': 'bg-success',
                     'CANCELLED': 'bg-danger',
-                    'RETURNED': 'bg-dark'
+                    'REFUNDED': 'bg-secondary'
                 };
                 return classes[status] || 'bg-secondary';
             }
