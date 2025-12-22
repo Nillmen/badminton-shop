@@ -69,7 +69,7 @@ public class AdminProductController {
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        return ResponseEntity.ok(productService.searchProductsAdvanced(
+        return ResponseEntity.ok(productService.searchProductsAdvancedAdmin(
                 keyword, categoryId, brandId, productType,
                 minPrice, maxPrice, status, isPublished, pageable));
     }

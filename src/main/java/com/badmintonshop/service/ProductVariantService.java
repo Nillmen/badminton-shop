@@ -67,7 +67,12 @@ public class ProductVariantService {
     }
 
     /**
-     * Create new variant and its corresponding inventory record
+     * Create new variant and its corresponding inventory record.
+     * Note: The variant status is kept as provided by the user (default ACTIVE).
+     * We do NOT call checkAndUpdateVariantStatus here because initial inventory is
+     * 0,
+     * which would incorrectly set the status to INACTIVE.
+     * Admin should update inventory quantity separately after creating the variant.
      */
     @Transactional
     public ProductVariantDTO createVariant(Long productId, ProductVariantDTO dto) {
@@ -106,7 +111,15 @@ public class ProductVariantService {
                 .build();
         inventoryRepository.save(inventory);
 
-        log.info("Created variant {} for product {} with inventory record (quantity: 0)", variant.getSku(), productId);
+        // Set hasVariants = true on product so it shows on public pages
+        if (!Boolean.TRUE.equals(product.getHasVariants())) {
+            product.setHasVariants(true);
+            productRepository.save(product);
+            log.info("Set hasVariants=true for product {}", productId);
+        }
+
+        log.info("Created variant {} for product {} with inventory record (quantity: 0, status: {})",
+                variant.getSku(), productId, variant.getStatus());
         return ProductVariantDTO.fromEntity(variant);
     }
 

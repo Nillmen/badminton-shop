@@ -71,10 +71,11 @@ public class ProductService {
     }
 
     /**
-     * Get product by slug
+     * Get product by slug (public-facing, only returns products with variants)
      */
     public Optional<ProductResponse> getProductBySlug(String slug) {
         return productRepository.findBySlug(slug)
+                .filter(p -> Boolean.TRUE.equals(p.getHasVariants()))
                 .map(this::mapToProductResponse);
     }
 
@@ -128,7 +129,8 @@ public class ProductService {
     }
 
     /**
-     * Advanced search with filters
+     * Advanced search with filters (public-facing, only shows products with
+     * variants)
      */
     public Page<ProductListDTO> searchProductsAdvanced(
             String keyword,
@@ -141,6 +143,26 @@ public class ProductService {
             Boolean isPublished,
             Pageable pageable) {
         return productRepository.searchProducts(
+                keyword, categoryId, brandId, productType,
+                minPrice, maxPrice, status, pageable)
+                .map(this::mapToProductListDTO);
+    }
+
+    /**
+     * Advanced search with filters for admin (shows ALL products including those
+     * without variants)
+     */
+    public Page<ProductListDTO> searchProductsAdvancedAdmin(
+            String keyword,
+            Long categoryId,
+            Long brandId,
+            ProductType productType,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            ProductStatus status,
+            Boolean isPublished,
+            Pageable pageable) {
+        return productRepository.searchProductsAdmin(
                 keyword, categoryId, brandId, productType,
                 minPrice, maxPrice, status, pageable)
                 .map(this::mapToProductListDTO);

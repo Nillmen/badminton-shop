@@ -91,7 +91,7 @@ public class AdminController {
         log.info("Loading admin products page");
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<ProductListDTO> products = productService.searchProductsAdvanced(
+        Page<ProductListDTO> products = productService.searchProductsAdvancedAdmin(
                 keyword, categoryId, brandId, null, null, null, status, null, pageable);
 
         List<CategoryTreeDTO> categories = categoryService.getCategoryTree();

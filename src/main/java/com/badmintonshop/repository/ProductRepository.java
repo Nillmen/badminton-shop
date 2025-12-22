@@ -54,43 +54,43 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         /**
          * Find all active products
          */
-        @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' ORDER BY p.createdAt DESC")
+        @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' AND p.hasVariants = true ORDER BY p.createdAt DESC")
         List<Product> findAllActive();
 
         /**
          * Find products by category
          */
-        @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId AND p.status = 'ACTIVE'")
+        @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId AND p.status = 'ACTIVE' AND p.hasVariants = true")
         Page<Product> findByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
 
         /**
          * Find products by brand
          */
-        @Query("SELECT p FROM Product p WHERE p.brand.brandId = :brandId AND p.status = 'ACTIVE'")
+        @Query("SELECT p FROM Product p WHERE p.brand.brandId = :brandId AND p.status = 'ACTIVE' AND p.hasVariants = true")
         Page<Product> findByBrandId(@Param("brandId") Long brandId, Pageable pageable);
 
         /**
          * Find featured products
          */
-        @Query("SELECT p FROM Product p WHERE p.isFeatured = true AND p.status = 'ACTIVE' ORDER BY p.displayOrder ASC, p.createdAt DESC")
+        @Query("SELECT p FROM Product p WHERE p.isFeatured = true AND p.status = 'ACTIVE' AND p.hasVariants = true ORDER BY p.displayOrder ASC, p.createdAt DESC")
         List<Product> findFeaturedProducts();
 
         /**
          * Find featured products with limit
          */
-        @Query("SELECT p FROM Product p WHERE p.isFeatured = true AND p.status = 'ACTIVE' ORDER BY p.displayOrder ASC")
+        @Query("SELECT p FROM Product p WHERE p.isFeatured = true AND p.status = 'ACTIVE' AND p.hasVariants = true ORDER BY p.displayOrder ASC")
         Page<Product> findFeaturedProducts(Pageable pageable);
 
         /**
          * Find new arrivals (recent products marked as new arrival)
          */
-        @Query("SELECT p FROM Product p WHERE p.isNewArrival = true AND p.status = 'ACTIVE' ORDER BY p.createdAt DESC")
+        @Query("SELECT p FROM Product p WHERE p.isNewArrival = true AND p.status = 'ACTIVE' AND p.hasVariants = true ORDER BY p.createdAt DESC")
         Page<Product> findNewArrivals(Pageable pageable);
 
         /**
          * Find best sellers (by sold count)
          */
-        @Query("SELECT p FROM Product p WHERE p.isBestSeller = true AND p.status = 'ACTIVE' ORDER BY p.soldCount DESC")
+        @Query("SELECT p FROM Product p WHERE p.isBestSeller = true AND p.status = 'ACTIVE' AND p.hasVariants = true ORDER BY p.soldCount DESC")
         Page<Product> findBestSellers(Pageable pageable);
 
         /**
@@ -99,11 +99,35 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         @Query("SELECT p FROM Product p WHERE " +
                         "(LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                         "OR LOWER(p.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-                        "AND p.status = 'ACTIVE'")
+                        "AND p.status = 'ACTIVE' AND p.hasVariants = true")
         Page<Product> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
         /**
-         * Advanced search with filters
+         * Advanced search with filters (public-facing, only shows products with
+         * variants)
+         */
+        @Query("SELECT p FROM Product p WHERE " +
+                        "(:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                        "AND (:categoryId IS NULL OR p.category.categoryId = :categoryId) " +
+                        "AND (:brandId IS NULL OR p.brand.brandId = :brandId) " +
+                        "AND (:productType IS NULL OR p.productType = :productType) " +
+                        "AND (:minPrice IS NULL OR p.basePrice >= :minPrice) " +
+                        "AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice) " +
+                        "AND (:status IS NULL OR p.status = :status) " +
+                        "AND p.hasVariants = true")
+        Page<Product> searchProducts(
+                        @Param("keyword") String keyword,
+                        @Param("categoryId") Long categoryId,
+                        @Param("brandId") Long brandId,
+                        @Param("productType") ProductType productType,
+                        @Param("minPrice") BigDecimal minPrice,
+                        @Param("maxPrice") BigDecimal maxPrice,
+                        @Param("status") ProductStatus status,
+                        Pageable pageable);
+
+        /**
+         * Advanced search with filters for admin (shows ALL products including those
+         * without variants)
          */
         @Query("SELECT p FROM Product p WHERE " +
                         "(:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
@@ -113,7 +137,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
                         "AND (:minPrice IS NULL OR p.basePrice >= :minPrice) " +
                         "AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice) " +
                         "AND (:status IS NULL OR p.status = :status)")
-        Page<Product> searchProducts(
+        Page<Product> searchProductsAdmin(
                         @Param("keyword") String keyword,
                         @Param("categoryId") Long categoryId,
                         @Param("brandId") Long brandId,
@@ -165,7 +189,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         /**
          * Find products on sale (has compare at price higher than base price)
          */
-        @Query("SELECT p FROM Product p WHERE p.compareAtPrice IS NOT NULL AND p.compareAtPrice > p.basePrice AND p.status = 'ACTIVE' ORDER BY p.createdAt DESC")
+        @Query("SELECT p FROM Product p WHERE p.compareAtPrice IS NOT NULL AND p.compareAtPrice > p.basePrice AND p.status = 'ACTIVE' AND p.hasVariants = true ORDER BY p.createdAt DESC")
         Page<Product> findProductsOnSale(Pageable pageable);
 
         /**
