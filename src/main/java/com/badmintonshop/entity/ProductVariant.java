@@ -14,9 +14,9 @@ import java.util.List;
  */
 @Entity
 @Table(name = "product_variants", indexes = {
-    @Index(name = "idx_variants_product", columnList = "product_id"),
-    @Index(name = "idx_variants_status", columnList = "status"),
-    @Index(name = "idx_variants_deleted", columnList = "deleted_at")
+        @Index(name = "idx_variants_product", columnList = "product_id"),
+        @Index(name = "idx_variants_status", columnList = "status"),
+        @Index(name = "idx_variants_deleted", columnList = "deleted_at")
 })
 @Getter
 @Setter
@@ -78,5 +78,17 @@ public class ProductVariant extends BaseEntity {
 
     public boolean isActive() {
         return status == VariantStatus.ACTIVE;
+    }
+
+    /**
+     * Get total available stock quantity from all inventory records
+     */
+    public Integer getStockQuantity() {
+        if (inventories == null || inventories.isEmpty()) {
+            return 0;
+        }
+        return inventories.stream()
+                .mapToInt(inv -> inv.getActualAvailable())
+                .sum();
     }
 }

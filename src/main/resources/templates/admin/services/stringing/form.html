@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Thông tin Dịch vụ</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800 text-uppercase"
+                th:text="${id == null ? 'Thêm Dịch Vụ Mới' : 'Cập nhật Dịch Vụ'}">Title</h1>
+            <a th:href="@{/admin/services/stringing}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+
+        <!-- Alert Messages -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <form
+                            th:action="${id == null ? '/admin/services/stringing' : '/admin/services/stringing/' + id}"
+                            th:object="${service}" method="post">
+
+                            <div class="mb-3">
+                                <label class="form-label">Tên dịch vụ <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" th:field="*{serviceName}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Kiểu đan <span class="text-danger">*</span></label>
+                                <select class="form-select" th:field="*{serviceType}">
+                                    <option value="STANDARD">Standard (Tiêu chuẩn)</option>
+                                    <option value="FOUR_KNOT">Four Knot (4 nút - Professional)</option>
+                                    <option value="TWO_KNOT">Two Knot (2 nút)</option>
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Giá (VNĐ) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" th:field="*{basePrice}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Thời gian ước tính (phút)</label>
+                                    <input type="number" class="form-control" th:field="*{estimatedTimeMinutes}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả chi tiết</label>
+                                <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="isActive"
+                                        th:field="*{isActive}">
+                                    <label class="form-check-label" for="isActive">Kích hoạt (Active)</label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end mt-4">
+                                <a th:href="@{/admin/services/stringing}" class="btn btn-secondary me-2">Hủy</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i> Lưu dịch vụ
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -136,6 +136,11 @@
 
                 let itemsHtml = '';
                 cart.items.forEach(item => {
+                    // Determine display price (use promotionPrice if available)
+                    const displayPrice = item.promotionPrice || item.unitPrice;
+                    const hasPromotion = item.promotionPrice && item.promotionPrice < item.unitPrice;
+                    const itemSubtotal = displayPrice * item.quantity;
+
                     itemsHtml += `
                         <div class="cart-item" data-item-id="${item.cartItemId}">
                             <div class="row align-items-center">
@@ -150,9 +155,15 @@
                                     </h5>
                                     ${item.variantName ? `<small class="text-muted">${item.variantName}</small>` : ''}
                                     ${item.stringingServiceName ? `<div class="small text-info mt-1"><i class="fas fa-tools me-1"></i>${item.stringingServiceName}</div>` : ''}
+                                    ${hasPromotion ? `<div class="small text-success mt-1"><i class="fas fa-fire me-1"></i>${item.promotionName || 'Đang khuyến mãi'}</div>` : ''}
                                 </div>
                                 <div class="col-md-2">
-                                    <span class="fw-bold text-danger">${formatPrice(item.unitPrice)}</span>
+                                    ${hasPromotion ? `
+                                        <span class="fw-bold text-danger">${formatPrice(item.promotionPrice)}</span>
+                                        <br><small class="text-muted text-decoration-line-through">${formatPrice(item.unitPrice)}</small>
+                                    ` : `
+                                        <span class="fw-bold text-danger">${formatPrice(item.unitPrice)}</span>
+                                    `}
                                 </div>
                                 <div class="col-md-2">
                                     <div class="quantity-control">
@@ -163,7 +174,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-1">
-                                    <span class="fw-bold">${formatPrice(item.subtotal)}</span>
+                                    <span class="fw-bold">${formatPrice(itemSubtotal)}</span>
                                 </div>
                                 <div class="col-md-1">
                                     <button class="btn btn-link text-danger" onclick="removeItem(${item.cartItemId})">
@@ -174,6 +185,10 @@
                         </div>
                     `;
                 });
+
+                // Calculate totals with promotion discounts
+                const promotionDiscount = cart.promotionDiscount || 0;
+                cartSubtotal = cart.subtotal; // Store for coupon validation
 
                 container.innerHTML = `
                     <div class="row">
@@ -190,28 +205,46 @@
                         </div>
                         <div class="col-lg-4">
                             <div class="cart-summary">
-                                <h5 class="mb-4">Tóm tắt đơn hàng</h5>
+                                <h5 class="mb-4">Tổng quan</h5>
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Tạm tính (${cart.totalQuantity} sản phẩm)</span>
+                                    <span>Tạm tính</span>
                                     <span>${formatPrice(cart.subtotal)}</span>
                                 </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Phí vận chuyển</span>
-                                    <span>${cart.shippingFee > 0 ? formatPrice(cart.shippingFee) : 'Miễn phí'}</span>
-                                </div>
-                                ${cart.discount > 0 ? `
+                                ${promotionDiscount > 0 ? `
                                 <div class="d-flex justify-content-between mb-2 text-success">
-                                    <span>Giảm giá</span>
-                                    <span>-${formatPrice(cart.discount)}</span>
+                                    <span>Giảm giá khuyến mãi</span>
+                                    <span>-${formatPrice(promotionDiscount)}</span>
                                 </div>
-                                ` : ''}
+                                ` : `
+                                <div class="d-flex justify-content-between mb-2 text-muted">
+                                    <span>Giảm giá</span>
+                                    <span>-0₫</span>
+                                </div>
+                                `}
                                 <hr>
                                 <div class="d-flex justify-content-between mb-4">
                                     <strong>Tổng cộng</strong>
-                                    <strong class="text-danger fs-4">${formatPrice(cart.total)}</strong>
+                                    <strong class="text-danger fs-4" id="totalDisplay">${formatPrice(cart.total)}</strong>
                                 </div>
+                                
+                                <!-- Coupon Section -->
+                                <div class="mb-3">
+                                    <label class="form-label small">Mã giảm giá</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="couponCode" placeholder="Nhập mã giảm giá">
+                                        <button class="btn btn-outline-primary" type="button" onclick="applyCoupon()">Áp dụng</button>
+                                    </div>
+                                    <div id="couponMessage" class="mt-2"></div>
+                                    <div id="appliedCouponDisplay" class="mt-2" style="display: none;">
+                                        <div class="d-flex justify-content-between align-items-center bg-success bg-opacity-10 p-2 rounded">
+                                            <span class="text-success"><i class="fas fa-check-circle me-1"></i><span id="appliedCouponCode"></span></span>
+                                            <button class="btn btn-sm btn-link text-danger" onclick="removeCoupon()"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <button class="btn btn-checkout" onclick="checkout()">
-                                    <i class="fas fa-credit-card me-2"></i>Tiến hành thanh toán
+                                    Thanh toán ngay &nbsp;<i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
                         </div>
@@ -300,6 +333,87 @@
                 `;
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 3000);
+            }
+
+            // ===== COUPON HANDLING =====
+            let appliedCoupon = null;
+            let cartSubtotal = 0;
+
+            async function applyCoupon() {
+                const code = document.getElementById('couponCode').value.trim();
+                const messageDiv = document.getElementById('couponMessage');
+
+                console.log('Applying coupon:', code, 'Subtotal:', cartSubtotal);
+
+                if (!code) {
+                    messageDiv.innerHTML = '<div class="text-danger small"><i class="fas fa-exclamation-circle me-1"></i>Vui lòng nhập mã giảm giá</div>';
+                    return;
+                }
+
+                if (!cartSubtotal || cartSubtotal <= 0) {
+                    messageDiv.innerHTML = '<div class="text-danger small"><i class="fas fa-exclamation-circle me-1"></i>Giỏ hàng trống hoặc không hợp lệ</div>';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/coupons/validate?code=${encodeURIComponent(code)}&orderTotal=${cartSubtotal}`, {
+                        method: 'POST'
+                    });
+
+                    console.log('Response status:', response.status);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Coupon validation failed:', errorText);
+                        messageDiv.innerHTML = '<div class="text-danger small"><i class="fas fa-exclamation-circle me-1"></i>Có lỗi xảy ra, vui lòng thử lại</div>';
+                        return;
+                    }
+
+                    const result = await response.json();
+                    console.log('Coupon validation result:', result);
+
+                    if (result.valid) {
+                        appliedCoupon = {
+                            code: result.code,
+                            name: result.name,
+                            discountAmount: result.discountAmount,
+                            newTotal: result.newTotal
+                        };
+
+                        messageDiv.innerHTML = `<div class="text-success small"><i class="fas fa-check-circle me-1"></i>Giảm ${formatPrice(result.discountAmount)}</div>`;
+
+                        // Update total display
+                        document.getElementById('totalDisplay').textContent = formatPrice(result.newTotal);
+
+                        // Show applied coupon
+                        document.getElementById('appliedCouponCode').textContent = result.code;
+                        document.getElementById('appliedCouponDisplay').style.display = 'block';
+
+                        // Disable input
+                        document.getElementById('couponCode').disabled = true;
+
+                        showToast('Áp dụng mã giảm giá thành công!', 'success');
+
+                    } else {
+                        appliedCoupon = null;
+                        messageDiv.innerHTML = `<div class="text-danger small"><i class="fas fa-exclamation-circle me-1"></i>${result.errorMessage || 'Mã giảm giá không hợp lệ'}</div>`;
+                    }
+                } catch (error) {
+                    console.error('Error validating coupon:', error);
+                    messageDiv.innerHTML = '<div class="text-danger small"><i class="fas fa-exclamation-circle me-1"></i>Có lỗi xảy ra, vui lòng thử lại</div>';
+                }
+            }
+
+            function removeCoupon() {
+                appliedCoupon = null;
+                document.getElementById('couponCode').value = '';
+                document.getElementById('couponCode').disabled = false;
+                document.getElementById('couponMessage').innerHTML = '';
+                document.getElementById('appliedCouponDisplay').style.display = 'none';
+
+                // Restore original total
+                loadCart();
+                showToast('Đã hủy mã giảm giá', 'success');
             }
         </script>
     </th:block>

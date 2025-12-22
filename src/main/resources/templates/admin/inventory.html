@@ -83,14 +83,25 @@
                 <!-- Filters -->
                 <div class="card mb-4">
                     <div class="card-body">
-                        <form id="filterForm" class="row g-3">
+                        <form id="filterForm" th:action="@{/admin/inventory}" method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Tìm kiếm</label>
+                                <input type="text" class="form-control" id="keyword" name="keyword"
+                                    placeholder="Tên sản phẩm, SKU..." th:value="${param.keyword}">
+                            </div>
                             <div class="col-md-4">
                                 <label class="form-label">Lọc theo trạng thái</label>
-                                <select class="form-select" id="lowStock" name="lowStock">
+                                <select class="form-select" id="stockStatus" name="stockStatus">
                                     <option value="">Tất cả</option>
-                                    <option value="true"
-                                        th:selected="${param.lowStock != null and param.lowStock[0] == 'true'}">Sắp hết
-                                        hàng</option>
+                                    <option value="IN_STOCK"
+                                        th:selected="${param.stockStatus != null and param.stockStatus[0] == 'IN_STOCK'}">
+                                        Còn hàng</option>
+                                    <option value="LOW_STOCK"
+                                        th:selected="${param.stockStatus != null and param.stockStatus[0] == 'LOW_STOCK'}">
+                                        Sắp hết hàng</option>
+                                    <option value="OUT_OF_STOCK"
+                                        th:selected="${param.stockStatus != null and param.stockStatus[0] == 'OUT_OF_STOCK'}">
+                                        Hết hàng</option>
                                 </select>
                             </div>
                             <div class="col-md-4 d-flex align-items-end">
@@ -189,17 +200,20 @@
                         <nav>
                             <ul class="pagination mb-0">
                                 <li class="page-item" th:classappend="${inventory.first} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/admin/inventory(page=${inventory.number - 1})}">
+                                    <a class="page-link"
+                                        th:href="@{/admin/inventory(page=${inventory.number - 1}, keyword=${param.keyword}, stockStatus=${param.stockStatus})}">
                                         <i class="fas fa-chevron-left"></i>
                                     </a>
                                 </li>
                                 <li class="page-item" th:each="i : ${#numbers.sequence(0, inventory.totalPages - 1)}"
                                     th:classappend="${i == inventory.number} ? 'active'">
-                                    <a class="page-link" th:href="@{/admin/inventory(page=${i})}"
+                                    <a class="page-link"
+                                        th:href="@{/admin/inventory(page=${i}, keyword=${param.keyword}, stockStatus=${param.stockStatus})}"
                                         th:text="${i + 1}">1</a>
                                 </li>
                                 <li class="page-item" th:classappend="${inventory.last} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/admin/inventory(page=${inventory.number + 1})}">
+                                    <a class="page-link"
+                                        th:href="@{/admin/inventory(page=${inventory.number + 1}, keyword=${param.keyword}, stockStatus=${param.stockStatus})}">
                                         <i class="fas fa-chevron-right"></i>
                                     </a>
                                 </li>

@@ -204,15 +204,7 @@ public class ShopController {
         return "shop/categories";
     }
 
-    /**
-     * Cart page
-     * GET /cart
-     */
-    @GetMapping("/cart")
-    public String cartPage() {
-        log.info("Loading cart page");
-        return "shop/cart";
-    }
+    // NOTE: Cart page is handled by CartController at /cart
 
     /**
      * Wishlist page

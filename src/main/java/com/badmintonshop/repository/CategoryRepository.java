@@ -104,8 +104,15 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         List<Category> findCategoryTree();
 
         /**
-         * Find soft-deleted categories for trash
+         * Find soft-deleted categories for trash (uses native query to bypass @Where
+         * filter)
          */
-        @Query("SELECT c FROM Category c WHERE c.deletedAt IS NOT NULL ORDER BY c.deletedAt DESC")
+        @Query(value = "SELECT * FROM categories WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", countQuery = "SELECT COUNT(*) FROM categories WHERE deleted_at IS NOT NULL", nativeQuery = true)
         Page<Category> findDeleted(Pageable pageable);
+
+        /**
+         * Find category by ID including deleted (bypasses @Where filter)
+         */
+        @Query(value = "SELECT * FROM categories WHERE category_id = :id", nativeQuery = true)
+        Optional<Category> findByIdIncludingDeleted(@Param("id") Long id);
 }

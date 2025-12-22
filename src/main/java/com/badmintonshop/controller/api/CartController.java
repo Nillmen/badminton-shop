@@ -42,25 +42,35 @@ public class CartController {
             String sessionId = getOrCreateGuestSession(session);
             cart = cartService.getGuestCartResponse(sessionId);
         }
-        
+
         return ResponseEntity.ok(cart);
     }
 
     /**
-     * Add item to cart
+     * Add item to cart - REQUIRES LOGIN
      * POST /api/cart/add
      */
     @PostMapping("/add")
-    public ResponseEntity<CartResponse> addToCart(
+    public ResponseEntity<?> addToCart(
             @Valid @RequestBody AddToCartRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpSession session) {
 
-        Long userId = userDetails != null ? userDetails.getUserId() : null;
-        String sessionId = userId == null ? getOrCreateGuestSession(session) : null;
+        // Require user to be logged in to add to cart
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-        CartResponse cart = cartService.addToCart(userId, sessionId, request);
-        return ResponseEntity.ok(cart);
+        try {
+            Long userId = userDetails.getUserId();
+            CartResponse cart = cartService.addToCart(userId, null, request);
+            return ResponseEntity.ok(cart);
+        } catch (com.badmintonshop.exception.InsufficientStockException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", true,
+                    "message", e.getMessage(),
+                    "availableQuantity", e.getAvailableQuantity()));
+        }
     }
 
     /**

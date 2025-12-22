@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Chi tiết Đổi hàng</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Chi tiết Yêu cầu Đổi hàng: <span
+                    th:text="${exchange.exchangeNumber}"></span></h1>
+            <a th:href="@{/admin/exchanges}" class="btn btn-secondary btn-sm shadow-sm">
+                <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Exchange Info -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Thông tin yêu cầu</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Mã đơn hàng gốc:</th>
+                                <td><a th:href="@{/admin/orders/{id}(id=${exchange.orderId})}"
+                                        th:text="${exchange.orderNumber}"></a></td>
+                            </tr>
+                            <tr>
+                                <th>Ngày tạo:</th>
+                                <td th:text="${#temporals.format(exchange.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                            </tr>
+                            <tr>
+                                <th>Lý do đổi:</th>
+                                <td th:text="${exchange.reason}"></td>
+                            </tr>
+                            <tr>
+                                <th>Mô tả chi tiết:</th>
+                                <td th:text="${exchange.description}"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Thông tin sản phẩm</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 border-end">
+                                <h6 class="text-danger">Sản phẩm trả lại (Cũ)</h6>
+                                <p class="fw-bold mb-1" th:text="${exchange.oldProductName}"></p>
+                                <p class="small text-muted" th:text="${exchange.oldVariantName}"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success">Sản phẩm đổi lấy (Mới)</h6>
+                                <p class="fw-bold mb-1" th:text="${exchange.newProductName}"></p>
+                                <p class="small text-muted" th:text="${exchange.newVariantName}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <!-- Status & Action -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Cập nhật trạng thái</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="fw-bold">Trạng thái hiện tại:</label>
+                            <span class="badge fs-6" th:classappend="${
+                                      exchange.status.name() == 'APPROVED' ? 'bg-success' : 
+                                      (exchange.status.name() == 'REJECTED' ? 'bg-danger' : 
+                                      (exchange.status.name() == 'COMPLETED' ? 'bg-primary' : 'bg-warning'))
+                                  }" th:text="${exchange.status}">PENDING</span>
+                        </div>
+
+                        <form th:action="@{/admin/exchanges/{id}/status(id=${exchange.exchangeId})}" method="post">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Chuyển trạng thái sang:</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                                        th:selected="${s == exchange.status}"></option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Ghi chú (Admin):</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3"
+                                    placeholder="Nhập lý do từ chối hoặc ghi chú thêm..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Cập nhật trạng thái</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yêu cầu hỗ trợ - Badminton Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 80px;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-primary"><i class="fas fa-headset me-2"></i>Yêu cầu hỗ trợ</h2>
+            <a th:href="@{/users/profile}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại hồ sơ
+            </a>
+        </div>
+
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="card p-4">
+            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pills-exchange-tab" data-bs-toggle="pill"
+                        data-bs-target="#pills-exchange" type="button">Đổi trả hàng</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pills-warranty-tab" data-bs-toggle="pill"
+                        data-bs-target="#pills-warranty" type="button">Bảo hành</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="pills-exchange" role="tabpanel">
+                    <div th:if="${#lists.isEmpty(exchanges)}" class="text-center text-muted my-5">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Bạn chưa có yêu cầu đổi trả nào.</p>
+                        <a th:href="@{/orders}" class="btn btn-outline-primary btn-sm mt-2">Xem đơn hàng để tạo yêu
+                            cầu</a>
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(exchanges)}" class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã yêu cầu</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Ngày gửi</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item : ${exchanges}">
+                                    <td class="fw-bold text-primary" th:text="${item.exchangeNumber}">EX-123456</td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold" th:text="${item.oldProductName}">Product Name</span>
+                                            <small class="text-muted" th:text="${item.oldVariantName}">Variant</small>
+                                        </div>
+                                    </td>
+                                    <td th:text="${#temporals.format(item.createdAt, 'dd/MM/yyyy')}">01/01/2024</td>
+                                    <td>
+                                        <span class="badge"
+                                            th:classappend="${item.status.name() == 'APPROVED' ? 'bg-success' : 
+                                                              (item.status.name() == 'REJECTED' ? 'bg-danger' : 
+                                                              (item.status.name() == 'COMPLETED' ? 'bg-primary' : 'bg-warning text-dark'))}"
+                                            th:text="${item.status}">PENDING</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="pills-warranty" role="tabpanel">
+                    <div th:if="${#lists.isEmpty(warranties)}" class="text-center text-muted my-5">
+                        <i class="fas fa-clipboard-check fa-3x mb-3"></i>
+                        <p>Bạn chưa có yêu cầu bảo hành nào.</p>
+                        <a th:href="@{/orders}" class="btn btn-outline-primary btn-sm mt-2">Xem đơn hàng để tạo yêu
+                            cầu</a>
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(warranties)}" class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã phiếu</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Lỗi gặp phải</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item : ${warranties}">
+                                    <td class="fw-bold text-danger" th:text="${item.warrantyNumber}">WAR-123456</td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold" th:text="${item.productName}">Product Name</span>
+                                            <small class="text-muted" th:text="'Mua: ' + ${item.purchaseDate}">Mua:
+                                                2024-01-01</small>
+                                        </div>
+                                    </td>
+                                    <td th:text="${item.issueType}">Gãy khung</td>
+                                    <td>
+                                        <span class="badge"
+                                            th:classappend="${item.status.name() == 'APPROVED' ? 'bg-success' : 
+                                                              (item.status.name() == 'REJECTED' ? 'bg-danger' : 
+                                                              (item.status.name() == 'COMPLETED' ? 'bg-primary' : 'bg-warning text-dark'))}"
+                                            th:text="${item.status}">PENDING</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

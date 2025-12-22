@@ -38,4 +38,19 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long>, Jpa
 
         // Find by type and isActive
         Page<Promotion> findByTypeAndIsActive(PromotionType type, Boolean isActive, Pageable pageable);
+
+        // ===== TRASH METHODS =====
+
+        /**
+         * Find deleted promotions (for trash) - uses native query to bypass @Where
+         * filter
+         */
+        @Query(value = "SELECT * FROM promotions WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", countQuery = "SELECT COUNT(*) FROM promotions WHERE deleted_at IS NOT NULL", nativeQuery = true)
+        Page<Promotion> findDeletedPromotions(Pageable pageable);
+
+        /**
+         * Find promotion by ID including deleted (ignore @Where clause)
+         */
+        @Query(value = "SELECT * FROM promotions WHERE promotion_id = :id", nativeQuery = true)
+        java.util.Optional<Promotion> findByIdIncludingDeleted(@Param("id") Long id);
 }

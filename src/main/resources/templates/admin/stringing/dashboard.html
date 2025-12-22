@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Stringing Workload Dashboard</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Stringing Workload Dashboard</h1>
+            <a th:href="@{/admin/stringing}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Xem danh sách lệnh đan
+            </a>
+        </div>
+
+        <!-- Staff Cards -->
+        <div class="row">
+            <div th:each="staff : ${workload}" class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1"
+                                    th:text="${staff.staffName}">
+                                    Nguyen Van A
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span th:text="${staff.currentAssignedCount}">5</span> tasks
+                                </div>
+                                <div class="text-xs text-muted mt-1">
+                                    Đã xong hôm nay: <span th:text="${staff.completedTodayCount}">2</span>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-user-cog fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <span th:if="${staff.currentAssignedCount >= 5}" class="badge bg-danger">Overloaded</span>
+                        <span th:if="${staff.currentAssignedCount < 5 && staff.currentAssignedCount > 0}"
+                            class="badge bg-warning text-dark">Busy</span>
+                        <span th:if="${staff.currentAssignedCount == 0}" class="badge bg-success">Free</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Queues / Stats could go here -->
+
+    </div>
+</body>
+
+</html>

@@ -58,6 +58,17 @@
                 <i class="fas fa-tools"></i>
                 <span>Đan vợt</span>
             </a>
+            <!-- Warranties & Exchanges - Only for SUPER_ADMIN or SALE_STAFF -->
+            <a sec:authorize="hasRole('SUPER_ADMIN') or hasAuthority('warranties.view')" th:href="@{/admin/warranties}"
+                class="sidebar-link" data-page="warranties">
+                <i class="fas fa-shield-alt"></i>
+                <span>Yêu cầu bảo hành</span>
+            </a>
+            <a sec:authorize="hasRole('SUPER_ADMIN') or hasAuthority('exchanges.view')" th:href="@{/admin/exchanges}"
+                class="sidebar-link" data-page="exchanges">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Yêu cầu đổi trả</span>
+            </a>
         </div>
 
         <!-- Customers -->

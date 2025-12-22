@@ -5,10 +5,13 @@ import com.badmintonshop.dto.inventory.InventoryDTO;
 import com.badmintonshop.dto.inventory.InventoryTransactionDTO;
 import com.badmintonshop.entity.Inventory;
 import com.badmintonshop.entity.InventoryTransaction;
+import com.badmintonshop.entity.ProductVariant;
 import com.badmintonshop.entity.enums.TransactionType;
+import com.badmintonshop.entity.enums.VariantStatus;
 import com.badmintonshop.repository.InventoryRepository;
 import com.badmintonshop.repository.InventoryTransactionRepository;
 import com.badmintonshop.repository.ProductRepository;
+import com.badmintonshop.repository.ProductVariantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +37,7 @@ public class InventoryService {
         private final InventoryRepository inventoryRepository;
         private final InventoryTransactionRepository transactionRepository;
         private final ProductRepository productRepository;
+        private final ProductVariantRepository productVariantRepository;
 
         /**
          * Get all inventory with pagination
@@ -47,6 +52,15 @@ public class InventoryService {
          */
         public Page<InventoryDTO> searchInventory(Long productId, Boolean lowStock, Pageable pageable) {
                 return inventoryRepository.searchInventory(productId, lowStock, pageable)
+                                .map(InventoryDTO::fromEntity);
+        }
+
+        /**
+         * Search inventory with keyword and status filter
+         * stockStatus: LOW_STOCK, OUT_OF_STOCK, IN_STOCK
+         */
+        public Page<InventoryDTO> searchInventoryWithKeyword(String keyword, String stockStatus, Pageable pageable) {
+                return inventoryRepository.searchInventoryWithKeyword(keyword, stockStatus, pageable)
                                 .map(InventoryDTO::fromEntity);
         }
 
@@ -90,7 +104,9 @@ public class InventoryService {
 
                 inventory.setQuantityAvailable(newQuantity);
                 inventory.setUpdatedAt(LocalDateTime.now());
-                inventory = inventoryRepository.save(inventory);
+                inventoryRepository.saveAndFlush(inventory);
+                // Refresh with variant eagerly loaded for status update
+                inventory = inventoryRepository.findByIdWithVariant(inventoryId).get();
 
                 // Record transaction - use IN for increase, OUT for decrease
                 createTransaction(inventory, previousQuantity, newQuantity, Math.abs(adjustment),
@@ -98,6 +114,11 @@ public class InventoryService {
                                 reason, "adjustment", null);
 
                 log.info("Updated inventory {}: {} -> {}", inventoryId, previousQuantity, newQuantity);
+
+                // Check and update product and variant status if needed
+                checkAndUpdateProductStatus(inventory.getProduct().getProductId());
+                checkAndUpdateVariantStatus(inventory);
+
                 return InventoryDTO.fromEntity(inventory);
         }
 
@@ -126,8 +147,8 @@ public class InventoryService {
                         throw new IllegalArgumentException("Không thể điều chỉnh tồn kho. Số lượng không đủ.");
                 }
 
-                // Refresh entity
-                inventory = inventoryRepository.findById(inventoryId).get();
+                // Refresh entity with variant eagerly loaded for status update
+                inventory = inventoryRepository.findByIdWithVariant(inventoryId).get();
                 int newQuantity = inventory.getQuantityAvailable();
 
                 // Record transaction - use ADJUSTMENT for manual adjustments
@@ -136,6 +157,11 @@ public class InventoryService {
                                 request.getReason(), "adjustment", null);
 
                 log.info("Adjusted inventory {}: {} units", inventoryId, adjustment);
+
+                // Check and update product and variant status if needed
+                checkAndUpdateProductStatus(inventory.getProduct().getProductId());
+                checkAndUpdateVariantStatus(inventory);
+
                 return InventoryDTO.fromEntity(inventory);
         }
 
@@ -198,6 +224,10 @@ public class InventoryService {
                 createTransaction(inventory, previousQuantity, inventory.getQuantityAvailable(), quantity,
                                 TransactionType.OUT, "Bán hàng", "order", orderId);
                 log.info("Completed sale of {} units from inventory {}", quantity, inventoryId);
+
+                // Check and update product and variant status if needed
+                checkAndUpdateProductStatus(inventory.getProduct().getProductId());
+                checkAndUpdateVariantStatus(inventory);
         }
 
         /**
@@ -217,6 +247,12 @@ public class InventoryService {
                 createTransaction(inventory, previousQuantity, inventory.getQuantityAvailable(), quantity,
                                 TransactionType.IN, "Nhập kho", "purchase_order", purchaseOrderId);
                 log.info("Restocked {} units to inventory {}", quantity, inventoryId);
+
+                // Check and update product and variant status if needed (might restore from
+                // OUT_OF_STOCK)
+                checkAndUpdateProductStatus(inventory.getProduct().getProductId());
+                checkAndUpdateVariantStatus(inventory);
+
                 return InventoryDTO.fromEntity(inventory);
         }
 
@@ -263,6 +299,103 @@ public class InventoryService {
                 return transactionRepository
                                 .searchTransactions(productId, transactionType, startDate, endDate, pageable)
                                 .map(InventoryTransactionDTO::fromEntity);
+        }
+
+        /**
+         * Check and update product status based on inventory levels.
+         * If all inventory for a product is out of stock, set product status to
+         * OUT_OF_STOCK.
+         * If product was OUT_OF_STOCK and now has stock, set it back to ACTIVE.
+         */
+        @Transactional
+        public void checkAndUpdateProductStatus(Long productId) {
+                if (productId == null) {
+                        return;
+                }
+
+                var productOpt = productRepository.findById(productId);
+                if (productOpt.isEmpty()) {
+                        return;
+                }
+
+                var product = productOpt.get();
+                boolean hasStock = inventoryRepository.hasAvailableStock(productId);
+
+                if (!hasStock && product.getStatus() == com.badmintonshop.entity.enums.ProductStatus.ACTIVE) {
+                        // All inventory is out of stock, update product status
+                        product.setStatus(com.badmintonshop.entity.enums.ProductStatus.OUT_OF_STOCK);
+                        productRepository.save(product);
+                        log.info("Product {} status changed to OUT_OF_STOCK (all variants out of stock)", productId);
+                } else if (hasStock
+                                && product.getStatus() == com.badmintonshop.entity.enums.ProductStatus.OUT_OF_STOCK) {
+                        // Stock is available again, restore product status to ACTIVE
+                        product.setStatus(com.badmintonshop.entity.enums.ProductStatus.ACTIVE);
+                        productRepository.save(product);
+                        log.info("Product {} status restored to ACTIVE (stock available)", productId);
+                }
+        }
+
+        /**
+         * Check and update variant status based on its inventory level.
+         * If variant inventory is out of stock, set variant status to INACTIVE.
+         * If variant was INACTIVE and now has stock, set it back to ACTIVE.
+         */
+        @Transactional
+        public void checkAndUpdateVariantStatus(Inventory inventory) {
+                if (inventory == null) {
+                        log.debug("checkAndUpdateVariantStatus: inventory is null");
+                        return;
+                }
+
+                Long inventoryId = inventory.getInventoryId();
+                // Get variant ID directly from DB to avoid lazy loading issues
+                Optional<Long> variantIdOpt = inventoryRepository.findVariantIdByInventoryId(inventoryId);
+
+                if (variantIdOpt.isEmpty()) {
+                        log.debug("checkAndUpdateVariantStatus: inventory {} has no variant linked in DB", inventoryId);
+                        return;
+                }
+
+                Long variantId = variantIdOpt.get();
+                log.info("checkAndUpdateVariantStatus: Processing variant {} for inventory {}", variantId, inventoryId);
+
+                // Refresh variant from DB to get current status
+                var variantOpt = productVariantRepository.findById(variantId);
+                if (variantOpt.isEmpty()) {
+                        log.warn("checkAndUpdateVariantStatus: Variant {} not found in DB", variantId);
+                        return;
+                }
+                ProductVariant variant = variantOpt.get();
+
+                boolean isOutOfStock = inventory.getQuantityAvailable() <= 0;
+                VariantStatus currentStatus = variant.getStatus();
+
+                log.info("checkAndUpdateVariantStatus: variant {} current status={}, quantityAvailable={}, isOutOfStock={}",
+                                variantId, currentStatus, inventory.getQuantityAvailable(), isOutOfStock);
+
+                if (isOutOfStock) {
+                        try {
+                                log.info("Attempting to update variant {} status to INACTIVE. Current stock: {}",
+                                                variantId, inventory.getQuantityAvailable());
+                                // Updates are now self-flushing via repository annotation
+                                productVariantRepository.updateStatus(variantId, VariantStatus.INACTIVE);
+                                log.info("Variant {} status updated to INACTIVE", variantId);
+                        } catch (Exception e) {
+                                log.error("Failed to update variant {} status: {}", variantId, e.getMessage(), e);
+                        }
+                } else if (!isOutOfStock && currentStatus == VariantStatus.INACTIVE) {
+                        try {
+                                log.info("Attempting to update variant {} status to ACTIVE. Current stock: {}",
+                                                variantId, inventory.getQuantityAvailable());
+                                productVariantRepository.updateStatus(variantId, VariantStatus.ACTIVE);
+                                log.info("Variant {} status updated to ACTIVE", variantId);
+                        } catch (Exception e) {
+                                log.error("Failed to update variant {} status: {}", variantId, e.getMessage(), e);
+                        }
+                } else {
+                        log.info("No status change needed for variant {}. Stock: {}, Current Status: {}", variantId,
+                                        inventory.getQuantityAvailable(), currentStatus);
+                }
         }
 
         @lombok.Builder

@@ -73,9 +73,17 @@ public class SupplierService {
             throw new IllegalArgumentException("Tên nhà cung cấp đã tồn tại: " + dto.getName());
         }
 
+        // Auto-generate code if not provided
+        String code = dto.getCode();
+        if (code == null || code.trim().isEmpty()) {
+            code = "SUP-" + System.currentTimeMillis();
+        } else if (supplierRepository.existsByCode(code)) {
+            throw new IllegalArgumentException("Mã nhà cung cấp đã tồn tại: " + code);
+        }
+
         Supplier supplier = Supplier.builder()
                 .name(dto.getName())
-                .code(dto.getCode())
+                .code(code)
                 .contactName(dto.getContactName())
                 .contactEmail(dto.getContactEmail())
                 .contactPhone(dto.getContactPhone())
@@ -146,11 +154,19 @@ public class SupplierService {
     }
 
     /**
-     * Get suppliers for a product
+     * Get suppliers for a product - returns full info including supplier details
      */
-    public List<SupplierDTO> getSuppliersForProduct(Long productId) {
+    public List<java.util.Map<String, Object>> getSuppliersForProduct(Long productId) {
         return productSupplierRepository.findByProductProductId(productId).stream()
-                .map(ps -> SupplierDTO.fromEntity(ps.getSupplier()))
+                .map(ps -> {
+                    java.util.Map<String, Object> result = new java.util.HashMap<>();
+                    result.put("supplierId", ps.getSupplier().getSupplierId());
+                    result.put("supplierName", ps.getSupplier().getName());
+                    result.put("supplierCode", ps.getSupplier().getCode());
+                    result.put("isPrimary", ps.getIsPreferred() != null && ps.getIsPreferred());
+                    result.put("costPrice", ps.getCostPrice());
+                    return result;
+                })
                 .collect(Collectors.toList());
     }
 

@@ -43,4 +43,18 @@ public interface CouponRepository extends JpaRepository<Coupon, Long>, JpaSpecif
 
         // Find by type and isActive
         Page<Coupon> findByTypeAndIsActive(CouponType type, Boolean isActive, Pageable pageable);
+
+        // ===== TRASH METHODS =====
+
+        /**
+         * Find deleted coupons (for trash) - uses native query to bypass @Where filter
+         */
+        @Query(value = "SELECT * FROM coupons WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", countQuery = "SELECT COUNT(*) FROM coupons WHERE deleted_at IS NOT NULL", nativeQuery = true)
+        Page<Coupon> findDeletedCoupons(Pageable pageable);
+
+        /**
+         * Find coupon by ID including deleted (ignore @Where clause)
+         */
+        @Query(value = "SELECT * FROM coupons WHERE coupon_id = :id", nativeQuery = true)
+        Optional<Coupon> findByIdIncludingDeleted(@Param("id") Long id);
 }

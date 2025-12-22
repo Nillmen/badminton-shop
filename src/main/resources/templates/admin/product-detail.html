@@ -133,6 +133,12 @@
                     <i class="fas fa-layer-group me-1"></i>Biến thể
                 </button>
             </li>
+            <li class="nav-item" role="presentation" th:if="${productId != null}">
+                <button class="nav-link" id="suppliers-tab" data-bs-toggle="tab" data-bs-target="#suppliers-content"
+                    type="button">
+                    <i class="fas fa-truck me-1"></i>Nhà cung cấp
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="productTabContent">
@@ -279,6 +285,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Suppliers Tab -->
+            <div class="tab-pane fade" id="suppliers-content" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Quản lý nhà cung cấp</h5>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#addSupplierModal">
+                            <i class="fas fa-plus me-1"></i>Thêm NCC
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="suppliersList">
+                            <div class="text-center text-muted py-4">Chưa có nhà cung cấp nào</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Variant Modal -->
@@ -328,6 +352,39 @@
                 </div>
             </div>
         </div>
+
+        <!-- Add Supplier Modal -->
+        <div class="modal fade" id="addSupplierModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Thêm nhà cung cấp</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Chọn nhà cung cấp <span class="text-danger">*</span></label>
+                            <select class="form-select" id="supplierSelect">
+                                <option value="">-- Chọn nhà cung cấp --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Giá nhập</label>
+                            <input type="number" class="form-control" id="supplierCostPrice" min="0"
+                                placeholder="Giá nhập từ NCC">
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="isPrimarySupplier">
+                            <label class="form-check-label" for="isPrimarySupplier">Nhà cung cấp chính</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary" onclick="addSupplier()">Thêm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <th:block layout:fragment="scripts">
@@ -344,6 +401,8 @@
                     document.getElementById('pageSubtitle').textContent = 'Tạo sản phẩm mới';
                 } else {
                     loadProduct();
+                    loadProductSuppliers();
+                    loadAvailableSuppliers();
                     loadImages();
                     loadVariants();
                 }
@@ -360,12 +419,12 @@
                         document.getElementById('categoryId').value = product.categoryId || '';
                         document.getElementById('brandId').value = product.brandId || '';
                         document.getElementById('productType').value = product.productType || 'RACKET';
-                        document.getElementById('originalPrice').value = product.originalPrice || '';
-                        document.getElementById('sellingPrice').value = product.sellingPrice || '';
+                        document.getElementById('originalPrice').value = product.compareAtPrice || '';
+                        document.getElementById('sellingPrice').value = product.basePrice || '';
                         document.getElementById('status').value = product.status || 'ACTIVE';
-                        document.getElementById('isPublished').value = product.isPublished ? 'true' : 'false';
+                        document.getElementById('isPublished').value = product.status === 'ACTIVE' ? 'true' : 'false';
                         document.getElementById('shortDescription').value = product.shortDescription || '';
-                        document.getElementById('description').value = product.description || '';
+                        document.getElementById('description').value = product.fullDescription || '';
                     }
                 } catch (error) {
                     console.error('Error loading product:', error);
@@ -691,7 +750,7 @@
                         document.getElementById('variantPriceAdjust').value = v.priceAdjustment || 0;
                         document.getElementById('variantColor').value = v.color || '';
                         document.getElementById('variantSize').value = v.size || '';
-                        document.getElementById('variantActive').checked = v.isActive !== false;
+                        document.getElementById('variantActive').checked = v.isActive === true;
                         variantModal.show();
                     }
                 } catch (error) {
@@ -751,6 +810,131 @@
                         alert('Lỗi: ' + result.error);
                     } else {
                         loadVariants();
+                    }
+                } catch (error) {
+                    alert('Lỗi: ' + error.message);
+                }
+            }
+
+            // ===== SUPPLIERS =====
+            async function loadProductSuppliers() {
+                try {
+                    const response = await fetch('/admin/api/products/' + productId + '/suppliers');
+                    const suppliers = await response.json();
+                    renderProductSuppliers(suppliers);
+                } catch (error) {
+                    console.error('Error loading suppliers:', error);
+                }
+            }
+
+            async function loadAvailableSuppliers() {
+                try {
+                    const response = await fetch('/admin/api/suppliers/active');
+                    const suppliers = await response.json();
+                    const select = document.getElementById('supplierSelect');
+                    select.innerHTML = '<option value="">-- Chọn nhà cung cấp --</option>';
+                    suppliers.forEach(s => {
+                        select.innerHTML += `<option value="${s.supplierId}">${s.name} ${s.code ? '(' + s.code + ')' : ''}</option>`;
+                    });
+                } catch (error) {
+                    console.error('Error loading available suppliers:', error);
+                }
+            }
+
+            function renderProductSuppliers(suppliers) {
+                const list = document.getElementById('suppliersList');
+
+                if (!suppliers || suppliers.length === 0) {
+                    list.innerHTML = '<div class="text-center text-muted py-4">Chưa có nhà cung cấp nào</div>';
+                    return;
+                }
+
+                list.innerHTML = suppliers.map(s => `
+                    <div class="variant-row d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${s.supplierName || 'NCC #' + s.supplierId}</strong>
+                            ${s.isPrimary ? '<span class="badge bg-primary ms-2">Chính</span>' : ''}
+                            <div class="small text-muted mt-1">
+                                ${s.supplierCode ? 'Mã: ' + s.supplierCode + ' | ' : ''}
+                                ${s.costPrice ? 'Giá nhập: ' + s.costPrice.toLocaleString() + 'đ' : 'Chưa có giá nhập'}
+                            </div>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            ${!s.isPrimary ? `<button class="btn btn-outline-success" onclick="setPrimarySupplier(${s.supplierId})" title="Đặt làm NCC chính"><i class="fas fa-star"></i></button>` : ''}
+                            <button class="btn btn-outline-danger" onclick="removeSupplier(${s.supplierId})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async function addSupplier() {
+                const supplierId = document.getElementById('supplierSelect').value;
+                const costPrice = document.getElementById('supplierCostPrice').value;
+                const isPrimary = document.getElementById('isPrimarySupplier').checked;
+
+                if (!supplierId) {
+                    alert('Vui lòng chọn nhà cung cấp');
+                    return;
+                }
+
+                try {
+                    // Use query params instead of JSON body (API expects @RequestParam)
+                    const url = new URL('/admin/api/products/' + productId + '/suppliers', window.location.origin);
+                    url.searchParams.append('supplierId', supplierId);
+                    url.searchParams.append('isPrimary', isPrimary);
+
+                    const response = await fetch(url, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+                    if (result.error) {
+                        alert('Lỗi: ' + result.error);
+                    } else {
+                        bootstrap.Modal.getInstance(document.getElementById('addSupplierModal')).hide();
+                        document.getElementById('supplierSelect').value = '';
+                        document.getElementById('supplierCostPrice').value = '';
+                        document.getElementById('isPrimarySupplier').checked = false;
+                        loadProductSuppliers();
+                    }
+                } catch (error) {
+                    alert('Lỗi: ' + error.message);
+                }
+            }
+
+            async function removeSupplier(supplierId) {
+                if (!confirm('Xóa nhà cung cấp này khỏi sản phẩm?')) return;
+
+                try {
+                    const response = await fetch('/admin/api/products/' + productId + '/suppliers/' + supplierId, {
+                        method: 'DELETE'
+                    });
+                    const result = await response.json();
+                    if (result.error) {
+                        alert('Lỗi: ' + result.error);
+                    } else {
+                        loadProductSuppliers();
+                    }
+                } catch (error) {
+                    alert('Lỗi: ' + error.message);
+                }
+            }
+
+            async function setPrimarySupplier(supplierId) {
+                try {
+                    const url = new URL('/admin/api/products/' + productId + '/suppliers', window.location.origin);
+                    url.searchParams.append('supplierId', supplierId);
+                    url.searchParams.append('isPrimary', true);
+
+                    const response = await fetch(url, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+                    if (result.error) {
+                        alert('Lỗi: ' + result.error);
+                    } else {
+                        loadProductSuppliers();
                     }
                 } catch (error) {
                     alert('Lỗi: ' + error.message);

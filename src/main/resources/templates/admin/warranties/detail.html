@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Chi tiết Bảo hành</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Chi tiết Bảo hành: <span th:text="${warranty.warrantyNumber}"></span></h1>
+            <a th:href="@{/admin/warranties}" class="btn btn-secondary btn-sm shadow-sm">
+                <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Warranty Info -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Thông tin yêu cầu</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Mã đơn hàng gốc:</th>
+                                <td><a th:href="@{/admin/orders/{id}(id=${warranty.orderId})}"
+                                        th:text="${warranty.orderNumber}"></a></td>
+                            </tr>
+                            <tr>
+                                <th>Sản phẩm:</th>
+                                <td th:text="${warranty.productName}"></td>
+                            </tr>
+                            <tr>
+                                <th>Ngày mua:</th>
+                                <td th:text="${#temporals.format(warranty.purchaseDate, 'dd/MM/yyyy')}"></td>
+                            </tr>
+                            <tr>
+                                <th>Hạn bảo hành:</th>
+                                <td th:text="${#temporals.format(warranty.warrantyExpiryDate, 'dd/MM/yyyy')}"
+                                    class="fw-bold text-danger"></td>
+                            </tr>
+                            <tr>
+                                <th>Vấn đề gặp phải:</th>
+                                <td th:text="${warranty.issueType}"></td>
+                            </tr>
+                            <tr>
+                                <th>Mô tả chi tiết:</th>
+                                <td th:text="${warranty.description}"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <!-- Status & Action -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Cập nhật trạng thái</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="fw-bold">Trạng thái hiện tại:</label>
+                            <span class="badge fs-6" th:classappend="${
+                                      warranty.status.name() == 'APPROVED' ? 'bg-success' : 
+                                      (warranty.status.name() == 'REJECTED' ? 'bg-danger' : 
+                                      (warranty.status.name() == 'COMPLETED' ? 'bg-primary' : 'bg-warning'))
+                                  }" th:text="${warranty.status}">PENDING</span>
+                        </div>
+
+                        <form th:action="@{/admin/warranties/{id}/status(id=${warranty.warrantyId})}" method="post">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Chuyển trạng thái sang:</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                                        th:selected="${s == warranty.status}"></option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Ghi chú / Mã tham chiếu hãng:</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3"
+                                    placeholder="Nhập ghi chú..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Cập nhật trạng thái</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

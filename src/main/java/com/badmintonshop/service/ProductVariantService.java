@@ -1,9 +1,11 @@
 package com.badmintonshop.service;
 
 import com.badmintonshop.dto.product.ProductVariantDTO;
+import com.badmintonshop.entity.Inventory;
 import com.badmintonshop.entity.Product;
 import com.badmintonshop.entity.ProductVariant;
 import com.badmintonshop.entity.enums.VariantStatus;
+import com.badmintonshop.repository.InventoryRepository;
 import com.badmintonshop.repository.ProductRepository;
 import com.badmintonshop.repository.ProductVariantRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class ProductVariantService {
 
     private final ProductVariantRepository productVariantRepository;
     private final ProductRepository productRepository;
+    private final InventoryRepository inventoryRepository;
 
     /**
      * Get variants for a product
@@ -64,7 +67,7 @@ public class ProductVariantService {
     }
 
     /**
-     * Create new variant
+     * Create new variant and its corresponding inventory record
      */
     @Transactional
     public ProductVariantDTO createVariant(Long productId, ProductVariantDTO dto) {
@@ -88,7 +91,22 @@ public class ProductVariantService {
                 .build();
 
         variant = productVariantRepository.save(variant);
-        log.info("Created variant {} for product {}", variant.getSku(), productId);
+
+        // Create corresponding inventory record with default quantity 0
+        Inventory inventory = Inventory.builder()
+                .product(product)
+                .variant(variant)
+                .quantityAvailable(0)
+                .quantityReserved(0)
+                .quantitySold(0)
+                .lowStockThreshold(10)
+                .reorderPoint(20)
+                .warehouseLocation("main")
+                .updatedAt(LocalDateTime.now())
+                .build();
+        inventoryRepository.save(inventory);
+
+        log.info("Created variant {} for product {} with inventory record (quantity: 0)", variant.getSku(), productId);
         return ProductVariantDTO.fromEntity(variant);
     }
 
@@ -149,14 +167,67 @@ public class ProductVariantService {
     }
 
     /**
-     * Hard delete variant
+     * Hard delete variant - also deletes associated inventory
      */
     @Transactional
     public void hardDeleteVariant(Long productId, Long variantId) {
         if (!productVariantRepository.existsByVariantIdAndProductProductId(variantId, productId)) {
             throw new IllegalArgumentException("Biến thể không thuộc sản phẩm này");
         }
+        // Delete associated inventory first
+        inventoryRepository.deleteByVariantVariantId(variantId);
         productVariantRepository.deleteById(variantId);
-        log.info("Hard deleted variant {} from product {}", variantId, productId);
+        log.info("Hard deleted variant {} from product {} (including inventory)", variantId, productId);
+    }
+
+    // ==================== TRASH FUNCTIONALITY ====================
+
+    /**
+     * Get deleted variants for trash page
+     */
+    public List<ProductVariantDTO> getDeletedVariants() {
+        return productVariantRepository.findDeleted().stream()
+                .map(ProductVariantDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Restore variant from trash with safeguard
+     * Check if parent product is not soft-deleted
+     */
+    @Transactional
+    public void restoreVariant(Long variantId) {
+        ProductVariant variant = productVariantRepository.findByIdIncludingDeleted(variantId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy biến thể: " + variantId));
+
+        // Check if parent product is soft-deleted
+        Long productId = variant.getProduct().getProductId();
+        Optional<Product> productOpt = productRepository.findByIdIncludingDeleted(productId);
+        if (productOpt.isPresent() && productOpt.get().getDeletedAt() != null) {
+            throw new IllegalArgumentException(
+                    String.format("Không thể khôi phục biến thể '%s' vì sản phẩm '%s' đã bị xóa. " +
+                            "Vui lòng khôi phục sản phẩm trước.",
+                            variant.getVariantName() != null ? variant.getVariantName() : variant.getSku(),
+                            productOpt.get().getName()));
+        }
+
+        variant.setDeletedAt(null);
+        variant.setStatus(VariantStatus.ACTIVE);
+        productVariantRepository.save(variant);
+        log.info("Restored variant {} (inventory is implicitly restored via variant relationship)", variantId);
+    }
+
+    /**
+     * Hard delete variant from trash - also deletes associated inventory
+     */
+    @Transactional
+    public void hardDeleteVariantFromTrash(Long variantId) {
+        ProductVariant variant = productVariantRepository.findByIdIncludingDeleted(variantId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy biến thể: " + variantId));
+
+        // Delete associated inventory first
+        inventoryRepository.deleteByVariantVariantId(variantId);
+        productVariantRepository.delete(variant);
+        log.info("Hard deleted variant {} from trash (including inventory)", variantId);
     }
 }

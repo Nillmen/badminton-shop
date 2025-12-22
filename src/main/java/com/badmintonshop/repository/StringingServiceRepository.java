@@ -61,4 +61,6 @@ public interface StringingServiceRepository
     )
     Object findDtoById(@Param("id") Long id);
 
+    List<StringingService> findByIsActiveTrue();
+
 }

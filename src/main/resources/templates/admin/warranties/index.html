@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Quản lý Bảo hành</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Yêu cầu Bảo hành</h1>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Danh sách yêu cầu</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Mã BH</th>
+                                <th>Đơn hàng</th>
+                                <th>Sản phẩm</th>
+                                <th>Vấn đề</th>
+                                <th>Hạn bảo hành</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="warranty : ${warranties}">
+                                <td th:text="${warranty.warrantyNumber}">WAR-12345</td>
+                                <td>
+                                    <a th:href="@{/admin/orders/{id}(id=${warranty.orderId})}"
+                                        th:text="${warranty.orderNumber}">ORD-001</a>
+                                </td>
+                                <td th:text="${warranty.productName}">Product Name</td>
+                                <td th:text="${warranty.issueType}">Racket Crack</td>
+                                <td th:text="${#temporals.format(warranty.warrantyExpiryDate, 'dd/MM/yyyy')}">01/01/2024
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${
+                                              warranty.status.name() == 'APPROVED' ? 'bg-success' : 
+                                              (warranty.status.name() == 'REJECTED' ? 'bg-danger' : 
+                                              (warranty.status.name() == 'COMPLETED' ? 'bg-primary' : 'bg-warning'))
+                                          }" th:text="${warranty.status}">PENDING</span>
+                                </td>
+                                <td th:text="${#temporals.format(warranty.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2023
+                                    10:00</td>
+                                <td>
+                                    <a th:href="@{/admin/warranties/{id}(id=${warranty.warrantyId})}"
+                                        class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(warranties)}">
+                                <td colspan="8" class="text-center">Chưa có yêu cầu nào</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

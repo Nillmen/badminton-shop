@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/customer}">
+
+<head>
+    <title>Dịch vụ căng vợt - Badminton Shop</title>
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #f7c59f 100%);
+            color: white;
+            padding: 5rem 0;
+            margin-bottom: 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -25%;
+            width: 80%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            border-radius: 50%;
+        }
+
+        .page-header h1 {
+            font-weight: 800;
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .page-header p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* How it works */
+        .how-it-works {
+            background: #f8f9fa;
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+
+        .step-card h4 {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #333;
+        }
+
+        .step-card p {
+            color: #666;
+            margin: 0;
+        }
+
+        /* Services Section */
+        .services-section {
+            padding: 4rem 0;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+            height: 100%;
+            border: none;
+            position: relative;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b35, #f7931e);
+        }
+
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(255, 107, 53, 0.15);
+        }
+
+        .service-card-body {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .service-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 1.75rem;
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+
+        .service-name {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-type {
+            color: #888;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.25rem;
+        }
+
+        .service-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ff6b35;
+            margin-bottom: 1rem;
+        }
+
+        .service-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .service-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .service-meta-item i {
+            color: #ff6b35;
+        }
+
+        /* Strings Section */
+        .strings-section {
+            background: #f8f9fa;
+            padding: 4rem 0;
+        }
+
+        .string-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+            height: 100%;
+            border: 1px solid #f0f0f0;
+        }
+
+        .string-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            border-color: #ff6b35;
+        }
+
+        .string-image {
+            height: 160px;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 1rem;
+        }
+
+        .string-image img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+            transition: transform 0.3s;
+        }
+
+        .string-card:hover .string-image img {
+            transform: scale(1.05);
+        }
+
+        .string-image .placeholder-icon {
+            font-size: 3rem;
+            color: #ddd;
+        }
+
+        .string-card-body {
+            padding: 1.25rem;
+        }
+
+        .string-brand {
+            color: #999;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .string-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .string-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ff6b35;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 5rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cta-section h2 {
+            font-weight: 700;
+            font-size: 2.25rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .cta-section p {
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            font-size: 1.1rem;
+            position: relative;
+        }
+
+        .btn-cta {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.35);
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 53, 0.45);
+            color: white;
+        }
+
+        /* Features */
+        .features-section {
+            padding: 4rem 0;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #fff5f0, #fff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            font-size: 2rem;
+            color: #ff6b35;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.15);
+        }
+
+        .feature-item h5 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-item p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: white;
+            border-radius: 16px;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 3rem 1rem;
+            }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main layout:fragment="content">
+        <!-- Hero Header -->
+        <div class="page-header">
+            <div class="container">
+                <h1><i class="fas fa-tools me-3"></i>Dịch vụ căng vợt</h1>
+                <p>Dịch vụ căng vợt chuyên nghiệp với đội ngũ kỹ thuật viên giàu kinh nghiệm và máy căng hiện đại</p>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <section class="how-it-works">
+            <div class="container">
+                <h2 class="section-title"><i class="fas fa-question-circle text-primary me-2"></i>Cách sử dụng dịch vụ
+                </h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="step-card">
+                            <div class="step-number">1</div>
+                            <h4>Chọn sản phẩm</h4>
+                            <p>Chọn vợt cầu lông bạn muốn mua và thêm vào giỏ hàng</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="step-card">
+                            <div class="step-number">2</div>
+                            <h4>Thêm dịch vụ căng vợt</h4>
+                            <p>Trong giỏ hàng, chọn dịch vụ căng vợt và loại dây mong muốn</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="step-card">
+                            <div class="step-number">3</div>
+                            <h4>Nhận vợt đã căng</h4>
+                            <p>Đặt hàng và nhận vợt đã được căng theo yêu cầu của bạn</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="features-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <h5>Máy căng hiện đại</h5>
+                            <p>Sử dụng máy căng điện tử cao cấp</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <h5>Thợ giàu kinh nghiệm</h5>
+                            <p>Đội ngũ kỹ thuật viên chuyên nghiệp</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h5>Nhanh chóng</h5>
+                            <p>Hoàn thành trong 30-60 phút</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h5>Bảo hành</h5>
+                            <p>Bảo hành dịch vụ 7 ngày</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services -->
+        <section class="services-section">
+            <div class="container">
+                <h2 class="section-title"><i class="fas fa-cog text-primary me-2"></i>Các gói dịch vụ</h2>
+
+                <div class="row g-4" th:if="${services != null and !#lists.isEmpty(services)}">
+                    <div class="col-md-6 col-lg-4" th:each="service : ${services}">
+                        <div class="service-card">
+                            <div class="service-card-body">
+                                <div class="service-icon">
+                                    <i class="fas fa-wrench"></i>
+                                </div>
+                                <div class="service-name" th:text="${service.serviceName}">Căng vợt chuẩn</div>
+                                <div class="service-type" th:text="${service.serviceType?.name() ?: 'STANDARD'}">
+                                    STANDARD</div>
+                                <div class="service-price">
+                                    <span
+                                        th:text="${#numbers.formatDecimal(service.basePrice, 0, 'COMMA', 0, 'POINT')} + '₫'">50,000₫</span>
+                                </div>
+                                <div class="service-description" th:if="${service.description}"
+                                    th:text="${service.description}">
+                                    Mô tả dịch vụ
+                                </div>
+                                <div class="service-meta">
+                                    <div class="service-meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span th:text="${service.estimatedTimeMinutes} + ' phút'">30 phút</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="empty-state" th:if="${services == null or #lists.isEmpty(services)}">
+                    <i class="fas fa-tools"></i>
+                    <h4>Chưa có dịch vụ căng vợt</h4>
+                    <p class="text-muted">Vui lòng quay lại sau!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Strings -->
+        <section class="strings-section">
+            <div class="container">
+                <h2 class="section-title"><i class="fas fa-grip-lines-vertical text-primary me-2"></i>Các loại dây vợt
+                </h2>
+
+                <div class="row g-4" th:if="${strings != null and !#lists.isEmpty(strings)}">
+                    <div class="col-6 col-md-4 col-lg-3" th:each="string : ${strings}">
+                        <div class="string-card">
+                            <div class="string-image">
+                                <img th:if="${string.imageUrl != null}" th:src="${string.imageUrl}"
+                                    th:alt="${string.name}" loading="lazy">
+                                <i th:if="${string.imageUrl == null}"
+                                    class="fas fa-grip-lines-vertical placeholder-icon"></i>
+                            </div>
+                            <div class="string-card-body">
+                                <div class="string-brand" th:text="${string.brandName ?: 'Thương hiệu'}">Yonex</div>
+                                <div class="string-name" th:text="${string.name}">BG65</div>
+                                <div class="string-price">
+                                    <span
+                                        th:text="${#numbers.formatDecimal(string.retailPrice, 0, 'COMMA', 0, 'POINT')} + '₫'">80,000₫</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="empty-state" th:if="${strings == null or #lists.isEmpty(strings)}">
+                    <i class="fas fa-grip-lines-vertical"></i>
+                    <h4>Chưa có dây vợt</h4>
+                    <p class="text-muted">Vui lòng quay lại sau!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <h2><i class="fas fa-shopping-cart me-2"></i>Sẵn sàng căng vợt?</h2>
+                <p>Mua vợt cầu lông và thêm dịch vụ căng vợt ngay trong giỏ hàng!</p>
+                <a th:href="@{/products}" class="btn-cta">
+                    <i class="fas fa-shuttlecock"></i>Xem sản phẩm vợt
+                </a>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

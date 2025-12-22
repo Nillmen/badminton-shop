@@ -3,6 +3,7 @@ package com.badmintonshop.service;
 import com.badmintonshop.dto.banner.BannerDTO;
 import com.badmintonshop.entity.Banner;
 import com.badmintonshop.entity.enums.BannerPosition;
+import com.badmintonshop.entity.enums.LinkTarget;
 import com.badmintonshop.repository.BannerRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 /**
  * Service for Banner management
  */
@@ -29,6 +32,7 @@ import java.util.stream.Collectors;
 public class BannerService {
 
     private final BannerRepository bannerRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
      * Get displayable banners by position (for public/frontend)
@@ -210,10 +214,47 @@ public class BannerService {
     // ===== TRASH METHODS =====
 
     /**
-     * Get deleted banners (for trash)
+     * Get deleted banners (for trash) - uses JdbcTemplate to bypass @Where filter
      */
     public Page<BannerDTO> getDeletedBanners(Pageable pageable) {
-        return bannerRepository.findDeletedBanners(pageable).map(this::mapToDTO);
+        String countSql = "SELECT COUNT(*) FROM banners WHERE deleted_at IS NOT NULL";
+        Long totalCount = jdbcTemplate.queryForObject(countSql, Long.class);
+        if (totalCount == null || totalCount == 0) {
+            return Page.empty(pageable);
+        }
+
+        String sql = """
+                SELECT banner_id, title, image_url, mobile_image_url, link_url, link_target,
+                       position, display_order, starts_at, ends_at, is_active, deleted_at
+                FROM banners
+                WHERE deleted_at IS NOT NULL
+                ORDER BY deleted_at DESC
+                LIMIT ? OFFSET ?
+                """;
+
+        List<BannerDTO> banners = jdbcTemplate.query(
+                sql,
+                new Object[] { pageable.getPageSize(), pageable.getOffset() },
+                (rs, rowNum) -> BannerDTO.builder()
+                        .bannerId(rs.getLong("banner_id"))
+                        .title(rs.getString("title"))
+                        .imageUrl(rs.getString("image_url"))
+                        .mobileImageUrl(rs.getString("mobile_image_url"))
+                        .linkUrl(rs.getString("link_url"))
+                        .linkTarget(
+                                rs.getString("link_target") != null ? LinkTarget.valueOf(rs.getString("link_target"))
+                                        : null)
+                        .position(rs.getString("position") != null ? BannerPosition.valueOf(rs.getString("position"))
+                                : null)
+                        .displayOrder(rs.getInt("display_order"))
+                        .startsAt(rs.getTimestamp("starts_at") != null ? rs.getTimestamp("starts_at").toLocalDateTime()
+                                : null)
+                        .endsAt(rs.getTimestamp("ends_at") != null ? rs.getTimestamp("ends_at").toLocalDateTime()
+                                : null)
+                        .isActive(rs.getBoolean("is_active"))
+                        .build());
+
+        return new org.springframework.data.domain.PageImpl<>(banners, pageable, totalCount);
     }
 
     /**

@@ -28,6 +28,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         Optional<Product> findBySlug(String slug);
 
         /**
+         * Find product by slug with variants and their inventories eagerly loaded
+         */
+        @Query("SELECT DISTINCT p FROM Product p " +
+                        "LEFT JOIN FETCH p.variants v " +
+                        "LEFT JOIN FETCH v.inventories " +
+                        "WHERE p.slug = :slug")
+        Optional<Product> findBySlugWithVariantsAndInventory(@Param("slug") String slug);
+
+        /**
          * Find product by SKU
          */
         Optional<Product> findBySku(String sku);
@@ -178,8 +187,30 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         Optional<Product> findByIdWithVariants(@Param("productId") Long productId);
 
         /**
-         * Find soft-deleted products for trash
+         * Find soft-deleted products for trash (uses native query to bypass @Where
+         * filter)
          */
-        @Query("SELECT p FROM Product p WHERE p.deletedAt IS NOT NULL ORDER BY p.deletedAt DESC")
+        @Query(value = "SELECT * FROM products WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", countQuery = "SELECT COUNT(*) FROM products WHERE deleted_at IS NOT NULL", nativeQuery = true)
         Page<Product> findDeleted(Pageable pageable);
+
+        /**
+         * Find product by ID including deleted (bypasses @Where filter)
+         */
+        @Query(value = "SELECT * FROM products WHERE product_id = :id", nativeQuery = true)
+        Optional<Product> findByIdIncludingDeleted(@Param("id") Long id);
+
+        /**
+         * Count ALL products by category (including soft-deleted) - bypasses @Where
+         * filter
+         * Used to check if category can be hard deleted
+         */
+        @Query(value = "SELECT COUNT(*) FROM products WHERE category_id = :categoryId", nativeQuery = true)
+        long countAllByCategoryId(@Param("categoryId") Long categoryId);
+
+        /**
+         * Count ALL products by brand (including soft-deleted) - bypasses @Where filter
+         * Used to check if brand can be hard deleted
+         */
+        @Query(value = "SELECT COUNT(*) FROM products WHERE brand_id = :brandId", nativeQuery = true)
+        long countAllByBrandId(@Param("brandId") Long brandId);
 }

@@ -28,13 +28,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             userId = ((CustomOAuth2User) principal).getUserId();
         }
 
-        String redirectUrl;
-        if (userId != null) {
-            redirectUrl = "/?uid=" + userId;
-        } else {
-            redirectUrl = "/";
-        }
-
-        response.sendRedirect(redirectUrl);
+        // Redirect to home without uid parameter
+        response.sendRedirect("/");
     }
 }

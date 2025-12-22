@@ -6,6 +6,7 @@ import com.badmintonshop.entity.Category;
 import com.badmintonshop.entity.enums.CategoryStatus;
 import com.badmintonshop.entity.enums.CategoryType;
 import com.badmintonshop.repository.CategoryRepository;
+import com.badmintonshop.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 /**
  * Service for Category operations with tree structure support
  */
@@ -28,6 +31,8 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
      * Get all active categories
@@ -206,6 +211,24 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục: " + id));
 
+        // Check if category has associated products
+        long productCount = productRepository.countByCategoryCategoryId(id);
+        if (productCount > 0) {
+            throw new IllegalArgumentException(
+                    String.format("Không thể xóa danh mục '%s' vì có %d sản phẩm đang liên kết. " +
+                            "Vui lòng chuyển hoặc xóa các sản phẩm trước.",
+                            category.getName(), productCount));
+        }
+
+        // First, unlink all child categories to avoid EntityNotFoundException
+        // when page reloads and tries to load children's parent reference
+        List<Category> children = categoryRepository.findChildrenByParentId(id);
+        for (Category child : children) {
+            child.setParentCategory(null);
+            categoryRepository.save(child);
+            log.info("Unlinked child category '{}' from parent '{}'", child.getName(), category.getName());
+        }
+
         category.setDeletedAt(LocalDateTime.now());
         category.setIsActive(false);
         category.setStatus(CategoryStatus.INACTIVE);
@@ -234,11 +257,43 @@ public class CategoryService {
     }
 
     /**
-     * Get deleted categories for trash
+     * Get deleted categories for trash - uses JdbcTemplate to bypass @Where filter
      */
     public Page<CategoryDTO> getDeletedCategories(Pageable pageable) {
-        return categoryRepository.findDeleted(pageable)
-                .map(CategoryDTO::fromEntity);
+        String countSql = "SELECT COUNT(*) FROM categories WHERE deleted_at IS NOT NULL";
+        Long totalCount = jdbcTemplate.queryForObject(countSql, Long.class);
+        if (totalCount == null || totalCount == 0) {
+            return Page.empty(pageable);
+        }
+
+        String sql = """
+                SELECT category_id, name, slug, description, image_url, icon,
+                       category_type, display_order, is_active, status, deleted_at
+                FROM categories
+                WHERE deleted_at IS NOT NULL
+                ORDER BY deleted_at DESC
+                LIMIT ? OFFSET ?
+                """;
+
+        List<CategoryDTO> categories = jdbcTemplate.query(
+                sql,
+                new Object[] { pageable.getPageSize(), pageable.getOffset() },
+                (rs, rowNum) -> CategoryDTO.builder()
+                        .categoryId(rs.getLong("category_id"))
+                        .name(rs.getString("name"))
+                        .slug(rs.getString("slug"))
+                        .description(rs.getString("description"))
+                        .imageUrl(rs.getString("image_url"))
+                        .icon(rs.getString("icon"))
+                        .categoryType(rs.getString("category_type") != null
+                                ? CategoryType.valueOf(rs.getString("category_type"))
+                                : null)
+                        .displayOrder(rs.getInt("display_order"))
+                        .isActive(rs.getBoolean("is_active"))
+                        .status(rs.getString("status") != null ? CategoryStatus.valueOf(rs.getString("status")) : null)
+                        .build());
+
+        return new org.springframework.data.domain.PageImpl<>(categories, pageable, totalCount);
     }
 
     /**
@@ -246,7 +301,7 @@ public class CategoryService {
      */
     @Transactional
     public void restoreCategory(Long id) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục: " + id));
 
         category.setDeletedAt(null);
@@ -261,8 +316,26 @@ public class CategoryService {
      */
     @Transactional
     public void hardDeleteCategory(Long id) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục: " + id));
+
+        // Check if ANY products (including deleted) reference this category
+        long productCount = productRepository.countAllByCategoryId(id);
+        if (productCount > 0) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Không thể xóa vĩnh viễn danh mục '%s' vì có %d sản phẩm đang liên kết (bao gồm cả sản phẩm trong thùng rác). "
+                                    +
+                                    "Vui lòng xóa vĩnh viễn các sản phẩm trước.",
+                            category.getName(), productCount));
+        }
+
+        // Also unlink any child categories that might still reference this category
+        List<Category> children = categoryRepository.findChildrenByParentId(id);
+        for (Category child : children) {
+            child.setParentCategory(null);
+            categoryRepository.save(child);
+        }
 
         categoryRepository.delete(category);
         log.info("Hard deleted category: {}", category.getName());

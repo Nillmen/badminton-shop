@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - Badminton Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 80px;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">Đơn hàng <span th:text="${order.orderNumber}" class="text-primary"></span></h2>
+            <a th:href="@{/orders}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Order Items -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Sản phẩm</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <tbody>
+                                    <tr th:each="item : ${order.items}">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="ms-3">
+                                                    <h6 class="mb-0 fw-bold" th:text="${item.productName}">Product Name
+                                                    </h6>
+                                                    <small class="text-muted"
+                                                        th:text="${item.variantName}">Variant</small>
+                                                    <div th:if="${item.hasStringingService}" class="mt-1">
+                                                        <span class="badge bg-info text-dark">
+                                                            <i class="fas fa-tools me-1"></i>Đan vợt
+                                                        </span>
+                                                        <span class="small text-muted"
+                                                            th:text="${item.stringingServiceName}"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle text-center" th:text="'x' + ${item.quantity}">x1</td>
+                                        <td class="align-middle text-end pe-4 fw-bold"
+                                            th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                                        </td>
+
+                                        <!-- Actions: Exchange / Warranty -->
+                                        <td class="align-middle text-end" style="min-width: 150px;">
+                                            <div class="d-flex flex-column gap-1">
+                                                <!-- Exchange Button -->
+                                                <a th:if="${!exchangedMap.get(item.orderItemId)}"
+                                                    th:href="@{/account/requests/exchange/new(orderItemId=${item.orderItemId})}"
+                                                    class="btn btn-sm btn-outline-warning">
+                                                    <i class="fas fa-exchange-alt me-1"></i>Đổi trả
+                                                </a>
+                                                <span th:if="${exchangedMap.get(item.orderItemId)}"
+                                                    class="badge bg-secondary">Đã đổi
+                                                    trả</span>
+
+                                                <!-- Warranty Button -->
+                                                <a th:if="${!warrantyMap.get(item.orderItemId)}"
+                                                    th:href="@{/account/requests/warranty/new(orderItemId=${item.orderItemId})}"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                                                </a>
+                                                <span th:if="${warrantyMap.get(item.orderItemId)}"
+                                                    class="badge bg-secondary">Đã
+                                                    bảo hành</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Order Summary -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Thông tin đơn hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Ngày đặt:</span>
+                            <span class="fw-bold"
+                                th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Trạng thái:</span>
+                            <span class="badge" th:classappend="${
+                                order.status.name() == 'DELIVERED' ? 'bg-success' : 
+                                (order.status.name() == 'CANCELLED' ? 'bg-danger' : 
+                                (order.status.name() == 'PENDING' ? 'bg-warning text-dark' : 'bg-primary'))
+                            }" th:text="${
+                                order.status.name() == 'PENDING' ? 'Chờ xác nhận' :
+                                (order.status.name() == 'CONFIRMED' ? 'Đã xác nhận' :
+                                (order.status.name() == 'PROCESSING' ? 'Đang xử lý' :
+                                (order.status.name() == 'STRINGING' ? 'Đang đan vợt' :
+                                (order.status.name() == 'READY_TO_SHIP' ? 'Sẵn sàng giao' :
+                                (order.status.name() == 'SHIPPED' ? 'Đang vận chuyển' :
+                                (order.status.name() == 'DELIVERED' ? 'Đã giao hàng' :
+                                (order.status.name() == 'CANCELLED' ? 'Đã hủy' :
+                                (order.status.name() == 'REFUNDED' ? 'Đã hoàn tiền' : order.status))))))))
+                            }"></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Thanh toán:</span>
+                            <span th:text="${order.paymentMethod}"></span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tạm tính:</span>
+                            <span
+                                th:text="${#numbers.formatDecimal(order.subtotal, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Phí ship:</span>
+                            <span
+                                th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                            <h5 class="mb-0 fw-bold">Tổng cộng:</h5>
+                            <h5 class="mb-0 fw-bold text-primary"
+                                th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Info -->
+                <div class="card">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Địa chỉ nhận hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="fw-bold" th:text="${order.shippingRecipientName}">Nguyen Van A</h6>
+                        <p class="mb-1" th:text="${order.shippingPhone}">0909000000</p>
+                        <p class="mb-0 text-muted" th:text="${order.fullShippingAddress}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -117,4 +117,7 @@ public interface StringProductRepository extends JpaRepository<StringProduct, Lo
           AND s.deleted_at IS NULL
         """, nativeQuery = true)
     List<Object[]> findByBrandWithBrand(@Param("brandId") Long brandId);
+    
+    @Query("SELECT s FROM StringProduct s WHERE s.isActive = true")
+    List<StringProduct> findAllActive();
 }

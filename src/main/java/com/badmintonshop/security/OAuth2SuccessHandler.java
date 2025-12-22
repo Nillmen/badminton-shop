@@ -32,13 +32,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             userId = oAuth2User.getUserId();
         }
 
-        String redirectUrl;
-        if (userId != null) {
-            redirectUrl = "/?uid=" + userId;
-        } else {
-            redirectUrl = "/";
-        }
-
-        response.sendRedirect(redirectUrl);
+        // Redirect to home without uid parameter
+        response.sendRedirect("/");
     }
 }

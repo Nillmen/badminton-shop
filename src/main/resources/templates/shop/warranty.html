@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/customer}">
+
+<head>
+    <title>Chính sách bảo hành</title>
+</head>
+
+<body>
+    <main layout:fragment="content">
+        <!-- Hero Section -->
+        <section class="page-header py-5" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <div class="container text-center text-white">
+                <h1 class="fw-bold mb-3"><i class="fas fa-shield-alt me-2"></i>Chính Sách Bảo Hành</h1>
+                <p class="lead mb-0">Cam kết bảo hành chất lượng sản phẩm</p>
+            </div>
+        </section>
+
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-9">
+                    <!-- Quick Info Cards -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100 text-center p-4">
+                                <i class="fas fa-calendar-check text-success" style="font-size: 2.5rem;"></i>
+                                <h5 class="mt-3 fw-bold">12 Tháng</h5>
+                                <p class="text-muted mb-0 small">Bảo hành vợt chính hãng</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100 text-center p-4">
+                                <i class="fas fa-tools text-primary" style="font-size: 2.5rem;"></i>
+                                <h5 class="mt-3 fw-bold">Miễn Phí</h5>
+                                <p class="text-muted mb-0 small">Sửa chữa trong bảo hành</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100 text-center p-4">
+                                <i class="fas fa-exchange-alt text-warning" style="font-size: 2.5rem;"></i>
+                                <h5 class="mt-3 fw-bold">1 Đổi 1</h5>
+                                <p class="text-muted mb-0 small">Nếu lỗi từ nhà sản xuất</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 p-md-5">
+                            <h4 class="fw-bold text-success mb-4">
+                                <i class="fas fa-check-circle me-2"></i>Điều kiện bảo hành
+                            </h4>
+                            <ul class="list-unstyled mb-4">
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-check text-success me-3 mt-1"></i>
+                                    <span>Sản phẩm còn trong thời hạn bảo hành (tính từ ngày mua)</span>
+                                </li>
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-check text-success me-3 mt-1"></i>
+                                    <span>Có hóa đơn mua hàng hoặc phiếu bảo hành từ Badminton Shop</span>
+                                </li>
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-check text-success me-3 mt-1"></i>
+                                    <span>Sản phẩm bị lỗi do nhà sản xuất (lỗi kỹ thuật)</span>
+                                </li>
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-check text-success me-3 mt-1"></i>
+                                    <span>Tem bảo hành, mã số sản phẩm còn nguyên vẹn</span>
+                                </li>
+                            </ul>
+
+                            <hr class="my-4">
+
+                            <h4 class="fw-bold text-danger mb-4">
+                                <i class="fas fa-times-circle me-2"></i>Không bảo hành
+                            </h4>
+                            <ul class="list-unstyled mb-4">
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-times text-danger me-3 mt-1"></i>
+                                    <span>Hư hỏng do sử dụng sai cách, va đập mạnh, rơi vỡ</span>
+                                </li>
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-times text-danger me-3 mt-1"></i>
+                                    <span>Vợt bị gãy khung, nứt do căng quá lực khuyến cáo</span>
+                                </li>
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-times text-danger me-3 mt-1"></i>
+                                    <span>Sản phẩm đã bị sửa chữa bởi bên thứ ba</span>
+                                </li>
+                                <li class="d-flex align-items-start mb-3">
+                                    <i class="fas fa-times text-danger me-3 mt-1"></i>
+                                    <span>Cước, quấn cán, grip (phụ kiện tiêu hao)</span>
+                                </li>
+                            </ul>
+
+                            <hr class="my-4">
+
+                            <h4 class="fw-bold text-primary mb-4">
+                                <i class="fas fa-list-ol me-2"></i>Quy trình bảo hành
+                            </h4>
+                            <div class="position-relative ps-4">
+                                <div class="timeline-line position-absolute"
+                                    style="left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, #667eea, #764ba2);">
+                                </div>
+
+                                <div class="d-flex mb-4">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                        style="width: 30px; height: 30px; margin-left: -18px;">1</div>
+                                    <div>
+                                        <strong>Liên hệ</strong>
+                                        <p class="mb-0 text-muted small">Gọi hotline hoặc gửi yêu cầu bảo hành online
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mb-4">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                        style="width: 30px; height: 30px; margin-left: -18px;">2</div>
+                                    <div>
+                                        <strong>Gửi sản phẩm</strong>
+                                        <p class="mb-0 text-muted small">Gửi sản phẩm về cửa hàng kèm hóa đơn</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mb-4">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                        style="width: 30px; height: 30px; margin-left: -18px;">3</div>
+                                    <div>
+                                        <strong>Kiểm tra</strong>
+                                        <p class="mb-0 text-muted small">Chúng tôi kiểm tra và xác nhận tình trạng (1-3
+                                            ngày)</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3"
+                                        style="width: 30px; height: 30px; margin-left: -18px;">4</div>
+                                    <div>
+                                        <strong>Hoàn tất</strong>
+                                        <p class="mb-0 text-muted small">Sửa chữa/đổi mới và gửi lại cho bạn (5-7 ngày)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="card border-0 shadow-sm mt-4 bg-light">
+                        <div class="card-body p-4 text-center">
+                            <h5 class="fw-bold mb-3">Cần hỗ trợ bảo hành?</h5>
+                            <p class="mb-3 text-muted">Liên hệ với chúng tôi qua hotline hoặc email</p>
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <a href="tel:1900xxxx" class="btn btn-success">
+                                    <i class="fas fa-phone me-2"></i>1900 xxxx
+                                </a>
+                                <a href="mailto:warranty@badmintonshop.vn" class="btn btn-outline-success">
+                                    <i class="fas fa-envelope me-2"></i>warranty@badmintonshop.vn
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

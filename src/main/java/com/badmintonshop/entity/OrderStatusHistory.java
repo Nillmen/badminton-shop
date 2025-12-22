@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "order_status_history", indexes = {
-    @Index(name = "idx_order_history_order", columnList = "order_id"),
-    @Index(name = "idx_order_history_changed", columnList = "changed_at")
+        @Index(name = "idx_order_history_order", columnList = "order_id"),
+        @Index(name = "idx_order_history_changed", columnList = "changed_at")
 })
 @Getter
 @Setter
@@ -30,10 +30,10 @@ public class OrderStatusHistory {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "from_status", length = 50)
+    @Column(name = "from_status", columnDefinition = "ENUM('PENDING','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED','RETURNED','REFUNDED')")
     private String fromStatus;
 
-    @Column(name = "to_status", nullable = false, length = 50)
+    @Column(name = "to_status", nullable = false, columnDefinition = "ENUM('PENDING','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED','RETURNED','REFUNDED')")
     private String toStatus;
 
     @Column(name = "notes", columnDefinition = "TEXT")

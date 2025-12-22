@@ -12,8 +12,8 @@ import java.util.List;
  */
 @Entity
 @Table(name = "suppliers", indexes = {
-    @Index(name = "idx_suppliers_active", columnList = "is_active"),
-    @Index(name = "idx_suppliers_deleted", columnList = "deleted_at")
+        @Index(name = "idx_suppliers_active", columnList = "is_active"),
+        @Index(name = "idx_suppliers_deleted", columnList = "deleted_at")
 })
 @Getter
 @Setter
@@ -31,8 +31,8 @@ public class Supplier extends BaseEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "code", nullable = false, unique = true, length = 50)
-    private String code; // Mã nhà cung cấp
+    @Column(name = "code", unique = true, length = 50)
+    private String code; // Mã nhà cung cấp (optional, auto-generated if not provided)
 
     @Column(name = "contact_name")
     private String contactName;

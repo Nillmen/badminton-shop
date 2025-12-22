@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Thông tin Cước Vợt</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800" th:text="${id == null ? 'Thêm Cước Mới' : 'Cập nhật Cước Vợt'}">Title</h1>
+            <a th:href="@{/admin/products/strings}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+
+        <!-- Alert Messages -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <form th:action="${id == null ? '/admin/products/strings' : '/admin/products/strings/' + id}"
+                    th:object="${stringProduct}" method="post">
+
+                    <div class="row">
+                        <!-- Basic Info -->
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Tên cước <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" th:field="*{name}" required>
+                                <div class="text-danger small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
+                                    Error</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">SKU <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" th:field="*{sku}" required>
+                                    <div class="text-danger small" th:if="${#fields.hasErrors('sku')}"
+                                        th:errors="*{sku}">Error</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Thương hiệu</label>
+                                    <select class="form-select" th:field="*{brandId}">
+                                        <option value="">-- Chọn thương hiệu --</option>
+                                        <option th:each="brand : ${brands}" th:value="${brand.brandId}"
+                                            th:text="${brand.name}"></option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Loại cước <span class="text-danger">*</span></label>
+                                    <select class="form-select" th:field="*{stringType}">
+                                        <option value="SYNTHETIC">Synthetic (Tổng hợp)</option>
+                                        <option value="NATURAL">Natural (Tự nhiên)</option>
+                                        <option value="HYBRID">Hybrid (Lai)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Chất liệu</label>
+                                    <input type="text" class="form-control" th:field="*{material}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả</label>
+                                <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
+                            </div>
+
+                            <h5 class="mt-4 mb-3 border-bottom pb-2">Thông số kỹ thuật</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Độ dày (mm)</label>
+                                    <input type="number" step="0.01" class="form-control" th:field="*{gauge}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Sức căng Min (lbs)</label>
+                                    <input type="number" step="0.5" class="form-control"
+                                        th:field="*{recommendedTensionMin}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Sức căng Max (lbs)</label>
+                                    <input type="number" step="0.5" class="form-control"
+                                        th:field="*{recommendedTensionMax}">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Độ bền (1-10)</label>
+                                    <input type="number" min="1" max="10" class="form-control"
+                                        th:field="*{durabilityRating}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Độ nảy (1-10)</label>
+                                    <input type="number" min="1" max="10" class="form-control"
+                                        th:field="*{repulsionRating}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Kiểm soát (1-10)</label>
+                                    <input type="number" min="1" max="10" class="form-control"
+                                        th:field="*{controlRating}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Âm thanh (1-10)</label>
+                                    <input type="number" min="1" max="10" class="form-control"
+                                        th:field="*{hittingSoundRating}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Side Info -->
+                        <div class="col-md-4">
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold">Thông tin bán hàng</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Giá bán (VNĐ) <span
+                                                class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" th:field="*{retailPrice}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tồn kho</label>
+                                        <input type="number" class="form-control" th:field="*{quantityInStock}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Ngày tạo</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="activeInfo"
+                                                th:field="*{isActive}">
+                                            <label class="form-check-label" for="activeInfo">Đang kinh doanh
+                                                (Active)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Màu sắc</label>
+                                <input type="text" class="form-control" th:field="*{color}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">URL Ảnh</label>
+                                <input type="text" class="form-control" th:field="*{imageUrl}" placeholder="http://...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a th:href="@{/admin/products/strings}" class="btn btn-secondary me-2">Hủy</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Lưu thông tin
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

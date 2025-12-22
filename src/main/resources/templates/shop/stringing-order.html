@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/customer}">
+
+<head>
+    <title>Đặt dịch vụ căng vợt</title>
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .order-form-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #ff6b35;
+        }
+
+        .service-option,
+        .string-option {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .service-option:hover,
+        .string-option:hover {
+            border-color: #ff6b35;
+            background: #fff5f0;
+        }
+
+        .service-option.selected,
+        .string-option.selected {
+            border-color: #ff6b35;
+            background: #fff5f0;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+        }
+
+        .option-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .option-price {
+            color: #ff6b35;
+            font-weight: 700;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+            color: white;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ff6b35;
+        }
+
+        .tension-input {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .tension-badge {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <main layout:fragment="content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="container">
+                <h1><i class="fas fa-shopping-cart me-2"></i>Đặt dịch vụ căng vợt</h1>
+                <p class="mb-0">Điền thông tin để đặt dịch vụ căng vợt</p>
+            </div>
+        </div>
+
+        <div class="container pb-5">
+            <div class="row">
+                <!-- Order Form -->
+                <div class="col-lg-8">
+                    <form id="stringingOrderForm" method="post" action="/stringing/order/submit">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                        <!-- Stringing Service Selection -->
+                        <div class="order-form-section">
+                            <h3 class="section-title"><i class="fas fa-cog me-2"></i>1. Chọn dịch vụ căng vợt</h3>
+
+                            <div class="row" th:if="${services != null and !#lists.isEmpty(services)}">
+                                <div class="col-md-6" th:each="service : ${services}">
+                                    <div class="service-option" th:data-id="${service.serviceId}"
+                                        th:data-name="${service.serviceName}" th:data-price="${service.basePrice}"
+                                        onclick="selectService(this)">
+                                        <input type="radio" name="serviceId" th:value="${service.serviceId}"
+                                            class="d-none">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="option-name" th:text="${service.serviceName}">Căng vợt chuẩn
+                                                </div>
+                                                <small class="text-muted"
+                                                    th:text="${service.description ?: 'Dịch vụ căng vợt'}">Mô tả</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="option-price"
+                                                    th:text="${#numbers.formatDecimal(service.basePrice, 0, 'COMMA', 0, 'POINT')} + '₫'">
+                                                    50,000₫</div>
+                                                <small class="text-muted"
+                                                    th:text="${service.estimatedTimeMinutes} + ' phút'">30 phút</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- String Selection -->
+                        <div class="order-form-section">
+                            <h3 class="section-title"><i class="fas fa-grip-lines-vertical me-2"></i>2. Chọn dây vợt
+                                (tùy chọn)</h3>
+                            <p class="text-muted mb-3">Bạn có thể chọn dây vợt của chúng tôi hoặc mang dây riêng.</p>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="useOwnString" name="useOwnString"
+                                    onchange="toggleStringSelection()">
+                                <label class="form-check-label" for="useOwnString">
+                                    Tôi mang dây riêng
+                                </label>
+                            </div>
+
+                            <div id="stringSelection" class="row"
+                                th:if="${strings != null and !#lists.isEmpty(strings)}">
+                                <div class="col-md-4" th:each="string : ${strings}">
+                                    <div class="string-option" th:data-id="${string.stringId}"
+                                        th:data-name="${string.name}" th:data-price="${string.retailPrice}"
+                                        onclick="selectString(this)">
+                                        <input type="radio" name="stringId" th:value="${string.stringId}"
+                                            class="d-none">
+                                        <div class="option-name" th:text="${string.name}">BG65</div>
+                                        <small class="text-muted" th:text="${string.brandName}">Yonex</small>
+                                        <div class="option-price"
+                                            th:text="${#numbers.formatDecimal(string.retailPrice, 0, 'COMMA', 0, 'POINT')} + '₫'">
+                                            80,000₫</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tension & Notes -->
+                        <div class="order-form-section">
+                            <h3 class="section-title"><i class="fas fa-sliders-h me-2"></i>3. Thông số căng</h3>
+
+                            <div class="mb-4">
+                                <label class="form-label">Lực căng (lbs)</label>
+                                <div class="tension-input">
+                                    <input type="range" class="form-range" id="tensionRange" name="tension" min="20"
+                                        max="32" value="25" oninput="updateTensionValue(this.value)">
+                                    <span id="tensionValue" class="tension-badge">25 lbs</span>
+                                </div>
+                                <small class="text-muted">Khuyến nghị: 22-26 lbs cho người mới, 26-30 lbs cho người chơi
+                                    trung bình</small>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Ghi chú</label>
+                                <textarea class="form-control" name="notes" rows="3"
+                                    placeholder="Ví dụ: Căng đều 2 dây, hoặc yêu cầu đặc biệt khác..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Contact Info -->
+                        <div class="order-form-section">
+                            <h3 class="section-title"><i class="fas fa-user me-2"></i>4. Thông tin liên hệ</h3>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Họ và tên</label>
+                                    <input type="text" class="form-control" name="customerName" required
+                                        th:value="${user?.fullName}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" name="phone" required
+                                        th:value="${user?.phone}">
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Địa chỉ nhận vợt</label>
+                                    <input type="text" class="form-control" name="address" required
+                                        placeholder="Địa chỉ giao hàng sau khi căng xong">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="col-lg-4">
+                    <div class="summary-card sticky-top" style="top: 100px;">
+                        <h4 class="mb-4"><i class="fas fa-receipt me-2"></i>Tóm tắt đơn hàng</h4>
+
+                        <div class="summary-item" id="summaryService">
+                            <span>Dịch vụ căng:</span>
+                            <span id="serviceSummary">Chưa chọn</span>
+                        </div>
+
+                        <div class="summary-item" id="summaryString">
+                            <span>Dây vợt:</span>
+                            <span id="stringSummary">Chưa chọn</span>
+                        </div>
+
+                        <div class="summary-item" id="summaryTension">
+                            <span>Lực căng:</span>
+                            <span id="tensionSummary">25 lbs</span>
+                        </div>
+
+                        <div class="summary-item summary-total">
+                            <span>Tổng cộng:</span>
+                            <span id="totalSummary">0₫</span>
+                        </div>
+
+                        <button type="submit" form="stringingOrderForm" class="btn btn-submit w-100 mt-4">
+                            <i class="fas fa-check me-2"></i>Xác nhận đặt dịch vụ
+                        </button>
+
+                        <p class="text-center text-muted mt-3 mb-0">
+                            <small><i class="fas fa-shield-alt me-1"></i>Thông tin được bảo mật an toàn</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            let selectedServicePrice = 0;
+            let selectedStringPrice = 0;
+
+            function selectService(element) {
+                // Remove selection from all
+                document.querySelectorAll('.service-option').forEach(el => {
+                    el.classList.remove('selected');
+                    el.querySelector('input').checked = false;
+                });
+
+                // Select this one
+                element.classList.add('selected');
+                element.querySelector('input').checked = true;
+
+                // Update summary
+                const name = element.dataset.name;
+                const price = parseFloat(element.dataset.price);
+                selectedServicePrice = price;
+
+                document.getElementById('serviceSummary').textContent = name + ' - ' + formatPrice(price);
+                updateTotal();
+            }
+
+            function selectString(element) {
+                // Remove selection from all
+                document.querySelectorAll('.string-option').forEach(el => {
+                    el.classList.remove('selected');
+                    el.querySelector('input').checked = false;
+                });
+
+                // Select this one
+                element.classList.add('selected');
+                element.querySelector('input').checked = true;
+
+                // Update summary
+                const name = element.dataset.name;
+                const price = parseFloat(element.dataset.price);
+                selectedStringPrice = price;
+
+                document.getElementById('stringSummary').textContent = name + ' - ' + formatPrice(price);
+                updateTotal();
+            }
+
+            function toggleStringSelection() {
+                const useOwn = document.getElementById('useOwnString').checked;
+                const stringSection = document.getElementById('stringSelection');
+
+                if (useOwn) {
+                    stringSection.style.opacity = '0.5';
+                    stringSection.style.pointerEvents = 'none';
+                    document.querySelectorAll('.string-option').forEach(el => {
+                        el.classList.remove('selected');
+                        el.querySelector('input').checked = false;
+                    });
+                    selectedStringPrice = 0;
+                    document.getElementById('stringSummary').textContent = 'Mang dây riêng';
+                } else {
+                    stringSection.style.opacity = '1';
+                    stringSection.style.pointerEvents = 'auto';
+                    document.getElementById('stringSummary').textContent = 'Chưa chọn';
+                }
+                updateTotal();
+            }
+
+            function updateTensionValue(value) {
+                document.getElementById('tensionValue').textContent = value + ' lbs';
+                document.getElementById('tensionSummary').textContent = value + ' lbs';
+            }
+
+            function updateTotal() {
+                const total = selectedServicePrice + selectedStringPrice;
+                document.getElementById('totalSummary').textContent = formatPrice(total);
+            }
+
+            function formatPrice(price) {
+                return new Intl.NumberFormat('vi-VN').format(price) + '₫';
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

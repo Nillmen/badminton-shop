@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi yêu cầu đổi hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 80px;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gửi yêu cầu đổi hàng</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/account/requests/exchange}" th:object="${exchangeRequest}" method="post">
+                            <input type="hidden" th:field="*{orderItemId}">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Lý do đổi hàng <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" th:field="*{reason}" required>
+                                    <option value="" disabled selected>-- Chọn lý do --</option>
+                                    <option th:each="r : ${reasons}" th:value="${r}" th:text="${r}"></option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Chi tiết / Mô tả thêm</label>
+                                <textarea class="form-control" th:field="*{description}" rows="4"
+                                    placeholder="Mô tả chi tiết tình trạng sản phẩm..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Địa chỉ lấy hàng</label>
+                                <input type="text" class="form-control" th:field="*{pickupAddress}"
+                                    placeholder="Nhập địa chỉ shipper đến lấy hàng hoàn...">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Hình ảnh sản phẩm (URLs)</label>
+                                <textarea class="form-control" th:field="*{images}" rows="2"
+                                    placeholder="Dán link ảnh, phân tách bởi dấu phẩy, ví dụ: https://imgur.com/a, https://imgur.com/b"></textarea>
+                                <div class="form-text">Tạm thời nhập URL ảnh. Tính năng upload sẽ cập nhật sau.</div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a th:href="@{/orders}" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                                <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

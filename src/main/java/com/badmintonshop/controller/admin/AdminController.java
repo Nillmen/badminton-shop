@@ -185,16 +185,16 @@ public class AdminController {
      */
     @GetMapping("/inventory")
     public String inventoryPage(
-            @RequestParam(required = false) Long productId,
-            @RequestParam(required = false) Boolean lowStock,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String stockStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Model model) {
 
-        log.info("Loading admin inventory page");
+        log.info("Loading admin inventory page - keyword: {}, stockStatus: {}", keyword, stockStatus);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
-        var inventoryPage = inventoryService.searchInventory(productId, lowStock, pageable);
+        var inventoryPage = inventoryService.searchInventoryWithKeyword(keyword, stockStatus, pageable);
         var stats = inventoryService.getInventoryStats();
 
         model.addAttribute("inventory", inventoryPage);
@@ -234,8 +234,9 @@ public class AdminController {
 
     /**
      * Users (Customers) Management page
+     * Accessible via /admin/users or /admin/customers
      */
-    @GetMapping("/users")
+    @GetMapping({ "/users", "/customers" })
     public String usersPage() {
         log.info("Loading admin users management page");
         return "admin/users";

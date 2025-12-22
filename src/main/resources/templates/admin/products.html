@@ -59,6 +59,7 @@
                         <select class="form-select" id="status" name="status">
                             <option value="">Tất cả</option>
                             <option value="ACTIVE">Đang bán</option>
+                            <option value="INACTIVE">Tạm ẩn</option>
                             <option value="DRAFT">Nháp</option>
                             <option value="OUT_OF_STOCK">Hết hàng</option>
                             <option value="DISCONTINUED">Ngừng bán</option>
@@ -114,8 +115,12 @@
                                 <span class="badge"
                                     th:classappend="${product.status.name() == 'ACTIVE'} ? 'bg-success' : 
                                                   (${product.status.name() == 'DRAFT'} ? 'bg-secondary' : 
-                                                  (${product.status.name() == 'OUT_OF_STOCK'} ? 'bg-warning' : 'bg-danger'))"
-                                    th:text="${product.status}">Active</span>
+                                                  (${product.status.name() == 'INACTIVE'} ? 'bg-secondary' :
+                                                  (${product.status.name() == 'OUT_OF_STOCK'} ? 'bg-warning' : 'bg-danger')))"
+                                    th:text="${product.status.name() == 'ACTIVE'} ? 'Đang bán' : 
+                                             (${product.status.name() == 'DRAFT'} ? 'Nháp' : 
+                                             (${product.status.name() == 'INACTIVE'} ? 'Tạm ẩn' :
+                                             (${product.status.name() == 'OUT_OF_STOCK'} ? 'Hết hàng' : 'Ngừng bán')))">Active</span>
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">

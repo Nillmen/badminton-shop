@@ -79,9 +79,11 @@ public interface StaffRepository extends JpaRepository<Staff, Long> {
 
        /**
         * Find staff with filters (search, role, status) with pagination
+        * Excludes SUPER_ADMIN from the list
         */
        @Query("SELECT s FROM Staff s " +
-                     "WHERE (:search IS NULL OR :search = '' " +
+                     "WHERE s.role != 'SUPER_ADMIN' " +
+                     "AND (:search IS NULL OR :search = '' " +
                      "       OR LOWER(s.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
                      "       OR LOWER(s.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
                      "AND (:role IS NULL OR s.role = :role) " +

@@ -50,14 +50,15 @@ public interface BannerRepository extends JpaRepository<Banner, Long>, JpaSpecif
         // ===== TRASH METHODS =====
 
         /**
-         * Find deleted banners (for trash)
+         * Find deleted banners (for trash) - uses native query to bypass @Where filter
          */
-        @Query("SELECT b FROM Banner b WHERE b.deletedAt IS NOT NULL ORDER BY b.deletedAt DESC")
+        @Query(value = "SELECT * FROM banners WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", countQuery = "SELECT COUNT(*) FROM banners WHERE deleted_at IS NOT NULL", nativeQuery = true)
         Page<Banner> findDeletedBanners(Pageable pageable);
 
         /**
          * Find banner by ID including deleted (ignore @Where clause)
+         * Must use nativeQuery to bypass Hibernate @Where filter
          */
-        @Query("SELECT b FROM Banner b WHERE b.bannerId = :id")
+        @Query(value = "SELECT * FROM banners WHERE banner_id = :id", nativeQuery = true)
         java.util.Optional<Banner> findByIdIncludingDeleted(@Param("id") Long id);
 }

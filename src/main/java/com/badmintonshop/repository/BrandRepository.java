@@ -87,8 +87,15 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
         List<Brand> findAllActiveWithProducts();
 
         /**
-         * Find soft-deleted brands for trash
+         * Find soft-deleted brands for trash (uses native query to bypass @Where
+         * filter)
          */
-        @Query("SELECT b FROM Brand b WHERE b.deletedAt IS NOT NULL ORDER BY b.deletedAt DESC")
+        @Query(value = "SELECT * FROM brands WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", countQuery = "SELECT COUNT(*) FROM brands WHERE deleted_at IS NOT NULL", nativeQuery = true)
         Page<Brand> findDeleted(Pageable pageable);
+
+        /**
+         * Find brand by ID including deleted (bypasses @Where filter)
+         */
+        @Query(value = "SELECT * FROM brands WHERE brand_id = :id", nativeQuery = true)
+        Optional<Brand> findByIdIncludingDeleted(@Param("id") Long id);
 }

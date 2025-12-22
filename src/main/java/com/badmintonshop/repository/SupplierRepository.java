@@ -28,6 +28,11 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     boolean existsByName(String name);
 
     /**
+     * Check if code exists
+     */
+    boolean existsByCode(String code);
+
+    /**
      * Find all active suppliers
      */
     @Query("SELECT s FROM Supplier s WHERE s.isActive = true ORDER BY s.name ASC")

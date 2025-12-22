@@ -86,7 +86,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" th:href="${currentUserId != null} ? @{/(uid=${currentUserId})} : @{/}">
+            <a class="navbar-brand fw-bold" th:href="@{/}">
                 <i class="fas fa-shuttlecock me-2" style="color: var(--primary)"></i>Badminton Shop
             </a>
 
@@ -99,19 +99,13 @@
                 <!-- Main Navigation -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link"
-                            th:href="${currentUserId != null} ? @{/products(uid=${currentUserId})} : @{/products}">Sản
-                            phẩm</a>
+                        <a class="nav-link" th:href="@{/products}">Sản phẩm</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            th:href="${currentUserId != null} ? @{/categories(uid=${currentUserId})} : @{/categories}">Danh
-                            mục</a>
+                        <a class="nav-link" th:href="@{/categories}">Danh mục</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            th:href="${currentUserId != null} ? @{/brands(uid=${currentUserId})} : @{/brands}">Thương
-                            hiệu</a>
+                        <a class="nav-link" th:href="@{/brands}">Thương hiệu</a>
                     </li>
                 </ul>
 
@@ -133,11 +127,10 @@
                             <span sec:authentication="principal.fullName">User</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" th:href="@{/users/profile(uid=${currentUserId})}"><i
-                                        class="fas fa-user me-2"></i>Tài
-                                    khoản</a></li>
-                            <li><a class="dropdown-item" th:href="@{/orders(uid=${currentUserId})}"><i
-                                        class="fas fa-shopping-bag me-2"></i>Đơn hàng</a>
+                            <li><a class="dropdown-item" th:href="@{/users/profile}">
+                                    <i class="fas fa-user me-2"></i>Tài khoản</a></li>
+                            <li><a class="dropdown-item" th:href="@{/orders}">
+                                    <i class="fas fa-shopping-bag me-2"></i>Đơn hàng</a>
                             </li>
                             <li>
                                 <hr class="dropdown-divider">
@@ -161,8 +154,7 @@
         <div class="container text-center">
             <h1>Chào mừng đến với Badminton Shop</h1>
             <p class="lead mt-3">Cửa hàng chuyên cung cấp vợt, giày, cước và phụ kiện cầu lông chính hãng</p>
-            <a th:href="${currentUserId != null} ? @{/products(uid=${currentUserId})} : @{/products}"
-                class="btn btn-hero btn-lg mt-4">
+            <a th:href="@{/products}" class="btn btn-hero btn-lg mt-4">
                 <i class="fas fa-shopping-bag me-2"></i>Khám phá ngay
             </a>
         </div>

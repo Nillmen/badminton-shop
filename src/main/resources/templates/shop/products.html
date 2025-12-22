@@ -158,8 +158,8 @@
 
 <body>
     <main layout:fragment="content">
-        <!-- Banner Carousel (if banners exist AND there are active promotions) -->
-        <th:block th:if="${hasActivePromotions and banners != null and !banners.isEmpty()}">
+        <!-- Banner Carousel (if banners exist) -->
+        <th:block th:if="${banners != null and !banners.isEmpty()}">
             <div id="bannerCarousel" class="carousel slide banner-carousel" data-bs-ride="carousel"
                 data-bs-interval="4000">
                 <!-- Indicators -->
@@ -227,8 +227,8 @@
             </div>
         </th:block>
 
-        <!-- Fallback Page Header (when no active promotions or no banners) -->
-        <th:block th:if="${!hasActivePromotions or banners == null or banners.isEmpty()}">
+        <!-- Fallback Page Header (when no banners) -->
+        <th:block th:if="${banners == null or banners.isEmpty()}">
             <div class="page-header">
                 <div class="container">
                     <h1>Sản phẩm</h1>

@@ -356,4 +356,47 @@ public class CouponService {
     private String formatPrice(BigDecimal price) {
         return String.format("%,d₫", price.longValue());
     }
+
+    // ==================== TRASH METHODS ====================
+
+    /**
+     * Get deleted coupons (for trash)
+     */
+    @Transactional(readOnly = true)
+    public Page<AdminCouponDTO> getDeletedCoupons(Pageable pageable) {
+        return couponRepository.findDeletedCoupons(pageable).map(this::mapToAdminCouponDTO);
+    }
+
+    /**
+     * Restore coupon from trash
+     */
+    @Transactional
+    public void restoreCoupon(Long id) {
+        Coupon coupon = couponRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new IllegalArgumentException("Coupon không tồn tại: " + id));
+
+        if (coupon.getDeletedAt() == null) {
+            throw new IllegalArgumentException("Coupon chưa bị xóa");
+        }
+
+        coupon.setDeletedAt(null);
+        couponRepository.save(coupon);
+        log.info("Restored coupon: {} (ID: {})", coupon.getCode(), id);
+    }
+
+    /**
+     * Hard delete coupon (permanently)
+     */
+    @Transactional
+    public void hardDeleteCoupon(Long id) {
+        Coupon coupon = couponRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new IllegalArgumentException("Coupon không tồn tại: " + id));
+
+        if (coupon.getDeletedAt() == null) {
+            throw new IllegalArgumentException("Coupon chưa bị xóa mềm, không thể xóa vĩnh viễn");
+        }
+
+        couponRepository.delete(coupon);
+        log.info("Hard deleted coupon: {} (ID: {})", coupon.getCode(), id);
+    }
 }

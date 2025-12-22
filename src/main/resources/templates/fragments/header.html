@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <!-- Customer Header Fragment -->
-<header th:fragment="header" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+<header th:fragment="header" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
     <div class="container">
         <!-- Logo -->
         <a class="navbar-brand" th:href="@{/}">
@@ -18,12 +18,12 @@
         <!-- Navigation -->
         <div class="collapse navbar-collapse" id="navbarMain">
             <!-- Main Menu -->
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/}">Trang chủ</a>
+                    <a class="nav-link px-3" th:href="@{/}">Trang chủ</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">
                         Sản phẩm
                     </a>
                     <ul class="dropdown-menu">
@@ -33,8 +33,6 @@
                                 <i class="fas fa-star me-2 text-warning"></i>Sản phẩm nổi bật</a></li>
                         <li><a class="dropdown-item" th:href="@{/products/new-arrivals}">
                                 <i class="fas fa-sparkles me-2 text-success"></i>Sản phẩm mới</a></li>
-                        <li><a class="dropdown-item" th:href="@{/products/best-sellers}">
-                                <i class="fas fa-chart-line me-2 text-danger"></i>Bán chạy nhất</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -45,7 +43,7 @@
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">
                         <i class="fas fa-fire text-danger me-1"></i>Khuyến mãi
                     </a>
                     <ul class="dropdown-menu">
@@ -56,7 +54,7 @@
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">
                         <i class="fas fa-info-circle me-1"></i>Hỗ trợ
                     </a>
                     <ul class="dropdown-menu">
@@ -64,104 +62,124 @@
                                 <i class="fas fa-newspaper me-2 text-primary"></i>Blog</a></li>
                         <li><a class="dropdown-item" th:href="@{/faq}">
                                 <i class="fas fa-question-circle me-2 text-info"></i>FAQ</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" th:href="@{/warranty}">
+                                <i class="fas fa-shield-alt me-2 text-success"></i>Bảo hành</a></li>
+                        <li><a class="dropdown-item" th:href="@{/exchange}">
+                                <i class="fas fa-exchange-alt me-2 text-warning"></i>Đổi trả</a></li>
                     </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3" th:href="@{/stringing}">
+                        <i class="fas fa-tools text-warning me-1"></i>Căng vợt
+                    </a>
                 </li>
             </ul>
 
-            <!-- Search -->
-            <form class="d-flex me-3" th:action="@{/products/search}" method="get">
-                <div class="input-group">
-                    <input type="search" name="q" class="form-control" placeholder="Tìm kiếm sản phẩm..."
-                        style="border-radius: 50px 0 0 50px;">
-                    <button class="btn btn-outline-primary" type="submit" style="border-radius: 0 50px 50px 0;">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </form>
-
-            <!-- Cart -->
-            <a th:href="@{/cart}" class="btn btn-icon position-relative me-2">
-                <i class="fas fa-shopping-cart fa-lg"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count"
-                    style="font-size: 0.6rem;">
-                    0
-                </span>
-            </a>
-
-            <!-- Notifications (for logged-in users) -->
-            <div sec:authorize="hasRole('USER')" class="dropdown me-2">
-                <button class="btn btn-icon position-relative" type="button" data-bs-toggle="dropdown"
-                    aria-expanded="false" id="notificationBell" onclick="loadNotifications()">
-                    <i class="fas fa-bell fa-lg"></i>
-                    <span
-                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-count"
-                        style="font-size: 0.6rem; display: none;">
-                        0
-                    </span>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end p-0" style="width: 320px; max-height: 400px;">
-                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
-                        <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Thông báo</h6>
-                        <button class="btn btn-sm btn-link p-0" onclick="markAllAsRead()"
-                            title="Đánh dấu đã đọc tất cả">
-                            <i class="fas fa-check-double"></i>
+            <!-- Right Side: Search + Cart + User -->
+            <div class="d-flex align-items-center gap-2">
+                <!-- Search -->
+                <form class="d-none d-lg-flex" th:action="@{/products/search}" method="get">
+                    <div class="input-group input-group-sm" style="width: 180px;">
+                        <input type="search" name="q" class="form-control" placeholder="Tìm kiếm..."
+                            style="border-radius: 50px 0 0 50px; font-size: 0.85rem;">
+                        <button class="btn btn-outline-primary" type="submit" style="border-radius: 0 50px 50px 0;">
+                            <i class="fas fa-search"></i>
                         </button>
                     </div>
-                    <div id="notificationList" style="max-height: 300px; overflow-y: auto;">
-                        <div class="text-center py-4 text-muted">
-                            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                </form>
+
+                <!-- Cart -->
+                <a th:href="@{/cart}" class="btn btn-icon position-relative">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count"
+                        style="font-size: 0.55rem;">
+                        0
+                    </span>
+                </a>
+
+                <!-- Notifications (for logged-in users) -->
+                <div sec:authorize="hasRole('USER')" class="dropdown">
+                    <button class="btn btn-icon position-relative" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false" id="notificationBell" onclick="loadNotifications()">
+                        <i class="fas fa-bell"></i>
+                        <span
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-count"
+                            style="font-size: 0.55rem; display: none;">
+                            0
+                        </span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0" style="width: 320px; max-height: 400px;">
+                        <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
+                            <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Thông báo</h6>
+                            <button class="btn btn-sm btn-link p-0" onclick="markAllAsRead()"
+                                title="Đánh dấu đã đọc tất cả">
+                                <i class="fas fa-check-double"></i>
+                            </button>
+                        </div>
+                        <div id="notificationList" style="max-height: 300px; overflow-y: auto;">
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                            </div>
+                        </div>
+                        <div class="p-2 border-top text-center">
+                            <a th:href="@{/notifications}" class="text-decoration-none small">Xem tất cả thông báo</a>
                         </div>
                     </div>
-                    <div class="p-2 border-top text-center">
-                        <a th:href="@{/notifications}" class="text-decoration-none small">Xem tất cả thông báo</a>
-                    </div>
                 </div>
-            </div>
 
-            <!-- User Menu - Not logged in as customer (show for anonymous OR staff/admin) -->
-            <div sec:authorize="!hasRole('USER')">
-                <a th:href="@{/login}" class="btn btn-outline-primary me-2">Đăng nhập</a>
-                <a th:href="@{/register}" class="btn btn-primary">Đăng ký</a>
-            </div>
+                <!-- User Menu - Not logged in as customer (show for anonymous OR staff/admin) -->
+                <div sec:authorize="!hasRole('USER')" class="d-flex gap-2">
+                    <a th:href="@{/login}" class="btn btn-outline-primary btn-sm">Đăng nhập</a>
+                    <a th:href="@{/register}" class="btn btn-primary btn-sm">Đăng ký</a>
+                </div>
 
-            <!-- User Menu - Logged in as customer (only for users with ROLE_USER) -->
-            <div sec:authorize="hasRole('USER')" class="dropdown">
-                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-                    <i class="fas fa-user-circle fa-lg me-2"></i>
-                    <span sec:authentication="principal.fullName">User</span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" th:href="@{/users/profile}">
-                            <i class="fas fa-user me-2"></i>Tài khoản
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" th:href="@{/orders}">
-                            <i class="fas fa-shopping-bag me-2"></i>Đơn hàng
-                        </a>
-                    </li>
-                    <li>
+                <!-- User Menu - Logged in as customer (only for users with ROLE_USER) -->
+                <div sec:authorize="hasRole('USER')" class="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center py-1 px-2" href="#"
+                        data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        <span class="d-none d-md-inline" sec:authentication="principal.fullName">User</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/users/profile}">
+                                <i class="fas fa-user me-2"></i>Tài khoản
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/orders}">
+                                <i class="fas fa-shopping-bag me-2"></i>Đơn hàng
+                            </a>
+                        </li>
                         <a class="dropdown-item" th:href="@{/wishlist}">
                             <i class="fas fa-heart me-2"></i>Yêu thích
                         </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" th:href="@{/notifications}">
-                            <i class="fas fa-bell me-2"></i>Thông báo
-                        </a>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li>
-                        <form th:action="@{/logout}" method="post" class="m-0">
-                            <button type="submit" class="dropdown-item text-danger">
-                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+                        </li>
+                        <li><a class="dropdown-item" th:href="@{/orders}">
+                                <i class="fas fa-shopping-bag me-2 text-primary"></i>Đơn hàng của tôi</a></li>
+                        <li><a class="dropdown-item" th:href="@{/account/requests}">
+                                <i class="fas fa-headset me-2 text-warning"></i>Yêu cầu hỗ trợ</a></li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/notifications}">
+                                <i class="fas fa-bell me-2"></i>Thông báo
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline w-100">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

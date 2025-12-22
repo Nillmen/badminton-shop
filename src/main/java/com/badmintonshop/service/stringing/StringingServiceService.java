@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
+@Service("stringingServiceManagementService")
 public class StringingServiceService {
 
     @Autowired
@@ -82,8 +82,7 @@ public class StringingServiceService {
         dto.setServiceId(((Number) row[0]).longValue());
         dto.setServiceName((String) row[1]);
         dto.setServiceType(
-                StringingServiceType.valueOf((String) row[2])
-        );
+                StringingServiceType.valueOf((String) row[2]));
         dto.setDescription((String) row[3]);
         dto.setBasePrice((BigDecimal) row[4]);
         dto.setEstimatedTimeMinutes((Integer) row[5]);
@@ -91,6 +90,5 @@ public class StringingServiceService {
 
         return dto;
     }
-
 
 }

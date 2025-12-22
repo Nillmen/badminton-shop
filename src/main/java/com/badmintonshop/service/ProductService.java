@@ -5,14 +5,18 @@ import com.badmintonshop.dto.product.ProductRequest;
 import com.badmintonshop.dto.product.ProductResponse;
 import com.badmintonshop.entity.Brand;
 import com.badmintonshop.entity.Category;
+import com.badmintonshop.entity.Inventory;
 import com.badmintonshop.entity.Product;
 import com.badmintonshop.entity.ProductImage;
 import com.badmintonshop.entity.enums.ProductStatus;
 import com.badmintonshop.entity.enums.ProductType;
+import com.badmintonshop.entity.enums.VariantStatus;
 import com.badmintonshop.repository.BrandRepository;
 import com.badmintonshop.repository.CategoryRepository;
+import com.badmintonshop.repository.InventoryRepository;
 import com.badmintonshop.repository.ProductImageRepository;
 import com.badmintonshop.repository.ProductRepository;
+import com.badmintonshop.repository.ProductVariantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,10 +26,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Service for Product operations
@@ -40,7 +49,10 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final ProductImageRepository productImageRepository;
+    private final InventoryRepository inventoryRepository;
     private final PromotionPriceService promotionPriceService;
+    private final JdbcTemplate jdbcTemplate;
+    private final ProductVariantRepository productVariantRepository;
 
     /**
      * Get all products with pagination (with promotion prices applied)
@@ -230,7 +242,22 @@ public class ProductService {
             }
         }
 
-        log.info("Created product: {} ({})", product.getName(), product.getSku());
+        // Create base inventory record for product (with quantity 0)
+        // This allows tracking inventory even before variants are added
+        Inventory baseInventory = Inventory.builder()
+                .product(product)
+                .variant(null) // Base product inventory (no variant)
+                .quantityAvailable(0)
+                .quantityReserved(0)
+                .quantitySold(0)
+                .lowStockThreshold(10)
+                .reorderPoint(20)
+                .warehouseLocation("main")
+                .updatedAt(LocalDateTime.now())
+                .build();
+        inventoryRepository.save(baseInventory);
+
+        log.info("Created product: {} ({}) with base inventory record", product.getName(), product.getSku());
         return ProductResponse.fromEntity(productRepository.findByIdWithImages(product.getProductId()).orElse(product));
     }
 
@@ -305,8 +332,20 @@ public class ProductService {
             product.setRacketMaxTension(request.getRacketMaxTension());
         if (request.getRacketMaterial() != null)
             product.setRacketMaterial(request.getRacketMaterial());
-        if (request.getStatus() != null)
-            product.setStatus(request.getStatus());
+        if (request.getStatus() != null) {
+            ProductStatus newStatus = request.getStatus();
+            ProductStatus oldStatus = product.getStatus();
+            product.setStatus(newStatus);
+
+            // Cascade status to variants when product is set to INACTIVE or OUT_OF_STOCK
+            if (newStatus == ProductStatus.INACTIVE || newStatus == ProductStatus.OUT_OF_STOCK) {
+                VariantStatus variantStatus = (newStatus == ProductStatus.INACTIVE)
+                        ? VariantStatus.INACTIVE
+                        : VariantStatus.INACTIVE; // OUT_OF_STOCK maps to INACTIVE for variants
+                productVariantRepository.updateStatusByProductId(id, variantStatus);
+                log.info("Cascaded status {} to all variants of product {}", variantStatus, id);
+            }
+        }
         if (request.getIsFeatured() != null)
             product.setIsFeatured(request.getIsFeatured());
         if (request.getIsNewArrival() != null)
@@ -379,11 +418,75 @@ public class ProductService {
     }
 
     /**
-     * Get deleted products for trash
+     * Get deleted products for trash - uses JdbcTemplate to bypass @Where filter
      */
     public Page<ProductListDTO> getDeletedProducts(Pageable pageable) {
-        return productRepository.findDeleted(pageable)
-                .map(this::mapToProductListDTO);
+        // Count total deleted products
+        String countSql = "SELECT COUNT(*) FROM products WHERE deleted_at IS NOT NULL";
+        Long totalCount = jdbcTemplate.queryForObject(countSql, Long.class);
+        log.info("Deleted products count from database: {}", totalCount);
+        if (totalCount == null || totalCount == 0) {
+            log.info("No deleted products found in database");
+            return Page.empty(pageable);
+        }
+
+        // Query deleted products with pagination
+        String sql = """
+                SELECT p.product_id, p.name, p.slug, p.sku, p.product_type, p.short_description,
+                       p.base_price, p.compare_at_price, p.status, p.is_featured, p.is_new_arrival,
+                       p.is_best_seller, p.sold_count, p.rating_average, p.rating_count,
+                       c.category_id, c.name as category_name,
+                       b.brand_id, b.name as brand_name, b.logo_url as brand_logo_url,
+                       (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.product_id
+                        AND (pi.is_primary = 1 OR pi.is_primary = true) LIMIT 1) as primary_image_url
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.category_id
+                LEFT JOIN brands b ON p.brand_id = b.brand_id
+                WHERE p.deleted_at IS NOT NULL
+                ORDER BY p.deleted_at DESC
+                LIMIT ? OFFSET ?
+                """;
+
+        List<ProductListDTO> products = jdbcTemplate.query(
+                sql,
+                new Object[] { pageable.getPageSize(), pageable.getOffset() },
+                (rs, rowNum) -> mapRowToProductListDTO(rs));
+
+        return new org.springframework.data.domain.PageImpl<>(products, pageable, totalCount);
+    }
+
+    /**
+     * Map ResultSet row to ProductListDTO
+     */
+    private ProductListDTO mapRowToProductListDTO(ResultSet rs) throws SQLException {
+        return ProductListDTO.builder()
+                .productId(rs.getLong("product_id"))
+                .name(rs.getString("name"))
+                .slug(rs.getString("slug"))
+                .sku(rs.getString("sku"))
+                .productType(rs.getString("product_type") != null
+                        ? com.badmintonshop.entity.enums.ProductType.valueOf(rs.getString("product_type"))
+                        : null)
+                .shortDescription(rs.getString("short_description"))
+                .basePrice(rs.getBigDecimal("base_price"))
+                .compareAtPrice(rs.getBigDecimal("compare_at_price"))
+                .currentPrice(rs.getBigDecimal("base_price")) // Same as base price for deleted items
+                .status(rs.getString("status") != null
+                        ? com.badmintonshop.entity.enums.ProductStatus.valueOf(rs.getString("status"))
+                        : null)
+                .isFeatured(rs.getBoolean("is_featured"))
+                .isNewArrival(rs.getBoolean("is_new_arrival"))
+                .isBestSeller(rs.getBoolean("is_best_seller"))
+                .soldCount(rs.getInt("sold_count"))
+                .ratingAverage(rs.getBigDecimal("rating_average"))
+                .ratingCount(rs.getInt("rating_count"))
+                .categoryId(rs.getObject("category_id") != null ? rs.getLong("category_id") : null)
+                .categoryName(rs.getString("category_name"))
+                .brandId(rs.getObject("brand_id") != null ? rs.getLong("brand_id") : null)
+                .brandName(rs.getString("brand_name"))
+                .brandLogoUrl(rs.getString("brand_logo_url"))
+                .primaryImageUrl(rs.getString("primary_image_url"))
+                .build();
     }
 
     // ==================== PROMOTION PRICE MAPPING ====================
@@ -393,8 +496,9 @@ public class ProductService {
      */
     private ProductListDTO mapToProductListDTO(Product product) {
         ProductListDTO dto = ProductListDTO.fromEntity(product);
-        if (dto == null) return null;
-        
+        if (dto == null)
+            return null;
+
         applyPromotionToProductListDTO(dto);
         return dto;
     }
@@ -404,8 +508,9 @@ public class ProductService {
      */
     private ProductResponse mapToProductResponse(Product product) {
         ProductResponse dto = ProductResponse.fromEntity(product);
-        if (dto == null) return null;
-        
+        if (dto == null)
+            return null;
+
         applyPromotionToProductResponse(dto);
         return dto;
     }
@@ -421,9 +526,11 @@ public class ProductService {
         if (promotionPriceService.hasActivePromotion(productId, categoryId)) {
             dto.setHasActivePromotion(true);
             dto.setPromotionPrice(promotionPriceService.calculatePromotionPrice(basePrice, productId, categoryId));
-            dto.setPromotionDiscount(promotionPriceService.calculatePromotionDiscount(basePrice, productId, categoryId));
-            
-            PromotionPriceService.PromotionInfo info = promotionPriceService.getAppliedPromotionInfo(productId, categoryId);
+            dto.setPromotionDiscount(
+                    promotionPriceService.calculatePromotionDiscount(basePrice, productId, categoryId));
+
+            PromotionPriceService.PromotionInfo info = promotionPriceService.getAppliedPromotionInfo(productId,
+                    categoryId);
             if (info != null) {
                 dto.setPromotionName(info.discountText());
             }
@@ -440,17 +547,40 @@ public class ProductService {
         Long categoryId = dto.getCategoryId();
         BigDecimal basePrice = dto.getBasePrice();
 
-        if (promotionPriceService.hasActivePromotion(productId, categoryId)) {
-            dto.setHasActivePromotion(true);
+        boolean hasPromotion = promotionPriceService.hasActivePromotion(productId, categoryId);
+        dto.setHasActivePromotion(hasPromotion);
+
+        if (hasPromotion) {
             dto.setPromotionPrice(promotionPriceService.calculatePromotionPrice(basePrice, productId, categoryId));
-            dto.setPromotionDiscount(promotionPriceService.calculatePromotionDiscount(basePrice, productId, categoryId));
-            
-            PromotionPriceService.PromotionInfo info = promotionPriceService.getAppliedPromotionInfo(productId, categoryId);
+            dto.setPromotionDiscount(
+                    promotionPriceService.calculatePromotionDiscount(basePrice, productId, categoryId));
+
+            PromotionPriceService.PromotionInfo info = promotionPriceService.getAppliedPromotionInfo(productId,
+                    categoryId);
             if (info != null) {
                 dto.setPromotionName(info.discountText());
             }
-        } else {
-            dto.setHasActivePromotion(false);
+        }
+
+        // Load stock quantity and apply promotion to each variant
+        if (dto.getVariants() != null) {
+            for (var variant : dto.getVariants()) {
+                // Load stock quantity from inventory
+                Integer stockQuantity = inventoryRepository.findByVariantVariantId(variant.getVariantId())
+                        .map(inv -> inv.getActualAvailable())
+                        .orElse(0);
+                variant.setStockQuantity(stockQuantity);
+
+                // Apply promotion if active
+                if (hasPromotion) {
+                    BigDecimal variantFinalPrice = variant.getFinalPrice();
+                    if (variantFinalPrice != null) {
+                        BigDecimal variantPromotionPrice = promotionPriceService.calculatePromotionPrice(
+                                variantFinalPrice, productId, categoryId);
+                        variant.setPromotionPrice(variantPromotionPrice);
+                    }
+                }
+            }
         }
     }
 
@@ -459,8 +589,33 @@ public class ProductService {
      */
     @Transactional
     public void restoreProduct(Long id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + id));
+
+        // Check if the product's category is soft-deleted
+        // We use native query to bypass @Where filter
+        Long categoryId = product.getCategory() != null ? product.getCategory().getCategoryId() : null;
+        if (categoryId != null) {
+            Optional<Category> categoryOpt = categoryRepository.findByIdIncludingDeleted(categoryId);
+            if (categoryOpt.isPresent() && categoryOpt.get().getDeletedAt() != null) {
+                throw new IllegalArgumentException(
+                        String.format("Không thể khôi phục sản phẩm '%s' vì danh mục '%s' đã bị xóa. " +
+                                "Vui lòng khôi phục danh mục trước.",
+                                product.getName(), categoryOpt.get().getName()));
+            }
+        }
+
+        // Check if the product's brand is soft-deleted
+        Long brandId = product.getBrand() != null ? product.getBrand().getBrandId() : null;
+        if (brandId != null) {
+            Optional<Brand> brandOpt = brandRepository.findByIdIncludingDeleted(brandId);
+            if (brandOpt.isPresent() && brandOpt.get().getDeletedAt() != null) {
+                throw new IllegalArgumentException(
+                        String.format("Không thể khôi phục sản phẩm '%s' vì thương hiệu '%s' đã bị xóa. " +
+                                "Vui lòng khôi phục thương hiệu trước.",
+                                product.getName(), brandOpt.get().getName()));
+            }
+        }
 
         product.setDeletedAt(null);
         product.setStatus(ProductStatus.DRAFT);
@@ -473,11 +628,14 @@ public class ProductService {
      */
     @Transactional
     public void hardDeleteProduct(Long id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + id));
 
         // Delete related images first
         productImageRepository.deleteByProductId(product.getProductId());
+
+        // Delete related inventory records
+        inventoryRepository.deleteByProductProductId(product.getProductId());
 
         // Delete the product
         productRepository.delete(product);

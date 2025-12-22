@@ -150,11 +150,25 @@
 
     <th:block layout:fragment="scripts">
         <script>
-            const categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+            let categoryModal;
 
-            document.getElementById('categoryForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                saveCategory();
+            document.addEventListener('DOMContentLoaded', function () {
+                // Safely initialize Bootstrap modal
+                const modalElement = document.getElementById('categoryModal');
+                if (modalElement && typeof bootstrap !== 'undefined') {
+                    categoryModal = new bootstrap.Modal(modalElement);
+                } else {
+                    console.warn('Bootstrap or categoryModal element not found');
+                }
+
+                // Add form submit listener
+                const categoryForm = document.getElementById('categoryForm');
+                if (categoryForm) {
+                    categoryForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        saveCategory();
+                    });
+                }
             });
 
             function saveCategory() {
@@ -199,7 +213,7 @@
                         if (result.error) {
                             alert('Lỗi: ' + result.error);
                         } else {
-                            categoryModal.hide();
+                            if (categoryModal) categoryModal.hide();
                             location.reload();
                         }
                     })
@@ -220,7 +234,7 @@
                         document.getElementById('categoryIcon').value = cat.icon || '';
                         document.getElementById('categoryDescription').value = cat.description || '';
                         document.getElementById('categoryActive').checked = cat.isActive;
-                        categoryModal.show();
+                        if (categoryModal) categoryModal.show();
                     });
             }
 

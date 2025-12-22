@@ -157,6 +157,7 @@ public class SecurityConfig {
                                                                 "/products/**", "/categories/**", "/brands/**",
                                                                 "/search", "/compare",
                                                                 "/cart/**",
+                                                                "/stringing", // Public stringing page
                                                                 "/login", "/register", "/forgot-password",
                                                                 "/reset-password",
                                                                 "/verify-email", "/resend-verification",
@@ -173,6 +174,7 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 "/account/**", "/orders/**", "/wishlist/**",
                                                                 "/checkout/**", "/payment/**",
+                                                                "/stringing/order/**", // Stringing order requires login
                                                                 "/users/**")
                                                 .authenticated()
                                                 .anyRequest().permitAll())

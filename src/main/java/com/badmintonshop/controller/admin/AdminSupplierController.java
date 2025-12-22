@@ -122,7 +122,7 @@ public class AdminSupplierController {
      * GET /admin/api/products/{productId}/suppliers
      */
     @GetMapping("/products/{productId}/suppliers")
-    public ResponseEntity<List<SupplierDTO>> getProductSuppliers(@PathVariable Long productId) {
+    public ResponseEntity<List<java.util.Map<String, Object>>> getProductSuppliers(@PathVariable Long productId) {
         return ResponseEntity.ok(supplierService.getSuppliersForProduct(productId));
     }
 

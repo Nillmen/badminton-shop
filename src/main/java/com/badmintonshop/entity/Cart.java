@@ -13,9 +13,9 @@ import java.util.List;
  */
 @Entity
 @Table(name = "carts", indexes = {
-    @Index(name = "idx_carts_user", columnList = "user_id"),
-    @Index(name = "idx_carts_session", columnList = "session_id"),
-    @Index(name = "idx_carts_expires", columnList = "expires_at")
+        @Index(name = "idx_carts_user", columnList = "user_id"),
+        @Index(name = "idx_carts_session", columnList = "session_id"),
+        @Index(name = "idx_carts_expires", columnList = "expires_at")
 })
 @Getter
 @Setter
@@ -65,6 +65,12 @@ public class Cart {
         return items.stream().mapToInt(CartItem::getQuantity).sum();
     }
 
+    public java.math.BigDecimal getTotalPrice() {
+        return items.stream()
+                .map(CartItem::getSubtotal)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+    }
+
     public void addItem(CartItem item) {
         items.add(item);
         item.setCart(this);
@@ -84,4 +90,3 @@ public class Cart {
         updatedAt = LocalDateTime.now();
     }
 }
-

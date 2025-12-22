@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Quản lý Dịch vụ Đan</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Dịch vụ Đan Vợt</h1>
+            <a th:href="@{/admin/services/stringing/new}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Thêm Dịch Vụ
+            </a>
+        </div>
+
+        <!-- Alert Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên dịch vụ</th>
+                                <th>Kiểu đan</th>
+                                <th>Giá (VNĐ)</th>
+                                <th>Thời gian (phút)</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${services}">
+                                <td th:text="${item.serviceId}">1</td>
+                                <td th:text="${item.serviceName}">Đan thường 2 nút</td>
+                                <td>
+                                    <span th:if="${item.serviceType.name() == 'STANDARD'}"
+                                        class="badge bg-secondary">Tiêu chuẩn</span>
+                                    <span th:if="${item.serviceType.name() == 'FOUR_KNOT'}" class="badge bg-info">4 Nút
+                                        (Chuyên nghiệp)</span>
+                                    <span th:if="${item.serviceType.name() == 'PRE_STRETCH'}"
+                                        class="badge bg-warning text-dark">Pre-stretch</span>
+                                </td>
+                                <td th:text="${#numbers.formatDecimal(item.basePrice, 0, 'COMMA', 0, 'POINT')}">30,000
+                                </td>
+                                <td th:text="${item.estimatedTimeMinutes}">30</td>
+                                <td>
+                                    <span th:if="${item.isActive}" class="badge bg-success">Active</span>
+                                    <span th:unless="${item.isActive}" class="badge bg-secondary">Inactive</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/services/stringing/{id}/edit(id=${item.serviceId})}"
+                                        class="btn btn-sm btn-info">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form th:action="@{/admin/services/stringing/{id}/delete(id=${item.serviceId})}"
+                                        method="post" class="d-inline" onsubmit="return confirm('Xóa dịch vụ này?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

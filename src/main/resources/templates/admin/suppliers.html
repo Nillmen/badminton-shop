@@ -14,8 +14,8 @@
                 <h1 class="page-title">Quản lý nhà cung cấp</h1>
                 <p class="page-subtitle">Danh sách các nhà cung cấp trong hệ thống</p>
             </div>
-            <div sec:authorize="hasRole('SUPER_ADMIN')">
-                <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+            <div sec:authorize="hasRole('SUPER_ADMIN') or hasAuthority('inventory.import')">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#supplierModal">
                     <i class="fas fa-plus me-2"></i>Thêm nhà cung cấp
                 </button>
             </div>
@@ -80,7 +80,8 @@
                                 <span th:unless="${supplier.isActive}" class="badge bg-secondary">Ngừng hoạt động</span>
                             </td>
                             <td>
-                                <div class="btn-group btn-group-sm" sec:authorize="hasRole('SUPER_ADMIN')">
+                                <div class="btn-group btn-group-sm"
+                                    sec:authorize="hasRole('SUPER_ADMIN') or hasAuthority('inventory.import')">
                                     <button type="button" class="btn btn-outline-warning" title="Sửa"
                                         th:onclick="'openEditModal(' + ${supplier.supplierId} + ')'">
                                         <i class="fas fa-edit"></i>
@@ -133,78 +134,79 @@
                 </nav>
             </div>
         </div>
-    </div>
 
-    <!-- Create/Edit Modal -->
-    <div class="modal fade" id="supplierModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Thêm nhà cung cấp</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="supplierForm">
-                        <input type="hidden" id="supplierId">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Tên nhà cung cấp <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="supplierName" required>
+        <!-- Create/Edit Modal - inside fragment -->
+        <div class="modal fade" id="supplierModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Thêm nhà cung cấp</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="supplierForm">
+                            <input type="hidden" id="supplierId">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tên nhà cung cấp <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="supplierName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Mã nhà cung cấp</label>
+                                    <input type="text" class="form-control" id="supplierCode">
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Mã nhà cung cấp</label>
-                                <input type="text" class="form-control" id="supplierCode">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Người liên hệ</label>
+                                    <input type="text" class="form-control" id="contactName">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email liên hệ</label>
+                                    <input type="email" class="form-control" id="contactEmail">
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Người liên hệ</label>
-                                <input type="text" class="form-control" id="contactName">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input type="text" class="form-control" id="contactPhone">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Điều khoản thanh toán</label>
+                                    <input type="text" class="form-control" id="paymentTerms" placeholder="VD: Net 30">
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email liên hệ</label>
-                                <input type="email" class="form-control" id="contactEmail">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Địa chỉ</label>
+                                    <input type="text" class="form-control" id="address">
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Số điện thoại</label>
-                                <input type="text" class="form-control" id="contactPhone">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Thành phố</label>
+                                    <input type="text" class="form-control" id="city">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Quốc gia</label>
+                                    <input type="text" class="form-control" id="country" value="Vietnam">
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Điều khoản thanh toán</label>
-                                <input type="text" class="form-control" id="paymentTerms" placeholder="VD: Net 30">
+                            <div class="mb-3">
+                                <label class="form-label">Ghi chú</label>
+                                <textarea class="form-control" id="notes" rows="2"></textarea>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label">Địa chỉ</label>
-                                <input type="text" class="form-control" id="address">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="isActive" checked>
+                                <label class="form-check-label" for="isActive">Hoạt động</label>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Thành phố</label>
-                                <input type="text" class="form-control" id="city">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Quốc gia</label>
-                                <input type="text" class="form-control" id="country" value="Vietnam">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ghi chú</label>
-                            <textarea class="form-control" id="notes" rows="2"></textarea>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="isActive" checked>
-                            <label class="form-check-label" for="isActive">Hoạt động</label>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" onclick="saveSupplier()">Lưu</button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary" onclick="saveSupplier()">Lưu</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -212,11 +214,22 @@
 
     <th:block layout:fragment="scripts">
         <script th:inline="javascript">
-            let supplierModal;
+            const supplierModal = new bootstrap.Modal(document.getElementById('supplierModal'));
             let isEditMode = false;
 
-            document.addEventListener('DOMContentLoaded', function () {
-                supplierModal = new bootstrap.Modal(document.getElementById('supplierModal'));
+            // Reset modal when opening for new supplier
+            document.getElementById('supplierModal').addEventListener('show.bs.modal', function (e) {
+                if (!document.getElementById('supplierId').value) {
+                    document.getElementById('modalTitle').textContent = 'Thêm nhà cung cấp';
+                    document.getElementById('supplierForm').reset();
+                    document.getElementById('isActive').checked = true;
+                    document.getElementById('country').value = 'Vietnam';
+                    isEditMode = false;
+                }
+            });
+
+            document.getElementById('supplierModal').addEventListener('hidden.bs.modal', function () {
+                document.getElementById('supplierId').value = '';
             });
 
             function openCreateModal() {

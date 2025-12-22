@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Quản Lý Đan Vợt - Admin</title>
+</head>
+
+<body>
+
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Quản Lý Đơn Đan Vợt</h1>
+        </div>
+
+        <!-- Tabs Navigation - CHỈ ADMIN thấy 2 tabs -->
+        <ul th:if="${isAdmin}" class="nav nav-tabs mb-4" id="stringingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assign-content"
+                    type="button" role="tab">
+                    <i class="fas fa-user-plus me-1"></i>Giao Nhiệm Vụ
+                    <span class="badge bg-warning text-dark ms-1" th:text="${#lists.size(pendingItems)}">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="progress-tab" data-bs-toggle="tab" data-bs-target="#progress-content"
+                    type="button" role="tab">
+                    <i class="fas fa-tasks me-1"></i>Tiến Trình
+                    <span class="badge bg-info ms-1" th:text="${#lists.size(progressItems)}">0</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tabs Content -->
+        <div class="tab-content" id="stringingTabsContent">
+
+            <!-- Tab 1: Giao Nhiệm Vụ (CHỈ ADMIN) -->
+            <div th:if="${isAdmin}" class="tab-pane fade show active" id="assign-content" role="tabpanel">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-clock me-2"></i>Đơn Chờ Giao Thợ
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Mã Đơn</th>
+                                        <th>Sản Phẩm</th>
+                                        <th>Chi Tiết Đan</th>
+                                        <th>Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item : ${pendingItems}">
+                                        <td class="ps-4 fw-bold" th:text="${item.order.orderNumber}">#ORD-123</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div>
+                                                    <div class="fw-medium" th:text="${item.productName}">Vợt Yonex</div>
+                                                    <small class="text-muted" th:text="${item.variantName}">4U</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small">
+                                                <span class="d-block">Lực căng: <strong
+                                                        th:text="${item.tension} + ' lbs'">24 lbs</strong></span>
+                                                <span class="d-block" th:text="${item.stringName}">BG 65</span>
+                                                <span class="d-block text-muted"
+                                                    th:text="${item.stringingServiceName}">Đan máy</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary"
+                                                th:onclick="'openAssignModal(' + ${item.orderItemId} + ')'">
+                                                <i class="fas fa-user-plus me-1"></i>Giao thợ
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(pendingItems)}">
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                                            <p class="mb-0">Không có đơn nào đang chờ giao</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Tiến Trình (TẤT CẢ đều thấy) -->
+            <div class="tab-pane fade" th:classappend="${!isAdmin} ? 'show active'" id="progress-content"
+                role="tabpanel">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-spinner me-2"></i>Đơn Đang Xử Lý
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Mã Đơn</th>
+                                        <th>Sản Phẩm</th>
+                                        <th>Chi Tiết Đan</th>
+                                        <th>Trạng Thái</th>
+                                        <th>Thợ Đan</th>
+                                        <th>Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item : ${progressItems}">
+                                        <td class="ps-4 fw-bold" th:text="${item.order.orderNumber}">#ORD-123</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div>
+                                                    <div class="fw-medium" th:text="${item.productName}">Vợt Yonex</div>
+                                                    <small class="text-muted" th:text="${item.variantName}">4U</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small">
+                                                <span class="d-block">Lực căng: <strong
+                                                        th:text="${item.tension} + ' lbs'">24 lbs</strong></span>
+                                                <span class="d-block" th:text="${item.stringName}">BG 65</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge rounded-pill"
+                                                th:classappend="${item.stringingStatus.name() == 'ASSIGNED' ? 'bg-info text-white' : 
+                                                                   (item.stringingStatus.name() == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                                   (item.stringingStatus.name() == 'COMPLETED' ? 'bg-success' : 
+                                                                   (item.stringingStatus.name() == 'QUALITY_CHECKED' ? 'bg-dark' : 'bg-secondary')))}"
+                                                th:text="${item.stringingStatus.name() == 'ASSIGNED' ? 'Đã giao' : 
+                                                           (item.stringingStatus.name() == 'IN_PROGRESS' ? 'Đang đan' : 
+                                                           (item.stringingStatus.name() == 'COMPLETED' ? 'Hoàn thành' : 
+                                                           (item.stringingStatus.name() == 'QUALITY_CHECKED' ? 'Đã kiểm tra' : item.stringingStatus)))}">
+                                                ASSIGNED
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${item.assignedStaff}" th:text="${item.assignedStaff.fullName}"
+                                                class="fw-medium">Nguyễn Văn A</span>
+                                            <span th:unless="${item.assignedStaff}"
+                                                class="text-muted fst-italic">-</span>
+                                        </td>
+                                        <td>
+                                            <!-- Nút Bắt đầu đan -->
+                                            <form th:if="${item.stringingStatus.name() == 'ASSIGNED'}"
+                                                th:action="@{/admin/stringing/start}" method="post" class="d-inline">
+                                                <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                                                <button class="btn btn-sm btn-info text-white" type="submit">
+                                                    <i class="fas fa-play me-1"></i>Bắt đầu
+                                                </button>
+                                            </form>
+
+                                            <!-- Nút Hoàn thành -->
+                                            <form th:if="${item.stringingStatus.name() == 'IN_PROGRESS'}"
+                                                th:action="@{/admin/stringing/complete}" method="post" class="d-inline">
+                                                <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                                                <button class="btn btn-sm btn-warning" type="submit">
+                                                    <i class="fas fa-check me-1"></i>Hoàn thành
+                                                </button>
+                                            </form>
+
+                                            <!-- Nút QC OK - CHỈ ADMIN -->
+                                            <form th:if="${isAdmin and item.stringingStatus.name() == 'COMPLETED'}"
+                                                th:action="@{/admin/stringing/qc-approve}" method="post"
+                                                class="d-inline">
+                                                <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                                                <button class="btn btn-sm btn-success" type="submit">
+                                                    <i class="fas fa-check-double me-1"></i>QC OK
+                                                </button>
+                                            </form>
+
+                                            <!-- Đã hoàn thành QC -->
+                                            <span th:if="${item.stringingStatus.name() == 'QUALITY_CHECKED'}"
+                                                class="text-success">
+                                                <i class="fas fa-check-circle"></i> Xong
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(progressItems)}">
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                                            <p class="mb-0">Không có đơn đang xử lý</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assign Modal - CHỈ ADMIN -->
+        <div th:if="${isAdmin}" class="modal fade" id="assignModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Chọn Thợ Đan</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/admin/stringing/assign}" method="post">
+                        <div class="modal-body">
+                            <input type="hidden" name="orderItemId" id="assignOrderItemId">
+
+                            <div class="list-group">
+                                <label class="list-group-item list-group-item-action d-flex gap-3"
+                                    th:each="staff : ${staffs}">
+                                    <input class="form-check-input flex-shrink-0" type="radio" name="staffId"
+                                        th:value="${staff.staffId}"
+                                        th:disabled="${staff.dailyStringingCapacity != null and 5 >= staff.dailyStringingCapacity}">
+                                    <span class="d-flex flex-column">
+                                        <span class="fw-bold" th:text="${staff.fullName}">Nguyen Van A</span>
+                                        <small class="text-muted">
+                                            Công suất: <span th:text="${staff.dailyStringingCapacity}">10</span>/ngày
+                                        </small>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Xác nhận giao</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function openAssignModal(orderItemId) {
+                document.getElementById('assignOrderItemId').value = orderItemId;
+                new bootstrap.Modal(document.getElementById('assignModal')).show();
+            }
+        </script>
+    </div>
+
+</body>
+
+</html>

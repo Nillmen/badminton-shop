@@ -253,4 +253,47 @@ public class PromotionService {
     private String formatPrice(BigDecimal price) {
         return String.format("%,d₫", price.longValue());
     }
+
+    // ==================== TRASH METHODS ====================
+
+    /**
+     * Get deleted promotions (for trash)
+     */
+    @Transactional(readOnly = true)
+    public Page<PromotionDTO> getDeletedPromotions(Pageable pageable) {
+        return promotionRepository.findDeletedPromotions(pageable).map(this::mapToDTO);
+    }
+
+    /**
+     * Restore promotion from trash
+     */
+    @Transactional
+    public void restorePromotion(Long id) {
+        Promotion promotion = promotionRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new IllegalArgumentException("Khuyến mãi không tồn tại: " + id));
+
+        if (promotion.getDeletedAt() == null) {
+            throw new IllegalArgumentException("Khuyến mãi chưa bị xóa");
+        }
+
+        promotion.setDeletedAt(null);
+        promotionRepository.save(promotion);
+        log.info("Restored promotion: {} (ID: {})", promotion.getName(), id);
+    }
+
+    /**
+     * Hard delete promotion (permanently)
+     */
+    @Transactional
+    public void hardDeletePromotion(Long id) {
+        Promotion promotion = promotionRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new IllegalArgumentException("Khuyến mãi không tồn tại: " + id));
+
+        if (promotion.getDeletedAt() == null) {
+            throw new IllegalArgumentException("Khuyến mãi chưa bị xóa mềm, không thể xóa vĩnh viễn");
+        }
+
+        promotionRepository.delete(promotion);
+        log.info("Hard deleted promotion: {} (ID: {})", promotion.getName(), id);
+    }
 }

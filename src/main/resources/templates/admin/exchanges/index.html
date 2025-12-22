@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Quản lý Đổi/Trả hàng</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Yêu cầu Đổi hàng</h1>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Danh sách yêu cầu</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Mã yêu cầu</th>
+                                <th>Đơn hàng</th>
+                                <th>Sản phẩm cũ</th>
+                                <th>Sản phẩm mới</th>
+                                <th>Lý do</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="exchange : ${exchanges}">
+                                <td th:text="${exchange.exchangeNumber}">EX-12345</td>
+                                <td>
+                                    <a th:href="@{/admin/orders/{id}(id=${exchange.orderId})}"
+                                        th:text="${exchange.orderNumber}">ORD-001</a>
+                                </td>
+                                <td>
+                                    <div th:text="${exchange.oldProductName}">Product A</div>
+                                    <small class="text-muted" th:text="${exchange.oldVariantName}">Variant A</small>
+                                </td>
+                                <td>
+                                    <div th:text="${exchange.newProductName}">Product B</div>
+                                    <small class="text-muted" th:text="${exchange.newVariantName}">Variant B</small>
+                                </td>
+                                <td th:text="${exchange.reason}">Changed Mind</td>
+                                <td>
+                                    <span class="badge" th:classappend="${
+                                              exchange.status.name() == 'APPROVED' ? 'bg-success' : 
+                                              (exchange.status.name() == 'REJECTED' ? 'bg-danger' : 
+                                              (exchange.status.name() == 'COMPLETED' ? 'bg-primary' : 'bg-warning'))
+                                          }" th:text="${exchange.status}">PENDING</span>
+                                </td>
+                                <td th:text="${#temporals.format(exchange.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2023
+                                    10:00</td>
+                                <td>
+                                    <a th:href="@{/admin/exchanges/{id}(id=${exchange.exchangeId})}"
+                                        class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(exchanges)}">
+                                <td colspan="8" class="text-center">Chưa có yêu cầu nào</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
