@@ -218,6 +218,20 @@ public class OrderService {
         }
     }
 
+    @Transactional
+    public void updateOrderStatus(Long orderId, OrderStatus newStatus, String notes, Long staffId) {
+        Order order = getOrder(orderId);
+        OrderStatus oldStatus = order.getStatus();
+
+        // Prevent backward transitions or invalid logic if needed
+        // For now, allow admin to override
+
+        order.updateStatus(newStatus);
+        orderRepository.save(order);
+
+        logStatusHistory(order, notes, com.badmintonshop.entity.enums.ChangedByType.STAFF, staffId);
+    }
+
     private void logStatusHistory(Order order, String notes, com.badmintonshop.entity.enums.ChangedByType type,
             Long changedById) {
         // FK constraint in database might only allow staff IDs for changed_by_id

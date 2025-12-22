@@ -16,13 +16,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/admin/api/orders")
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AdminOrderController {
 
     private final OrderRepository orderRepository;
     private final DTOMapper dtoMapper;
+    private final com.badmintonshop.service.OrderService orderService;
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<List<OrderResponse>> getAllOrders(@RequestParam(required = false) OrderStatus status) {
         List<Order> orders;
         if (status != null) {
@@ -36,6 +37,7 @@ public class AdminOrderController {
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id) {
         return orderRepository.findById(id)
                 .map(dtoMapper::toOrderResponse)
@@ -45,13 +47,17 @@ public class AdminOrderController {
 
     @PutMapping("/{id}/status")
     public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestParam OrderStatus status) {
-        Order order = orderRepository.findById(id).orElseThrow();
-        order.updateStatus(status);
-        orderRepository.save(order);
+        // Assuming admin ID is retrieved from security context, here passing null or
+        // placeholder for now
+        // In real app: Long staffId = ((StaffUserDetails)
+        // SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        Long staffId = 1L; // Fallback to system/admin ID
+        orderService.updateOrderStatus(id, status, "Admin updated status to " + status, staffId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}/history")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Object>> getOrderHistory(@PathVariable Long id) {
         // Stub: Return OrderStatusHistory list. Assuming logic exists or empty list.
         // In real app: return
@@ -60,6 +66,7 @@ public class AdminOrderController {
     }
 
     @PutMapping("/{id}/tracking")
+    @Transactional
     public ResponseEntity<Void> updateTracking(@PathVariable Long id,
             @RequestBody java.util.Map<String, String> trackingInfo) {
         orderRepository.findById(id).orElseThrow();
