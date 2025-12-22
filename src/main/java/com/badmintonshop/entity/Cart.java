@@ -13,20 +13,22 @@ import java.util.List;
  */
 @Entity
 @Table(name = "carts", indexes = {
-    @Index(name = "idx_carts_user", columnList = "user_id"),
-    @Index(name = "idx_carts_session", columnList = "session_id"),
-    @Index(name = "idx_carts_expires", columnList = "expires_at")
+        @Index(name = "idx_carts_user", columnList = "user_id"),
+        @Index(name = "idx_carts_session", columnList = "session_id"),
+        @Index(name = "idx_carts_expires", columnList = "expires_at")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cart_id")
+    @EqualsAndHashCode.Include
     private Long cartId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -84,4 +86,3 @@ public class Cart {
         updatedAt = LocalDateTime.now();
     }
 }
-

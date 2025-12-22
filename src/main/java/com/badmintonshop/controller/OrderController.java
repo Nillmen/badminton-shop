@@ -11,6 +11,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.Authentication;
 import com.badmintonshop.security.CustomUserDetails;
 import org.springframework.web.bind.annotation.*;
+import com.badmintonshop.service.PaymentService;
+import com.badmintonshop.entity.enums.PaymentMethod;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -22,20 +25,35 @@ import java.util.stream.Collectors;
 public class OrderController {
 
     private final OrderService orderService;
+    private final PaymentService paymentService;
     private final DTOMapper dtoMapper;
+    private final HttpServletRequest httpServletRequest;
 
     private Long getUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             return ((CustomUserDetails) authentication.getPrincipal()).getUserId();
         }
-        throw new RuntimeException("User must be logged in");
+        return null;
+    }
+
+    private String getSessionId() {
+        return httpServletRequest.getHeader("X-Session-ID");
     }
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest request) {
-        Order order = orderService.createOrder(getUserId(), request);
-        return ResponseEntity.ok(dtoMapper.toOrderResponse(order));
+        Long userId = getUserId();
+        String sessionId = getSessionId();
+
+        Order order = orderService.createOrder(userId, sessionId, request);
+
+        String paymentUrl = null;
+        if (order.getPaymentMethod() == PaymentMethod.VNPAY) {
+            paymentUrl = paymentService.createVnpayPaymentUrl(order);
+        }
+
+        return ResponseEntity.ok(dtoMapper.toOrderResponse(order, paymentUrl));
     }
 
     @GetMapping

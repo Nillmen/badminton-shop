@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <title>Shopping Cart - Badminton Shop</title>
@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/css/main.css"> <!-- Link to main.css -->
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <script src="/js/main.js"></script>
 </head>
 
 <body class="bg-gray-50 font-sans">
@@ -57,10 +58,18 @@
                         <span>Total</span>
                         <span id="total" class="text-primary">$0.00</span>
                     </div>
-                    <button onclick="window.location.href='/checkout'"
-                        class="w-full btn btn-primary py-3 rounded-lg hover:shadow-lg transition font-semibold">
-                        Proceed to Checkout <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
+                    <div sec:authorize="isAuthenticated()">
+                        <button onclick="window.location.href='/checkout'"
+                            class="w-full btn btn-primary py-3 rounded-lg hover:shadow-lg transition font-semibold">
+                            Proceed to Checkout <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                    <div sec:authorize="!isAuthenticated()">
+                        <a href="/login"
+                            class="block text-center w-full btn btn-secondary py-3 rounded-lg hover:shadow-lg transition font-semibold">
+                            Login to Checkout <i class="fas fa-sign-in-alt ml-2"></i>
+                        </a>
+                    </div>
                     <div class="mt-4 text-center">
                         <a href="/" class="text-sm text-gray-500 hover:text-primary transition">Continue Shopping</a>
                     </div>
@@ -73,8 +82,7 @@
         // Fetch Cart
         async function loadCart() {
             try {
-                const response = await fetch('/api/cart');
-                const cart = await response.json();
+                const cart = await Api.get('/api/cart');
                 renderCart(cart);
             } catch (error) {
                 console.error('Error loading cart:', error);
@@ -146,21 +154,12 @@
         async function removeItem(itemId) {
             if (!confirm('Remove this item?')) return;
             try {
-                // Fetch CSRF
-                const csrfToken = document.querySelector('meta[name="_csrf"]') ? document.querySelector('meta[name="_csrf"]').getAttribute('content') : '';
-                const csrfHeader = document.querySelector('meta[name="_csrf_header"]') ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content') : '';
-
-                const headers = {};
-                if (csrfToken) headers[csrfHeader] = csrfToken;
-
-                await fetch(`/api/cart/items/${itemId}`, {
-                    method: 'DELETE',
-                    headers: headers
-                });
+                await Api.delete(`/api/cart/items/${itemId}`);
                 loadCart();
+                Toast.success('Removed item');
             } catch (e) {
                 console.error(e);
-                alert('Error removing item');
+                Toast.error('Error removing item');
             }
         }
 
@@ -177,27 +176,17 @@
                 // Optimistic update
                 qtySpan.innerText = newQty;
 
-                const csrfToken = document.querySelector('meta[name="_csrf"]') ? document.querySelector('meta[name="_csrf"]').getAttribute('content') : '';
-                const csrfHeader = document.querySelector('meta[name="_csrf_header"]') ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content') : '';
+                // Use Api.put. Note: Controller expects param `quantity`, not body?
+                // Correct. Api helper handles JSON body. If param is needed, we construct URL.
+                // Wait, Controller: @PutMapping("/items/{itemId}") updateItemQuantity(@PathVariable Long itemId, @RequestParam Integer quantity)
+                // So it MUST be query param.
 
-                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                if (csrfToken) headers[csrfHeader] = csrfToken;
-
-                // Send quantity as param as configured in Controller
-                const response = await fetch(`/api/cart/items/${itemId}?quantity=${newQty}`, {
-                    method: 'PUT',
-                    headers: headers
-                });
-
-                if (response.ok) {
-                    loadCart();
-                } else {
-                    console.error("Update failed");
-                    qtySpan.innerText = currentQty;
-                    alert('Failed to update quantity');
-                }
+                await Api.put(`/api/cart/items/${itemId}?quantity=${newQty}`, {});
+                loadCart();
             } catch (e) {
                 console.error(e);
+                Toast.error('Failed to update quantity');
+                loadCart(); // Revert
             }
         }
 

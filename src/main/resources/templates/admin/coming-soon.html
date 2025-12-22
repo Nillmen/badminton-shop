@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Tính năng đang phát triển</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="text-center py-5">
+            <i class="fas fa-hammer fa-3x text-warning mb-3"></i>
+            <h1 class="page-title">Tính năng đang phát triển</h1>
+            <p class="text-muted">Chức năng này chưa được triển khai đầy đủ. Vui lòng quay lại sau.</p>
+            <a th:href="@{/admin/dashboard}" class="btn btn-primary mt-3">
+                <i class="fas fa-home me-2"></i>Về Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

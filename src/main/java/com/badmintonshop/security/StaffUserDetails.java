@@ -35,6 +35,7 @@ public class StaffUserDetails implements UserDetails {
                 role = "ROLE_STAFF";
                 break;
         }
+        System.out.println("DEBUG: Granting authority: " + role + " for staff: " + staff.getEmail());
         return Collections.singletonList(new SimpleGrantedAuthority(role));
     }
 

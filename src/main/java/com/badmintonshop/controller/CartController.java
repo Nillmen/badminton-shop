@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import com.badmintonshop.security.CustomUserDetails;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
@@ -24,6 +25,8 @@ public class CartController {
     private final CartService cartService;
     private final DTOMapper dtoMapper;
 
+    private final HttpServletRequest httpServletRequest;
+
     @PostConstruct
     public void init() {
         log.info("CartController initialized");
@@ -34,15 +37,22 @@ public class CartController {
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             return ((CustomUserDetails) authentication.getPrincipal()).getUserId();
         }
-        // For guest cart, we might want to return null, but service doesn't support it
-        // yet.
-        // Throwing exception for now to force login.
-        throw new RuntimeException("User must be logged in");
+        return null;
+    }
+
+    private String getSessionId() {
+        String sessionId = httpServletRequest.getHeader("X-Session-ID");
+        if (sessionId == null || sessionId.isEmpty()) {
+            // In a real app we might generate one or expect client to handle it.
+            // For now, return null, service will handle if both are null (exception)
+            return null;
+        }
+        return sessionId;
     }
 
     @GetMapping
     public ResponseEntity<CartResponse> getCart() {
-        Cart cart = cartService.getOrCreateCart(getUserId());
+        Cart cart = cartService.getOrCreateCart(getUserId(), getSessionId());
         return ResponseEntity.ok(dtoMapper.toCartResponse(cart));
     }
 
@@ -51,7 +61,9 @@ public class CartController {
         log.info("Received addToCart request: productId={}, variantId={}, quantity={}",
                 request.getProductId(), request.getVariantId(), request.getQuantity());
         try {
-            Cart cart = cartService.addToCart(getUserId(), request);
+            // Check if user is logged out AND no session ID provided?
+            // Service handles logic.
+            Cart cart = cartService.addToCart(getUserId(), getSessionId(), request);
             log.info("Successfully added to cart. CartId: {}", cart.getCartId());
             return ResponseEntity.ok(dtoMapper.toCartResponse(cart));
         } catch (Exception e) {
@@ -62,31 +74,31 @@ public class CartController {
 
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<Void> removeItem(@PathVariable Long itemId) {
-        cartService.removeFromCart(getUserId(), itemId);
+        cartService.removeFromCart(getUserId(), getSessionId(), itemId);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/items/{itemId}")
     public ResponseEntity<CartResponse> updateItemQuantity(@PathVariable Long itemId, @RequestParam Integer quantity) {
-        Cart cart = cartService.updateItemQuantity(getUserId(), itemId, quantity);
+        Cart cart = cartService.updateItemQuantity(getUserId(), getSessionId(), itemId, quantity);
         return ResponseEntity.ok(dtoMapper.toCartResponse(cart));
     }
 
     @DeleteMapping("/clear")
     public ResponseEntity<Void> clearCart() {
-        cartService.clearCart(getUserId());
+        cartService.clearCart(getUserId(), getSessionId());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/count")
     public ResponseEntity<Integer> getCartCount() {
-        return ResponseEntity.ok(cartService.getCartItemCount(getUserId()));
+        return ResponseEntity.ok(cartService.getCartItemCount(getUserId(), getSessionId()));
     }
 
     @PostMapping("/items/{itemId}/stringing")
     public ResponseEntity<Void> addStringingService(@PathVariable Long itemId,
             @RequestBody Map<String, String> payload) {
-        cartService.addStringingService(getUserId(), itemId, payload.get("info"));
+        cartService.addStringingService(getUserId(), getSessionId(), itemId, payload.get("info"));
         return ResponseEntity.ok().build();
     }
 }

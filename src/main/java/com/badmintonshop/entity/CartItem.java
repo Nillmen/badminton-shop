@@ -11,20 +11,22 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "cart_items", indexes = {
-    @Index(name = "idx_cart_items_cart", columnList = "cart_id"),
-    @Index(name = "idx_cart_items_product", columnList = "product_id"),
-    @Index(name = "idx_cart_items_variant", columnList = "variant_id")
+        @Index(name = "idx_cart_items_cart", columnList = "cart_id"),
+        @Index(name = "idx_cart_items_product", columnList = "product_id"),
+        @Index(name = "idx_cart_items_variant", columnList = "variant_id")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cart_item_id")
+    @EqualsAndHashCode.Include
     private Long cartItemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -73,14 +75,14 @@ public class CartItem {
 
     public BigDecimal getSubtotal() {
         BigDecimal subtotal = priceAtAdd.multiply(BigDecimal.valueOf(quantity));
-        
+
         if (stringingService != null) {
             subtotal = subtotal.add(stringingService.getBasePrice().multiply(BigDecimal.valueOf(quantity)));
         }
         if (stringProduct != null && stringProduct.getRetailPrice() != null) {
             subtotal = subtotal.add(stringProduct.getRetailPrice().multiply(BigDecimal.valueOf(quantity)));
         }
-        
+
         return subtotal;
     }
 

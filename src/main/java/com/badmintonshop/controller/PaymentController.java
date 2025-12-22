@@ -26,22 +26,23 @@ public class PaymentController {
 
     @GetMapping("/vnpay/callback")
     public ResponseEntity<Void> vnpayCallback(@RequestParam Map<String, String> params) {
-        // In real app, verify signature and redirect to frontend result page
-        String vnp_ResponseCode = params.get("vnp_ResponseCode");
-        String vnp_OrderInfo = params.get("vnp_OrderInfo"); // Assuming it contains orderNumber
-        paymentService.handleVnpayCallback(vnp_OrderInfo, vnp_ResponseCode);
-
-        // Redirect to order history or success page
-        return ResponseEntity.status(302).header("Location", "/orders").build();
+        try {
+            paymentService.handleVnpayCallback(params);
+            // Redirect to order history or success page
+            return ResponseEntity.status(302).header("Location", "/orders").build();
+        } catch (Exception e) {
+            return ResponseEntity.status(302).header("Location", "/orders?error=" + e.getMessage()).build();
+        }
     }
 
     @GetMapping("/vnpay/ipn")
     public ResponseEntity<Void> vnpayIpn(@RequestParam Map<String, String> params) {
-        // Server-to-server update
-        String vnp_ResponseCode = params.get("vnp_ResponseCode");
-        String vnp_OrderInfo = params.get("vnp_OrderInfo");
-        paymentService.handleVnpayCallback(vnp_OrderInfo, vnp_ResponseCode);
-        return ResponseEntity.ok().build();
+        try {
+            paymentService.handleVnpayCallback(params);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/methods")

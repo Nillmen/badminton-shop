@@ -24,4 +24,12 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
                         "AND (:variantId IS NULL OR i.variant.variantId = :variantId)")
         Integer getAvailable(@Param("productId") Long productId,
                         @Param("variantId") Long variantId);
+
+        @Modifying
+        @Query("UPDATE Inventory i SET i.quantityAvailable = i.quantityAvailable + :qty " +
+                        "WHERE i.product.productId = :productId " +
+                        "AND (:variantId IS NULL OR i.variant.variantId = :variantId)")
+        int atomicIncrease(@Param("productId") Long productId,
+                        @Param("variantId") Long variantId,
+                        @Param("qty") int qty);
 }

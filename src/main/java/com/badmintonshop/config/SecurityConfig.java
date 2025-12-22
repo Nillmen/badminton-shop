@@ -98,7 +98,9 @@ public class SecurityConfig {
                                 .securityMatcher("/admin/**")
                                 .authenticationManager(adminAuthManager)
                                 .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/admin/login", "/admin/forgot-password").permitAll()
+                                                .requestMatchers("/admin/login", "/admin/forgot-password",
+                                                                "/admin/access-denied")
+                                                .permitAll()
                                                 .requestMatchers("/admin/api/**").hasAnyRole("ADMIN", "STAFF")
                                                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "STAFF"))
                                 .formLogin(form -> form
@@ -113,9 +115,9 @@ public class SecurityConfig {
                                                 .logoutSuccessUrl("/admin/login?logout=true")
                                                 .invalidateHttpSession(true)
                                                 .deleteCookies("JSESSIONID", "remember-me"))
-                                // Disable CSRF for API endpoints (REST API)
+                                // Disable CSRF for Admin pages temporarily for debugging
                                 .csrf(csrf -> csrf
-                                                .ignoringRequestMatchers("/admin/api/**"))
+                                                .ignoringRequestMatchers("/admin/**"))
                                 .exceptionHandling(ex -> ex
                                                 .accessDeniedPage("/admin/access-denied"))
                                 .sessionManagement(session -> session

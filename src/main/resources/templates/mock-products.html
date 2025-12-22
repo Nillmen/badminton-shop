@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <script src="/js/main.js"></script>
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -123,39 +124,18 @@
         }
 
         async function addToCart(productId, variantId) {
-            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
             try {
-                const response = await fetch('/api/cart/items', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        [csrfHeader]: csrfToken
-                    },
-                    body: JSON.stringify({ productId, variantId, quantity: 1 })
+                // Uses Api from main.js which auto-handles CSRF and Session ID
+                await Api.post('/api/cart/items', {
+                    productId,
+                    variantId,
+                    quantity: 1
                 });
 
-                if (response.ok) {
-                    // Show success toast
-                    const toast = document.createElement('div');
-                    toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded shadow-lg transform transition-all duration-300 translate-y-20 z-50';
-                    toast.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Added to cart!';
-                    document.body.appendChild(toast);
-
-                    setTimeout(() => toast.classList.remove('translate-y-20'), 10);
-                    setTimeout(() => {
-                        toast.classList.add('translate-y-20', 'opacity-0');
-                        setTimeout(() => toast.remove(), 300);
-                    }, 3000);
-
-                } else {
-                    const error = await response.text();
-                    alert('Failed to add: ' + (error || 'Unknown error'));
-                }
+                Toast.success('Added to cart!');
             } catch (error) {
                 console.error(error);
-                alert('Connection error');
+                Toast.error('Failed to add: ' + error.message);
             }
         }
     </script>

@@ -36,6 +36,11 @@ public class DTOMapper {
     }
 
     public com.badmintonshop.dto.order.OrderResponse toOrderResponse(com.badmintonshop.entity.Order order) {
+        return toOrderResponse(order, null);
+    }
+
+    public com.badmintonshop.dto.order.OrderResponse toOrderResponse(com.badmintonshop.entity.Order order,
+            String paymentUrl) {
         return com.badmintonshop.dto.order.OrderResponse.builder()
                 .orderId(order.getOrderId())
                 .orderNumber(order.getOrderNumber())
@@ -50,6 +55,7 @@ public class DTOMapper {
                 .shippingAddress(order.getFullShippingAddress())
                 .createdAt(order.getCreatedAt())
                 .items(order.getItems().stream().map(this::toOrderItemResponse).collect(Collectors.toList()))
+                .paymentUrl(paymentUrl)
                 .build();
     }
 

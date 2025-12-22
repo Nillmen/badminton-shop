@@ -13,6 +13,11 @@ public class AdminStringingServiceController {
     @Autowired
     private StringingServiceService service;
 
+    @GetMapping
+    public java.util.List<StringServiceDTO> getAll() {
+        return service.getAll();
+    }
+
     @PostMapping
     public StringServiceDTO create(@RequestBody StringServiceDTO dto) {
         return service.create(dto);
@@ -30,4 +35,3 @@ public class AdminStringingServiceController {
         service.delete(id);
     }
 }
-

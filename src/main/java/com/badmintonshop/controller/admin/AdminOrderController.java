@@ -21,8 +21,14 @@ public class AdminOrderController {
     private final DTOMapper dtoMapper;
 
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
-        return ResponseEntity.ok(orderRepository.findAll().stream()
+    public ResponseEntity<List<OrderResponse>> getAllOrders(@RequestParam(required = false) OrderStatus status) {
+        List<Order> orders;
+        if (status != null) {
+            orders = orderRepository.findAllByStatus(status);
+        } else {
+            orders = orderRepository.findAll();
+        }
+        return ResponseEntity.ok(orders.stream()
                 .map(dtoMapper::toOrderResponse)
                 .collect(Collectors.toList()));
     }

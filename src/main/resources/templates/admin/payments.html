@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Quản lý Giao dịch</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="page-title">Giao dịch Thanh toán</h1>
+                <p class="page-subtitle">Lịch sử thanh toán và đối soát</p>
+            </div>
+            <button class="btn btn-outline-primary" onclick="loadPayments()">
+                <i class="fas fa-sync me-2"></i>Làm mới
+            </button>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Mã GD</th>
+                                <th>Đơn hàng</th>
+                                <th>Số tiền</th>
+                                <th>Phương thức</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentList"></tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="text-center py-5" style="display: none;">
+                    <p class="text-muted">Chưa có giao dịch nào</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', loadPayments);
+
+            async function loadPayments() {
+                try {
+                    const payments = await Api.get('/admin/api/payments');
+                    renderPayments(payments);
+                } catch (error) {
+                    console.error('Error loading payments:', error);
+                    Toast.error('Lỗi tải danh sách giao dịch');
+                }
+            }
+
+            function renderPayments(payments) {
+                const container = document.getElementById('paymentList');
+                const emptyState = document.getElementById('emptyState');
+
+                if (!payments || payments.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                container.innerHTML = payments.map(p => `
+                    <tr>
+                        <td class="ps-4 font-monospace">${p.transactionId || 'N/A'}</td>
+                        <td><a href="/admin/orders#${p.orderId}" class="text-decoration-none">#${p.orderNumber}</a></td>
+                        <td class="fw-bold">${Utils.formatCurrency(p.amount)}</td>
+                        <td>${p.paymentMethod}</td>
+                        <td>${Utils.formatDate(p.createdAt, 'long')}</td>
+                        <td><span class="badge ${p.status === 'SUCCESS' ? 'bg-success' : 'bg-warning'}">${p.status}</span></td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="alert('Xem chi tiết GD')">Chi tiết</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        </script>
+    </div>
+</body>
+
+</html>

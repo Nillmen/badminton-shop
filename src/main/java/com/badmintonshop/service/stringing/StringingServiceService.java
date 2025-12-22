@@ -24,6 +24,13 @@ public class StringingServiceService {
                 .collect(Collectors.toList());
     }
 
+    public List<StringServiceDTO> getAll() {
+        return repo.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     public StringServiceDTO create(StringServiceDTO dto) {
         StringingService entity = toEntity(dto);
         entity.setIsActive(true);
@@ -82,8 +89,7 @@ public class StringingServiceService {
         dto.setServiceId(((Number) row[0]).longValue());
         dto.setServiceName((String) row[1]);
         dto.setServiceType(
-                StringingServiceType.valueOf((String) row[2])
-        );
+                StringingServiceType.valueOf((String) row[2]));
         dto.setDescription((String) row[3]);
         dto.setBasePrice((BigDecimal) row[4]);
         dto.setEstimatedTimeMinutes((Integer) row[5]);
@@ -91,6 +97,5 @@ public class StringingServiceService {
 
         return dto;
     }
-
 
 }

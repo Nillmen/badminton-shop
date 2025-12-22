@@ -1,6 +1,6 @@
 -- Insert Dummy Category
-INSERT INTO categories (category_id, name, slug, description, type, status, created_at)
-VALUES (1, 'Rackets', 'rackets', 'Badminton Rackets', 'PRODUCT', 'ACTIVE', NOW())
+INSERT INTO categories (category_id, name, slug, description, category_type, status, created_at)
+VALUES (1, 'Rackets', 'rackets', 'Badminton Rackets', 'RACKET', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE name = name;
 
 -- Insert Dummy User (ID 1)
@@ -17,3 +17,30 @@ ON DUPLICATE KEY UPDATE name = name;
 INSERT INTO product_variants (variant_id, product_id, attributes, sku, price_adjustment, status)
 VALUES (1, 1, '{"color": "Navy/Orange", "size": "4U/G5"}', 'AX100ZZ-NO-4UG5', 0, 'ACTIVE')
 ON DUPLICATE KEY UPDATE sku = sku;
+
+-- Insert Admin Staff (Password: admin123)
+INSERT INTO staff (email, password_hash, full_name, phone, role, status, created_at, updated_at)
+VALUES (
+    'admin@shop.vn',
+    '$2a$12$NPAuKW3OFeGs8V12tpgtSuaywdUtULb44aZf5k1kDXcNzWc1KtZD6',
+    'Administrator',
+    '0909000000',
+    'SUPER_ADMIN',
+    'ACTIVE',
+    NOW(),
+    NOW()
+) ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = VALUES(role);
+
+-- Insert Staff Member (Password: admin123)
+INSERT INTO staff (email, password_hash, full_name, phone, role, status, created_at, updated_at)
+VALUES (
+    'staff@shop.vn',
+    '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X3a2c0h3K8e.1pJHu',
+    'Staff Member',
+    '0909111111',
+    'SALE_STAFF',
+    'ACTIVE',
+    NOW(),
+    NOW()
+) ON DUPLICATE KEY UPDATE email = email;
+

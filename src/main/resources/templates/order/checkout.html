@@ -111,7 +111,12 @@
         </form>
     </div>
 
+    <script src="/js/main.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mock loading cart items if needed, but endpoint for creating order pulls from DB
+        });
+
         async function handleCheckout(event) {
             event.preventDefault();
             const btn = event.target.querySelector('button[type="submit"]');
@@ -129,37 +134,22 @@
             };
 
             try {
-                const response = await fetch('/api/orders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+                const order = await Api.post('/api/orders', data);
 
-                if (response.ok) {
-                    const order = await response.json();
-                    if (data.paymentMethod === 'VNPAY') {
-                        // Create Payment URL
-                        const payRes = await fetch(`/api/payments/vnpay/create?orderId=${order.orderId}`, { method: 'POST' });
-                        const payData = await payRes.json();
-                        window.location.href = payData.url;
-                    } else {
-                        // Success Animation Stub
-                        btn.innerHTML = '<i class="fas fa-check mr-2"></i> Success!';
-                        btn.classList.replace('btn-primary', 'btn-success');
-                        setTimeout(() => {
-                            alert('Order placed successfully! Order: ' + order.orderNumber);
-                            window.location.href = '/orders';
-                        }, 500);
-                    }
+                if (data.paymentMethod === 'VNPAY') {
+                    const payData = await Api.post(`/api/payments/vnpay/create?orderId=${order.orderId}`, {});
+                    window.location.href = payData.url;
                 } else {
-                    const err = await response.json();
-                    alert('Order failed: ' + (err.message || 'Unknown error'));
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i> Success!';
+                    btn.classList.replace('btn-primary', 'btn-success');
+                    setTimeout(() => {
+                        Toast.success('Order placed successfully!');
+                        window.location.href = '/orders';
+                    }, 500);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred. Please check console.');
+                Toast.error('Order failed: ' + (error.message || 'Check connection'));
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
             }

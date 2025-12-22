@@ -10,5 +10,8 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUser_UserIdOrderByCreatedAtDesc(Long userId);
+
     Optional<Order> findByOrderNumber(String orderNumber);
+
+    List<Order> findAllByStatus(com.badmintonshop.entity.enums.OrderStatus status);
 }

@@ -74,6 +74,19 @@ const Toast = {
 };
 
 // ==================== AJAX Helper ====================
+// ==================== Session Helper ====================
+const Session = {
+    getSessionId(createIfMissing = true) {
+        let sessionId = localStorage.getItem('badminton_session_id');
+        if (!sessionId && createIfMissing) {
+            sessionId = crypto.randomUUID();
+            localStorage.setItem('badminton_session_id', sessionId);
+        }
+        return sessionId;
+    }
+};
+
+// ==================== AJAX Helper ====================
 const Api = {
     baseUrl: '',
 
@@ -84,6 +97,19 @@ const Api = {
                 'Accept': 'application/json'
             }
         };
+
+        // Add Session ID header
+        const sessionId = Session.getSessionId();
+        if (sessionId) {
+            defaultOptions.headers['X-Session-ID'] = sessionId;
+        }
+
+        // Add CSRF Token if available
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        if (csrfToken && csrfHeader) {
+            defaultOptions.headers[csrfHeader] = csrfToken;
+        }
 
         const config = {
             ...defaultOptions,
@@ -96,6 +122,9 @@ const Api = {
 
         try {
             const response = await fetch(this.baseUrl + url, config);
+
+            if (response.status === 204) return null; // No content
+
             const data = await response.json();
 
             if (!response.ok) {
@@ -306,3 +335,4 @@ window.Api = Api;
 window.Utils = Utils;
 window.Loading = Loading;
 window.Form = Form;
+window.Session = Session;

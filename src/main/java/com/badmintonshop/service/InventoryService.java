@@ -28,4 +28,9 @@ public class InventoryService {
         Integer available = inventoryRepository.getAvailable(productId, variantId);
         return available != null && available >= quantity;
     }
+
+    @Transactional
+    public void increaseStock(Long productId, Long variantId, int quantity) {
+        inventoryRepository.atomicIncrease(productId, variantId, quantity);
+    }
 }

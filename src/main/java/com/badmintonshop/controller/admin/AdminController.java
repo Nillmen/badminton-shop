@@ -27,16 +27,16 @@ public class AdminController {
     /**
      * Admin dashboard
      */
-    @GetMapping({"/", "/dashboard"})
+    @GetMapping({ "/", "/dashboard" })
     public String dashboard(Model model) {
         log.info("Loading admin dashboard");
-        
+
         // TODO: Add real stats from services
         model.addAttribute("totalOrders", 0);
         model.addAttribute("totalRevenue", 0);
         model.addAttribute("totalCustomers", 0);
         model.addAttribute("pendingStringing", 0);
-        
+
         return "admin/dashboard";
     }
 
@@ -91,5 +91,48 @@ public class AdminController {
     public String usersPage() {
         log.info("Loading admin users management page");
         return "admin/users";
+    }
+
+    /**
+     * Orders Management page
+     */
+    @GetMapping("/orders")
+    public String ordersPage() {
+        log.info("Loading admin orders management page");
+        return "admin/orders";
+    }
+
+    /**
+     * Payments Management page
+     */
+    @GetMapping("/payments")
+    public String paymentsPage() {
+        log.info("Loading admin payments management page");
+        return "admin/payments";
+    }
+
+    /**
+     * Stringing Services Management page
+     */
+    @GetMapping("/stringing")
+    public String stringingPage() {
+        log.info("Loading admin stringing services page");
+        return "admin/stringing";
+    }
+
+    /**
+     * Placeholder for unimplemented features
+     */
+    @GetMapping({
+            "/products", "/products/new",
+            "/categories",
+            "/brands",
+            "/inventory",
+            "/reviews",
+            "/coupons", "/coupons/new",
+            "/banners"
+    })
+    public String comingSoon() {
+        return "admin/coming-soon";
     }
 }

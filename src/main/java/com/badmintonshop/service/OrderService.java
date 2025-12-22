@@ -27,10 +27,11 @@ public class OrderService {
     private final InventoryService inventoryService;
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
+    private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
     @Transactional
-    public Order createOrder(Long userId, OrderRequest request) {
-        Cart cart = cartService.getCartByUserId(userId);
+    public Order createOrder(Long userId, String sessionId, OrderRequest request) {
+        Cart cart = cartService.getOrCreateCart(userId, sessionId);
         if (cart.getItems().isEmpty()) {
             throw new RuntimeException("Cart is empty");
         }
@@ -60,17 +61,35 @@ public class OrderService {
         }
 
         // Create Order
+        String receiverName = request.getReceiverName();
+        if (receiverName == null || receiverName.trim().isEmpty()) {
+            if (cart.getUser() != null) {
+                receiverName = cart.getUser().getFullName();
+            }
+        }
+        if (receiverName == null || receiverName.trim().isEmpty()) {
+            receiverName = "Guest Customer"; // Final fallback
+        }
+
+        String receiverPhone = request.getReceiverPhone();
+        if (receiverPhone == null || receiverPhone.trim().isEmpty()) {
+            if (cart.getUser() != null) {
+                receiverPhone = cart.getUser().getPhone();
+            }
+        }
+        if (receiverPhone == null || receiverPhone.trim().isEmpty()) {
+            receiverPhone = "0000000000"; // Final fallback
+        }
+
         Order order = Order.builder()
                 .user(cart.getUser())
                 .orderNumber(generateOrderNumber())
                 .status(OrderStatus.PENDING)
                 .paymentMethod(PaymentMethod.valueOf(request.getPaymentMethod())) // VNPAY, COD
                 .paymentStatus(PaymentStatus.PENDING)
-                .shippingRecipientName(
-                        request.getReceiverName() != null ? request.getReceiverName() : cart.getUser().getFullName())
-                .shippingPhone(
-                        request.getReceiverPhone() != null ? request.getReceiverPhone() : cart.getUser().getPhone())
-                .shippingAddress(shippingAddressStr != null ? shippingAddressStr : "Default Address")
+                .shippingRecipientName(receiverName)
+                .shippingPhone(receiverPhone)
+                .shippingAddress(shippingAddressStr != null ? shippingAddressStr : "Not provided")
                 .shippingDistrict("District") // Placeholder
                 .shippingCity("City") // Placeholder
                 .customerNotes(request.getNote())
@@ -107,6 +126,7 @@ public class OrderService {
 
         // Save Order (Cascade items)
         Order savedOrder = orderRepository.save(order);
+        logStatusHistory(savedOrder, "Order created", com.badmintonshop.entity.enums.ChangedByType.CUSTOMER, userId);
 
         // Decrease Inventory
         for (CartItem item : cart.getItems()) {
@@ -117,7 +137,7 @@ public class OrderService {
         }
 
         // Clear Cart
-        cartService.clearCart(userId);
+        cartService.clearCart(userId, sessionId);
 
         return savedOrder;
     }
@@ -182,10 +202,33 @@ public class OrderService {
 
         order.cancel(com.badmintonshop.entity.enums.CancelledBy.CUSTOMER, reason);
         orderRepository.save(order);
+        logStatusHistory(order, "Order cancelled by user: " + reason,
+                com.badmintonshop.entity.enums.ChangedByType.CUSTOMER, userId);
 
         // Restore inventory (simplified)
         for (OrderItem item : order.getItems()) {
-            // inventoryService.increaseStock(...) // Need to implement increaseStock
+            inventoryService.increaseStock(
+                    item.getProduct().getProductId(),
+                    item.getVariant() != null ? item.getVariant().getVariantId() : null,
+                    item.getQuantity());
         }
+    }
+
+    private void logStatusHistory(Order order, String notes, com.badmintonshop.entity.enums.ChangedByType type,
+            Long changedById) {
+        // FK constraint in database might only allow staff IDs for changed_by_id
+        // So we set it to null if the type is CUSTOMER
+        Long finalChangerId = (type == com.badmintonshop.entity.enums.ChangedByType.STAFF) ? changedById : null;
+
+        OrderStatusHistory history = OrderStatusHistory.builder()
+                .order(order)
+                .fromStatus(null)
+                .toStatus(order.getStatus().name())
+                .notes(notes)
+                .changedByType(type)
+                .changedById(finalChangerId)
+                .changedAt(LocalDateTime.now())
+                .build();
+        orderStatusHistoryRepository.save(history);
     }
 }

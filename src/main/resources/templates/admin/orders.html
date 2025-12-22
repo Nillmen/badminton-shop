@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Quản lý Đơn hàng</title>
+    <style>
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="page-title">Quản lý Đơn hàng</h1>
+                <p class="page-subtitle">Xem và quản lý trạng thái các đơn hàng</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-section">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter" onchange="loadOrders()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="PENDING">Chờ xử lý</option>
+                        <option value="CONFIRMED">Đã xác nhận</option>
+                        <option value="SHIPPING">Đang giao</option>
+                        <option value="DELIVERED">Đã giao</option>
+                        <option value="CANCELLED">Đã hủy</option>
+                        <option value="RETURNED">Hoàn trả</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="loadOrders()">
+                        <i class="fas fa-redo me-1"></i>Tải lại
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Ngày tạo</th>
+                                <th>Tổng tiền</th>
+                                <th>Thanh toán</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="emptyState" class="text-center py-5" style="display: none;">
+            <p class="text-muted">Không tìm thấy đơn hàng nào</p>
+        </div>
+
+    </div>
+
+    <div layout:fragment="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                loadOrders();
+            });
+
+            async function loadOrders() {
+                try {
+                    const status = document.getElementById('statusFilter').value;
+                    let url = '/admin/api/orders';
+                    if (status) url += `?status=${status}`;
+
+                    document.getElementById('loading').style.display = 'block';
+                    const response = await fetch(url);
+                    const orders = await response.json();
+
+                    renderOrders(orders);
+                } catch (error) {
+                    console.error('Error loading orders:', error);
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }
+
+            function renderOrders(orders) {
+                const container = document.getElementById('orderList');
+                const emptyState = document.getElementById('emptyState');
+
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                container.innerHTML = orders.map(o => `
+                    <tr>
+                        <td class="ps-4 fw-bold">#${o.orderNumber || o.orderId}</td>
+                        <td><small>ID: ${o.userId}</small></td>
+                        <td>${new Date(o.createdAt).toLocaleString('vi-VN')}</td>
+                        <td class="fw-bold text-primary">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(o.totalAmount)}</td>
+                        <td><span class="badge ${getPaymentStatusClass(o.paymentStatus)}">${o.paymentStatus}</span></td>
+                        <td><span class="badge ${getStatusClass(o.status)}">${getStatusName(o.status)}</span></td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-primary" onclick="alert('Chi tiết đơn hàng ID ' + ${o.orderId})">
+                                Chi tiết
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            function getStatusName(status) {
+                const names = {
+                    'PENDING': 'Chờ xử lý',
+                    'CONFIRMED': 'Đã xác nhận',
+                    'SHIPPING': 'Đang giao',
+                    'DELIVERED': 'Đã giao',
+                    'CANCELLED': 'Đã hủy',
+                    'RETURNED': 'Hoàn trả'
+                };
+                return names[status] || status;
+            }
+
+            function getStatusClass(status) {
+                const classes = {
+                    'PENDING': 'bg-secondary',
+                    'CONFIRMED': 'bg-primary',
+                    'SHIPPING': 'bg-info',
+                    'DELIVERED': 'bg-success',
+                    'CANCELLED': 'bg-danger',
+                    'RETURNED': 'bg-dark'
+                };
+                return classes[status] || 'bg-secondary';
+            }
+
+            function getPaymentStatusClass(status) {
+                return status === 'PAID' ? 'bg-success' : 'bg-warning text-dark';
+            }
+        </script>
+    </div>
+</body>
+
+</html>
