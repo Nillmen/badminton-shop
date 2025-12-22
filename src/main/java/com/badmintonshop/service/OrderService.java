@@ -227,6 +227,17 @@ public class OrderService {
         // For now, allow admin to override
 
         order.updateStatus(newStatus);
+
+        // Fix: Auto-update PaymentStatus to PAID if Delivered (regardless of method)
+        if (newStatus == OrderStatus.DELIVERED) {
+            if (order.getPaymentStatus() != PaymentStatus.PAID) {
+                order.setPaymentStatus(PaymentStatus.PAID);
+                order.setPaidAt(LocalDateTime.now());
+                // Append to notes
+                notes = (notes == null ? "" : notes + ". ") + "System: Marked as PAID upon delivery.";
+            }
+        }
+
         orderRepository.save(order);
 
         logStatusHistory(order, notes, com.badmintonshop.entity.enums.ChangedByType.STAFF, staffId);

@@ -13,15 +13,38 @@ import org.springframework.stereotype.Service;
 public class PaymentService {
 
     private final OrderRepository orderRepository;
+    private final com.badmintonshop.repository.PaymentMethodConfigRepository paymentMethodConfigRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    private java.util.Map<String, String> getVnpayConfig() {
+        com.badmintonshop.entity.PaymentMethodConfig config = paymentMethodConfigRepository.findByCode("VNPAY")
+                .orElseThrow(() -> new RuntimeException("VNPay configuration not found"));
+
+        try {
+            if (config.getConfig() == null)
+                return new java.util.HashMap<>();
+            return objectMapper.readValue(config.getConfig(),
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>() {
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid VNPay config JSON", e);
+        }
+    }
 
     public String createVnpayPaymentUrl(Order order) {
         log.info("Generating VNPay URL for order: {}", order.getOrderNumber());
         try {
+            java.util.Map<String, String> configMap = getVnpayConfig();
+
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
-            String vnp_TmnCode = "TESTCODE"; // Use ENV variable in prod
-            String vnp_HashSecret = "TESTSECRET"; // Use ENV variable in prod
+            String vnp_TmnCode = configMap.getOrDefault("vnp_TmnCode", "5BXYT9QA"); // User's Sandbox Code
+            String vnp_HashSecret = configMap.getOrDefault("vnp_HashSecret", "RBHK0ASFQZ4LMEGZS4T255N8TUGUO2TU"); // User's
+                                                                                                                  // Sandbox
+                                                                                                                  // Secret
             String vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+            // User requested specific return URL
+            String vnp_ReturnUrl = "http://localhost:8080/payment/vnpay-return";
 
             java.util.Map<String, String> vnp_Params = new java.util.HashMap<>();
             vnp_Params.put("vnp_Version", vnp_Version);
@@ -34,7 +57,7 @@ public class PaymentService {
             vnp_Params.put("vnp_OrderInfo", "Payment for order " + order.getOrderNumber());
             vnp_Params.put("vnp_OrderType", "other");
             vnp_Params.put("vnp_Locale", "vn");
-            vnp_Params.put("vnp_ReturnUrl", "http://localhost:8080/api/payments/vnpay/callback");
+            vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl); // Use config return URL
             vnp_Params.put("vnp_IpAddr", "127.0.0.1"); // Should get actual IP
 
             java.util.Calendar cld = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Etc/GMT+7"));
@@ -62,7 +85,9 @@ public class PaymentService {
     }
 
     public void handleVnpayCallback(java.util.Map<String, String> requestParams) {
-        String vnp_HashSecret = "TESTSECRET"; // Must match create
+        java.util.Map<String, String> configMap = getVnpayConfig();
+        // Use same default secret as createVnpayPaymentUrl
+        String vnp_HashSecret = configMap.getOrDefault("vnp_HashSecret", "RBHK0ASFQZ4LMEGZS4T255N8TUGUO2TU");
 
         java.util.Map<String, String> fields = new java.util.HashMap<>();
         for (java.util.Map.Entry<String, String> entry : requestParams.entrySet()) {
