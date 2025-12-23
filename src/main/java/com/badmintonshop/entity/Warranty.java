@@ -64,7 +64,8 @@ public class Warranty extends BaseEntity {
 
     // Images
     @Column(name = "images", columnDefinition = "JSON")
-    private String images; // Array of image URLs showing defect
+    @Builder.Default
+    private String images = "[]"; // Array of image URLs showing defect - default empty JSON array
 
     // Warranty Period Check
     @Column(name = "purchase_date", nullable = false)

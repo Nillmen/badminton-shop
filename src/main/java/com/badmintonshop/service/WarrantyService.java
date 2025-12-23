@@ -54,7 +54,12 @@ public class WarrantyService {
         warranty.setWarrantyNumber("WAR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         warranty.setIssueType(request.getIssueType());
         warranty.setDescription(request.getDescription());
-        warranty.setImages(request.getImages());
+        // Only set images if provided, otherwise set default empty JSON array
+        if (request.getImages() != null && !request.getImages().isBlank()) {
+            warranty.setImages(request.getImages());
+        } else {
+            warranty.setImages("[]");
+        }
         warranty.setStatus(WarrantyStatus.REQUESTED);
 
         // Set warranty expiry logic (simplified, e.g., 3 months from order)

@@ -73,7 +73,8 @@ public class Exchange extends BaseEntity {
 
     // Images
     @Column(name = "images", columnDefinition = "JSON")
-    private String images; // Array of image URLs
+    @Builder.Default
+    private String images = "[]"; // Array of image URLs - default empty JSON array
 
     // Pickup
     @Column(name = "pickup_scheduled_at")

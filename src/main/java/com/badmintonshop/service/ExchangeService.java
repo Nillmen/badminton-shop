@@ -61,7 +61,12 @@ public class ExchangeService {
         exchange.setExchangeNumber("EX-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         exchange.setReason(request.getReason());
         exchange.setDescription(request.getDescription());
-        exchange.setImages(request.getImages());
+        // Only set images if provided, otherwise keep default empty JSON array
+        if (request.getImages() != null && !request.getImages().isBlank()) {
+            exchange.setImages(request.getImages());
+        } else {
+            exchange.setImages("[]");
+        }
         exchange.setPickupAddress(request.getPickupAddress());
         exchange.setStatus(ExchangeStatus.REQUESTED);
 

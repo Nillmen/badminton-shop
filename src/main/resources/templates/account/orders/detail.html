@@ -65,8 +65,9 @@
                                             th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
                                         </td>
 
-                                        <!-- Actions: Exchange / Warranty -->
-                                        <td class="align-middle text-end" style="min-width: 150px;">
+                                        <!-- Actions: Exchange / Warranty - Only show when order is DELIVERED -->
+                                        <td th:if="${order.status.name() == 'DELIVERED'}" class="align-middle text-end"
+                                            style="min-width: 150px;">
                                             <div class="d-flex flex-column gap-1">
                                                 <!-- Exchange Button -->
                                                 <a th:if="${!exchangedMap.get(item.orderItemId)}"

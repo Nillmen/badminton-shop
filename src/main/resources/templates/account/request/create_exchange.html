@@ -17,6 +17,37 @@
             border: none;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
         }
+
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .image-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 
@@ -27,11 +58,19 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header bg-primary text-white py-3">
+                    <div class="card-header bg-warning text-dark py-3">
                         <h4 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Gửi yêu cầu đổi hàng</h4>
                     </div>
                     <div class="card-body p-4">
-                        <form th:action="@{/account/requests/exchange}" th:object="${exchangeRequest}" method="post">
+                        <!-- Alert messages -->
+                        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show"
+                            role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i><span th:text="${errorMessage}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+                        <form th:action="@{/account/requests/exchange}" th:object="${exchangeRequest}" method="post"
+                            enctype="multipart/form-data">
                             <input type="hidden" th:field="*{orderItemId}">
 
                             <div class="mb-3">
@@ -39,7 +78,8 @@
                                         class="text-danger">*</span></label>
                                 <select class="form-select" th:field="*{reason}" required>
                                     <option value="" disabled selected>-- Chọn lý do --</option>
-                                    <option th:each="r : ${reasons}" th:value="${r}" th:text="${r}"></option>
+                                    <option th:each="r : ${reasons}" th:value="${r}" th:text="${r.displayName}">
+                                    </option>
                                 </select>
                             </div>
 
@@ -55,16 +95,26 @@
                                     placeholder="Nhập địa chỉ shipper đến lấy hàng hoàn...">
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Hình ảnh sản phẩm (URLs)</label>
-                                <textarea class="form-control" th:field="*{images}" rows="2"
-                                    placeholder="Dán link ảnh, phân tách bởi dấu phẩy, ví dụ: https://imgur.com/a, https://imgur.com/b"></textarea>
-                                <div class="form-text">Tạm thời nhập URL ảnh. Tính năng upload sẽ cập nhật sau.</div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-camera me-1"></i>Hình ảnh sản phẩm
+                                </label>
+                                <input type="file" class="form-control" name="imageFiles" id="imageFiles"
+                                    accept="image/*" multiple>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Chọn tối đa 5 ảnh (mỗi ảnh tối đa 5MB). Định dạng: JPG, PNG, GIF
+                                </div>
+                                <div id="imagePreview" class="image-preview"></div>
                             </div>
 
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a th:href="@{/orders}" class="btn btn-secondary me-md-2">Hủy bỏ</a>
-                                <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+                                <a th:href="@{/orders}" class="btn btn-secondary me-md-2">
+                                    <i class="fas fa-times me-1"></i>Hủy bỏ
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-paper-plane me-1"></i>Gửi yêu cầu
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -74,6 +124,37 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Image preview functionality
+        document.getElementById('imageFiles').addEventListener('change', function (e) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+
+            const files = e.target.files;
+            if (files.length > 5) {
+                alert('Bạn chỉ có thể chọn tối đa 5 ảnh!');
+                this.value = '';
+                return;
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Ảnh "' + file.name + '" vượt quá 5MB!');
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = 'Preview';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -5,20 +5,27 @@ import com.badmintonshop.dto.request.WarrantyRequest;
 import com.badmintonshop.entity.enums.ExchangeReason;
 import com.badmintonshop.entity.enums.IssueType;
 import com.badmintonshop.service.ExchangeService;
+import com.badmintonshop.service.FileStorageService;
 import com.badmintonshop.service.WarrantyService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/account/requests")
 @RequiredArgsConstructor
+@Slf4j
 public class ClientRequestController {
 
     private final ExchangeService exchangeService;
-    private final WarrantyService warrantyService; // Re-added
+    private final WarrantyService warrantyService;
+    private final FileStorageService fileStorageService;
     private final com.badmintonshop.repository.UserRepository userRepository;
 
     @GetMapping
@@ -44,13 +51,20 @@ public class ClientRequestController {
     }
 
     @PostMapping("/exchange")
-    public String createExchange(@ModelAttribute ExchangeRequest request, RedirectAttributes redirectAttributes) {
+    public String createExchange(@ModelAttribute ExchangeRequest request,
+                                 @RequestParam(value = "imageFiles", required = false) List<MultipartFile> imageFiles,
+                                 RedirectAttributes redirectAttributes) {
         try {
+            // Handle image upload
+            String imagesJson = fileStorageService.storeRequestImages(imageFiles);
+            request.setImages(imagesJson);
+            
             exchangeService.createExchange(request);
-            redirectAttributes.addFlashAttribute("successMessage", "Exchange request submitted successfully.");
+            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu đổi hàng đã được gửi thành công!");
             return "redirect:/account/requests";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            log.error("Error creating exchange request", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
             return "redirect:/account/requests/exchange/new?orderItemId=" + request.getOrderItemId();
         }
     }
@@ -65,13 +79,20 @@ public class ClientRequestController {
     }
 
     @PostMapping("/warranty")
-    public String createWarranty(@ModelAttribute WarrantyRequest request, RedirectAttributes redirectAttributes) {
+    public String createWarranty(@ModelAttribute WarrantyRequest request,
+                                 @RequestParam(value = "imageFiles", required = false) List<MultipartFile> imageFiles,
+                                 RedirectAttributes redirectAttributes) {
         try {
+            // Handle image upload
+            String imagesJson = fileStorageService.storeRequestImages(imageFiles);
+            request.setImages(imagesJson);
+            
             warrantyService.createWarranty(request);
-            redirectAttributes.addFlashAttribute("successMessage", "Warranty claim submitted successfully.");
+            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu bảo hành đã được gửi thành công!");
             return "redirect:/account/requests";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            log.error("Error creating warranty request", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
             return "redirect:/account/requests/warranty/new?orderItemId=" + request.getOrderItemId();
         }
     }
