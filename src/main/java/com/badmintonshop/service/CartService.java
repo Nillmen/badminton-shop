@@ -138,46 +138,84 @@ public class CartService {
                     .orElseThrow(() -> new ResourceNotFoundException("Variant not found"));
         }
 
-        // Check if item already exists in cart
-        Optional<CartItem> existingItem;
-        if (variant != null) {
-            existingItem = cartItemRepository.findByCartCartIdAndProductProductIdAndVariantVariantId(
-                    cart.getCartId(), product.getProductId(), variant.getVariantId());
-        } else {
-            existingItem = cartItemRepository.findByCartAndProductNoVariant(
-                    cart.getCartId(), product.getProductId());
+        BigDecimal price = variant != null ? variant.getFinalPrice() : product.getCurrentPrice();
+        
+        // Check inventory
+        checkInventoryAvailability(product, variant, request.getQuantity());
+
+        // CASE 1: Racket with stringing service -> Split into individual items (quantity=1 each)
+        if (product.isRacket() && request.getStringingServiceId() != null) {
+            StringingService stringingService = stringingServiceRepository.findById(request.getStringingServiceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Stringing service not found"));
+            
+            StringProduct stringProduct = null;
+            if (request.getStringProductId() != null) {
+                stringProduct = stringProductRepository.findById(request.getStringProductId())
+                        .orElseThrow(() -> new ResourceNotFoundException("String product not found"));
+            }
+            
+            // Create separate cart item for each racket
+            for (int i = 0; i < request.getQuantity(); i++) {
+                CartItem item = CartItem.builder()
+                        .cart(cart)
+                        .product(product)
+                        .variant(variant)
+                        .quantity(1)  // Always 1 for rackets with stringing
+                        .priceAtAdd(price)
+                        .stringingService(stringingService)
+                        .stringProduct(stringProduct)
+                        .tension(request.getTension())
+                        .stringingNotes(request.getStringingNotes())
+                        .build();
+                cart.addItem(item);
+                cartItemRepository.save(item);
+            }
+            log.info("Added {} rackets with stringing to cart: product={}", request.getQuantity(), request.getProductId());
         }
+        // CASE 2: Regular product or racket without stringing -> Merge quantity
+        else {
+            Optional<CartItem> existingItem;
+            if (variant != null) {
+                existingItem = cartItemRepository.findByCartCartIdAndProductProductIdAndVariantVariantId(
+                        cart.getCartId(), product.getProductId(), variant.getVariantId());
+            } else {
+                existingItem = cartItemRepository.findByCartAndProductNoVariant(
+                        cart.getCartId(), product.getProductId());
+            }
 
-        if (existingItem.isPresent()) {
-            // Update quantity
-            CartItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + request.getQuantity();
-
-            // Check inventory before updating
-            checkInventoryAvailability(product, variant, newQuantity);
-
-            item.increaseQuantity(request.getQuantity());
-            cartItemRepository.save(item);
-            log.info("Increased quantity for cart item {}", item.getCartItemId());
-        } else {
-            // Check inventory before adding new item
-            checkInventoryAvailability(product, variant, request.getQuantity());
-
-            // Add new item
-            BigDecimal price = variant != null ? variant.getFinalPrice() : product.getCurrentPrice();
-
-            CartItem item = CartItem.builder()
-                    .cart(cart)
-                    .product(product)
-                    .variant(variant)
-                    .quantity(request.getQuantity())
-                    .priceAtAdd(price)
-                    .build();
-
-            cart.addItem(item);
-            cartItemRepository.save(item);
-            log.info("Added new item to cart: product={}, variant={}",
-                    request.getProductId(), request.getVariantId());
+            if (existingItem.isPresent()) {
+                // Only merge if item doesn't have stringing
+                CartItem item = existingItem.get();
+                if (!item.hasStringingService()) {
+                    item.increaseQuantity(request.getQuantity());
+                    cartItemRepository.save(item);
+                    log.info("Increased quantity for cart item {}", item.getCartItemId());
+                } else {
+                    // Item has stringing, add as new item
+                    CartItem newItem = CartItem.builder()
+                            .cart(cart)
+                            .product(product)
+                            .variant(variant)
+                            .quantity(request.getQuantity())
+                            .priceAtAdd(price)
+                            .build();
+                    cart.addItem(newItem);
+                    cartItemRepository.save(newItem);
+                    log.info("Added new item (existing has stringing): product={}", request.getProductId());
+                }
+            } else {
+                CartItem item = CartItem.builder()
+                        .cart(cart)
+                        .product(product)
+                        .variant(variant)
+                        .quantity(request.getQuantity())
+                        .priceAtAdd(price)
+                        .build();
+                cart.addItem(item);
+                cartItemRepository.save(item);
+                log.info("Added new item to cart: product={}, variant={}",
+                        request.getProductId(), request.getVariantId());
+            }
         }
 
         // Update cart expiry
@@ -186,6 +224,7 @@ public class CartService {
 
         return mapToResponse(cart);
     }
+
 
     /**
      * Update cart item quantity - supports both logged-in users and guests

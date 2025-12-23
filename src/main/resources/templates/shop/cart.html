@@ -135,6 +135,17 @@
                 }
 
                 let itemsHtml = '';
+                // Group rackets with stringing to show "Cây 1", "Cây 2" labels
+                const racketCounts = {};
+                cart.items.forEach(item => {
+                    if (item.stringingServiceId) {
+                        const key = `${item.productId}_${item.variantId || 'null'}`;
+                        racketCounts[key] = (racketCounts[key] || 0) + 1;
+                    }
+                });
+
+                const racketIndices = {};
+
                 cart.items.forEach(item => {
                     // Determine display price (use promotionPrice if available)
                     const displayPrice = item.promotionPrice || item.unitPrice;
@@ -147,6 +158,18 @@
                     const totalStringingCost = stringingServicePrice + stringProductPrice;
                     itemSubtotal += totalStringingCost;
 
+                    // Calculate racket index for items with stringing
+                    let racketLabel = '';
+                    const hasStringing = item.stringingServiceId != null;
+                    if (hasStringing) {
+                        const key = `${item.productId}_${item.variantId || 'null'}`;
+                        racketIndices[key] = (racketIndices[key] || 0) + 1;
+                        const totalForProduct = racketCounts[key] || 1;
+                        if (totalForProduct > 1) {
+                            racketLabel = ` - Cây ${racketIndices[key]}`;
+                        }
+                    }
+
                     itemsHtml += `
                         <div class="cart-item" data-item-id="${item.cartItemId}">
                             <div class="row align-items-center">
@@ -156,7 +179,7 @@
                                 <div class="col-md-4">
                                     <h5 class="mb-1">
                                         <a href="/products/${item.productSlug}" class="text-decoration-none text-dark">
-                                            ${item.productName}
+                                            ${hasStringing ? '🏸 ' : ''}${item.productName}${racketLabel}
                                         </a>
                                     </h5>
                                     ${item.variantName ? `<small class="text-muted">${item.variantName}</small>` : ''}
@@ -173,6 +196,7 @@
                                         </div>
                                     ` : ''}
                                     ${item.tension ? `<div class="small text-muted"><i class="fas fa-tachometer-alt me-1"></i>Độ căng: ${item.tension} lbs</div>` : ''}
+                                    ${item.stringingNotes ? `<div class="small text-muted"><i class="fas fa-comment me-1"></i>${item.stringingNotes}</div>` : ''}
                                     ${hasPromotion ? `<div class="small text-success mt-1"><i class="fas fa-fire me-1"></i>${item.promotionName || 'Đang khuyến mãi'}</div>` : ''}
                                 </div>
                                 <div class="col-md-2">
@@ -182,15 +206,19 @@
                                     ` : `
                                         <span class="fw-bold text-danger">${formatPrice(item.unitPrice)}</span>
                                     `}
-                                    ${totalStringingCost > 0 ? `<br><small class="text-info">+${formatPrice(totalStringingCost / item.quantity)} đan vợt</small>` : ''}
+                                    ${totalStringingCost > 0 ? `<br><small class="text-info">+${formatPrice(totalStringingCost)} đan vợt</small>` : ''}
                                 </div>
                                 <div class="col-md-2">
-                                    <div class="quantity-control">
-                                        <button onclick="updateQuantity(${item.cartItemId}, ${item.quantity - 1})">−</button>
-                                        <input type="number" value="${item.quantity}" min="1" max="99"
-                                            onchange="updateQuantity(${item.cartItemId}, parseInt(this.value))">
-                                        <button onclick="updateQuantity(${item.cartItemId}, ${item.quantity + 1})">+</button>
-                                    </div>
+                                    ${hasStringing ? `
+                                        <span class="badge bg-info">Đan vợt</span>
+                                    ` : `
+                                        <div class="quantity-control">
+                                            <button onclick="updateQuantity(${item.cartItemId}, ${item.quantity - 1})">−</button>
+                                            <input type="number" value="${item.quantity}" min="1" max="99"
+                                                onchange="updateQuantity(${item.cartItemId}, parseInt(this.value))">
+                                            <button onclick="updateQuantity(${item.cartItemId}, ${item.quantity + 1})">+</button>
+                                        </div>
+                                    `}
                                 </div>
                                 <div class="col-md-1">
                                     <span class="fw-bold">${formatPrice(itemSubtotal)}</span>
