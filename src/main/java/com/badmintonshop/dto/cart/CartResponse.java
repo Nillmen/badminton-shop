@@ -24,6 +24,7 @@ public class CartResponse {
     private BigDecimal discount;
     private BigDecimal promotionDiscount;
     private String couponCode;
+    private BigDecimal freeShippingThreshold;
     private BigDecimal total;
     private Boolean isEmpty;
 }

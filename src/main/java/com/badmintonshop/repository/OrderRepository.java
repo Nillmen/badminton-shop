@@ -55,6 +55,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Find order with all details eagerly fetched
     @Query("SELECT DISTINCT o FROM Order o " +
+           "LEFT JOIN FETCH o.user " +
            "LEFT JOIN FETCH o.items i " +
            "LEFT JOIN FETCH i.product " +
            "LEFT JOIN FETCH i.variant " +
@@ -63,6 +64,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByIdWithDetails(@Param("orderId") Long orderId);
 
     @Query("SELECT DISTINCT o FROM Order o " +
+           "LEFT JOIN FETCH o.user " +
            "LEFT JOIN FETCH o.items i " +
            "LEFT JOIN FETCH i.product " +
            "LEFT JOIN FETCH i.variant " +
@@ -78,5 +80,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT DISTINCT o FROM Order o JOIN o.items i " +
            "WHERE i.hasStringingService = true AND i.stringingStatus = 'PENDING'")
     List<Order> findOrdersWithPendingStringing();
-}
 
+    // Find expired VNPay orders for cleanup
+    // Orders with VNPAY payment method, PENDING status, created before timeout
+    // and no successful payment (either no payment record or payment still pending)
+    @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items " +
+           "WHERE o.paymentMethod = 'VNPAY' " +
+           "AND o.status = 'PENDING' " +
+           "AND o.paymentStatus = 'PENDING' " +
+           "AND o.createdAt < :timeout")
+    List<Order> findExpiredVNPayOrders(@Param("timeout") LocalDateTime timeout);
+}

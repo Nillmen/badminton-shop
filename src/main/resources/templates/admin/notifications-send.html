@@ -173,6 +173,18 @@
                             <small class="text-muted">Khi người dùng click vào thông báo sẽ được chuyển đến link
                                 này</small>
                         </div>
+
+                        <!-- Send Email Option -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="sendEmail">
+                                <label class="form-check-label" for="sendEmail">
+                                    <i class="fas fa-envelope me-1"></i>Gửi kèm email
+                                </label>
+                            </div>
+                            <small class="text-muted">Nếu bật, sẽ gửi email đến người nhận song song với thông báo trong
+                                hệ thống</small>
+                        </div>
                     </div>
                 </div>
 
@@ -266,8 +278,10 @@
     </div>
 
     <th:block layout:fragment="scripts">
-        <script>
+        <script th:inline="javascript">
             let selectedUsers = [];
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
 
             function selectType(element) {
                 document.querySelectorAll('.notification-type-btn').forEach(btn => {
@@ -353,6 +367,7 @@
                 const actionUrl = document.getElementById('actionUrl').value.trim();
                 const type = document.getElementById('notificationType').value;
                 const sendToAll = document.getElementById('sendToAll').checked;
+                const sendEmail = document.getElementById('sendEmail').checked;
                 const statusDiv = document.getElementById('sendStatus');
 
                 // Validation
@@ -374,13 +389,17 @@
                 try {
                     const response = await fetch('/admin/api/notifications/send', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            [csrfHeader]: csrfToken
+                        },
                         body: JSON.stringify({
                             title: title,
                             message: message,
                             actionUrl: actionUrl || null,
                             type: type,
                             sendToAll: sendToAll,
+                            sendEmail: sendEmail,
                             userIds: sendToAll ? null : selectedUsers.map(u => u.id)
                         })
                     });

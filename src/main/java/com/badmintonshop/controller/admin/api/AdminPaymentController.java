@@ -193,4 +193,23 @@ public class AdminPaymentController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    // ======================== Payment Cleanup ========================
+
+    private final com.badmintonshop.service.PaymentCleanupScheduler paymentCleanupScheduler;
+
+    /**
+     * Manually trigger VNPay order cleanup
+     * Cleans up expired VNPay orders (both with and without payment records)
+     */
+    @PostMapping("/cleanup-expired")
+    public ResponseEntity<Map<String, Object>> cleanupExpiredPayments() {
+        log.info("Admin triggered manual VNPay cleanup");
+        int count = paymentCleanupScheduler.manualCleanup();
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "message", "Đã xử lý " + count + " đơn hàng VNPay hết hạn",
+            "processedCount", count
+        ));
+    }
 }

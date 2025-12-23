@@ -108,91 +108,95 @@
                 <div id="pagination" class="d-flex justify-content-center mt-3"></div>
             </div>
         </div>
-    </div>
 
-    <!-- Blog Modal -->
-    <div class="modal fade" id="blogModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Thêm bài viết</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form id="blogForm">
-                    <div class="modal-body">
-                        <input type="hidden" id="postId">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="title" required
-                                        placeholder="Nhập tiêu đề bài viết">
+        <!-- Blog Modal -->
+        <div class="modal fade" id="blogModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Thêm bài viết</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="blogForm">
+                        <div class="modal-body">
+                            <input type="hidden" id="postId">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="title" required
+                                            placeholder="Nhập tiêu đề bài viết">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Slug <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="slug" required
+                                            placeholder="duong-dan-url">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tóm tắt</label>
+                                        <textarea class="form-control" id="excerpt" rows="2"
+                                            placeholder="Mô tả ngắn về bài viết"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nội dung <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="content" rows="10" required
+                                            placeholder="Nội dung bài viết..."></textarea>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Slug <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="slug" required
-                                        placeholder="duong-dan-url">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Tóm tắt</label>
-                                    <textarea class="form-control" id="excerpt" rows="2"
-                                        placeholder="Mô tả ngắn về bài viết"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Nội dung <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="content" rows="10" required
-                                        placeholder="Nội dung bài viết..."></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Danh mục</label>
-                                    <input type="text" class="form-control" id="category"
-                                        placeholder="VD: Hướng dẫn, Review">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Hình đại diện</label>
-                                    <input type="url" class="form-control" id="featuredImage"
-                                        placeholder="URL hình ảnh">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Tags (JSON)</label>
-                                    <input type="text" class="form-control" id="tags" placeholder='["tag1", "tag2"]'>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Trạng thái</label>
-                                    <select class="form-select" id="status">
-                                        <option value="DRAFT">Bản nháp</option>
-                                        <option value="PUBLISHED">Xuất bản</option>
-                                        <option value="ARCHIVED">Lưu trữ</option>
-                                    </select>
-                                </div>
-                                <hr>
-                                <h6><i class="fas fa-search me-1"></i>SEO</h6>
-                                <div class="mb-3">
-                                    <label class="form-label">Meta Title</label>
-                                    <input type="text" class="form-control" id="metaTitle" placeholder="Tiêu đề SEO">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Meta Description</label>
-                                    <textarea class="form-control" id="metaDescription" rows="2"
-                                        placeholder="Mô tả SEO"></textarea>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Danh mục</label>
+                                        <input type="text" class="form-control" id="category"
+                                            placeholder="VD: Hướng dẫn, Review">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Hình đại diện</label>
+                                        <input type="url" class="form-control" id="featuredImage"
+                                            placeholder="URL hình ảnh">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tags (JSON)</label>
+                                        <input type="text" class="form-control" id="tags"
+                                            placeholder='["tag1", "tag2"]'>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Trạng thái</label>
+                                        <select class="form-select" id="status">
+                                            <option value="DRAFT">Bản nháp</option>
+                                            <option value="PUBLISHED">Xuất bản</option>
+                                            <option value="ARCHIVED">Lưu trữ</option>
+                                        </select>
+                                    </div>
+                                    <hr>
+                                    <h6><i class="fas fa-search me-1"></i>SEO</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Meta Title</label>
+                                        <input type="text" class="form-control" id="metaTitle"
+                                            placeholder="Tiêu đề SEO">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Meta Description</label>
+                                        <textarea class="form-control" id="metaDescription" rows="2"
+                                            placeholder="Mô tả SEO"></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Lưu</button>
-                    </div>
-                </form>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
     <th:block layout:fragment="scripts">
-        <script>
+        <script th:inline="javascript">
             const blogModal = new bootstrap.Modal(document.getElementById('blogModal'));
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
             let currentPage = 0;
 
             document.addEventListener('DOMContentLoaded', function () {
@@ -352,7 +356,10 @@
 
                 fetch(url, {
                     method: method,
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
                     body: JSON.stringify(data)
                 })
                     .then(response => {
@@ -377,7 +384,10 @@
             function publishBlog(id) {
                 if (!confirm('Bạn có chắc muốn xuất bản bài viết này?')) return;
 
-                fetch(`/admin/api/blogs/${id}/publish`, { method: 'PUT' })
+                fetch(`/admin/api/blogs/${id}/publish`, {
+                    method: 'PUT',
+                    headers: { [csrfHeader]: csrfToken }
+                })
                     .then(response => {
                         if (!response.ok) throw response;
                         return response.json();
@@ -392,7 +402,10 @@
             function deleteBlog(id) {
                 if (!confirm('Bạn có chắc muốn xóa bài viết này?')) return;
 
-                fetch(`/admin/api/blogs/${id}`, { method: 'DELETE' })
+                fetch(`/admin/api/blogs/${id}`, {
+                    method: 'DELETE',
+                    headers: { [csrfHeader]: csrfToken }
+                })
                     .then(response => {
                         if (!response.ok) throw response;
                         return response.json();

@@ -68,6 +68,9 @@ public class Payment {
     private String transferProofUrl;
 
     // Timestamps
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+    
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
@@ -76,6 +79,11 @@ public class Payment {
 
     @Column(name = "refunded_at")
     private LocalDateTime refundedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     // Helper methods
     public void markAsPaid(String transactionId) {

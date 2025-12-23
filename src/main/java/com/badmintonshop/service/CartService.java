@@ -32,6 +32,10 @@ public class CartService {
     private final InventoryRepository inventoryRepository;
 
     private static final int CART_EXPIRY_DAYS = 7;
+    
+    // Shipping fee configuration
+    private static final BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("500000"); // 500k VND
+    private static final BigDecimal DEFAULT_SHIPPING_FEE = new BigDecimal("30000"); // 30k VND
 
     /**
      * Get or create cart for logged-in user
@@ -188,6 +192,30 @@ public class CartService {
             cartItemRepository.delete(item);
             log.info("Removed cart item {}", cartItemId);
         } else {
+            // Check stock availability before updating quantity
+            int availableStock = 0;
+            String productName = "";
+            
+            if (item.getVariant() != null) {
+                availableStock = item.getVariant().getStockQuantity();
+                productName = item.getVariant().getProduct().getName() + 
+                    (item.getVariant().getVariantName() != null ? " - " + item.getVariant().getVariantName() : "");
+            } else if (item.getProduct() != null) {
+                // For products without variants, check total stock from all variants or product stock
+                ProductVariant defaultVariant = variantRepository.findByProductProductIdOrderByVariantIdAsc(item.getProduct().getProductId())
+                        .stream().findFirst().orElse(null);
+                if (defaultVariant != null) {
+                    availableStock = defaultVariant.getStockQuantity();
+                }
+                productName = item.getProduct().getName();
+            }
+            
+            if (quantity > availableStock) {
+                throw new IllegalStateException(
+                    String.format("Số lượng yêu cầu (%d) vượt quá tồn kho hiện có (%d) cho sản phẩm: %s", 
+                        quantity, availableStock, productName));
+            }
+            
             item.setQuantity(quantity);
             cartItemRepository.save(item);
             log.info("Updated cart item {} quantity to {}", cartItemId, quantity);
@@ -383,7 +411,10 @@ public class CartService {
 
         // Get coupon discount from cart
         BigDecimal couponDiscount = cart.getCouponDiscount() != null ? cart.getCouponDiscount() : BigDecimal.ZERO;
-        BigDecimal total = subtotal.subtract(couponDiscount);
+
+        // Calculate shipping fee based on subtotal
+        BigDecimal shippingFee = calculateShippingFee(subtotal);
+        BigDecimal total = subtotal.add(shippingFee).subtract(couponDiscount);
         if (total.compareTo(BigDecimal.ZERO) < 0) {
             total = BigDecimal.ZERO;
         }
@@ -396,13 +427,32 @@ public class CartService {
                 .totalItems(items.size())
                 .totalQuantity(totalQuantity)
                 .subtotal(subtotal)
-                .shippingFee(BigDecimal.ZERO) // TODO: Calculate based on shipping rules
+                .shippingFee(shippingFee)
                 .discount(couponDiscount) // Coupon discount from cart
                 .promotionDiscount(totalPromotionDiscount)
                 .couponCode(cart.getCouponCode())
-                .total(total) // After promotion and coupon
+                .freeShippingThreshold(FREE_SHIPPING_THRESHOLD)
+                .total(total) // After promotion, coupon and shipping
                 .isEmpty(items.isEmpty())
                 .build();
+    }
+
+    /**
+     * Calculate shipping fee based on subtotal
+     * Free shipping for orders >= 500k VND, otherwise 30k VND
+     */
+    public BigDecimal calculateShippingFee(BigDecimal subtotal) {
+        if (subtotal.compareTo(FREE_SHIPPING_THRESHOLD) >= 0) {
+            return BigDecimal.ZERO;
+        }
+        return DEFAULT_SHIPPING_FEE;
+    }
+
+    /**
+     * Get free shipping threshold for display
+     */
+    public BigDecimal getFreeShippingThreshold() {
+        return FREE_SHIPPING_THRESHOLD;
     }
 
     private CartItemDTO mapItemToDTO(CartItem item) {

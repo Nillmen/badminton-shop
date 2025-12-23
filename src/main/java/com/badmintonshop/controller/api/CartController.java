@@ -124,16 +124,27 @@ public class CartController {
      * PUT /api/cart/items/{itemId}
      */
     @PutMapping("/items/{itemId}")
-    public ResponseEntity<CartResponse> updateCartItem(
+    public ResponseEntity<?> updateCartItem(
             @PathVariable Long itemId,
             @Valid @RequestBody UpdateCartItemRequest request,
             HttpSession session) {
 
-        Long userId = getCurrentUserId();
-        String sessionId = (String) session.getAttribute(GUEST_SESSION_KEY);
+        try {
+            Long userId = getCurrentUserId();
+            String sessionId = (String) session.getAttribute(GUEST_SESSION_KEY);
 
-        CartResponse cart = cartService.updateCartItem(itemId, userId, sessionId, request.getQuantity());
-        return ResponseEntity.ok(cart);
+            CartResponse cart = cartService.updateCartItem(itemId, userId, sessionId, request.getQuantity());
+            return ResponseEntity.ok(cart);
+        } catch (IllegalStateException e) {
+            // Stock validation error or permission error
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", true,
+                    "message", e.getMessage()));
+        } catch (com.badmintonshop.exception.ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error", true,
+                    "message", e.getMessage()));
+        }
     }
 
     /**

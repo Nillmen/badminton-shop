@@ -286,7 +286,7 @@
                     <h4 class="fw-bold mb-4">Tổng quan</h4>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Tạm tính</span>
-                        <span class="fw-bold"
+                        <span class="fw-bold" id="subtotalDisplay"
                             th:text="${#numbers.formatDecimal(cart.subtotal, 0, 'COMMA', 0, 'POINT') + ' ₫'}">---</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
@@ -295,9 +295,24 @@
                             th:text="${cart.promotionDiscount != null and cart.promotionDiscount > 0 ? '-' + #numbers.formatDecimal(cart.promotionDiscount, 0, 'COMMA', 0, 'POINT') + ' ₫' : '-0 ₫'}">-0
                             ₫</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-4" id="couponDiscountRow" style="display: none;">
+                    <div class="d-flex justify-content-between mb-2" id="couponDiscountRow" style="display: none;">
                         <span class="text-muted">Mã giảm giá</span>
                         <span class="text-success" id="couponDiscountAmount">-0 ₫</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2" id="shippingFeeRow">
+                        <span class="text-muted">Phí vận chuyển</span>
+                        <span id="shippingFeeAmount"
+                            th:class="${(cart.shippingFee == null or cart.shippingFee == 0) ? 'text-success fw-bold' : ''}"
+                            th:text="${(cart.shippingFee != null and cart.shippingFee > 0) ? #numbers.formatDecimal(cart.shippingFee, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Miễn phí'}">30.000
+                            ₫</span>
+                    </div>
+                    <!-- Free shipping threshold message -->
+                    <div id="freeShippingMessage" class="alert alert-info py-2 px-3 small mb-3"
+                        th:style="${(cart.shippingFee == null or cart.shippingFee == 0) ? 'display: none;' : ''}">
+                        <i class="fas fa-truck me-1"></i>
+                        Mua thêm <strong id="freeShippingRemaining"
+                            th:text="${cart.freeShippingThreshold != null ? #numbers.formatDecimal(cart.freeShippingThreshold - cart.subtotal, 0, 'COMMA', 0, 'POINT') + ' ₫' : ''}"></strong>
+                        để được <strong>miễn phí vận chuyển</strong>!
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between mb-4">
@@ -562,15 +577,19 @@
             }
         }
 
+        // Constants for shipping calculation
+        const FREE_SHIPPING_THRESHOLD = /*[[${cart.freeShippingThreshold != null ? cart.freeShippingThreshold : 500000}]]*/ 500000;
+        const DEFAULT_SHIPPING_FEE = 30000;
+
         function refreshCartDisplay(cart) {
             // Update totals
             cartTotal = cart.total;
             document.getElementById('totalDisplay').textContent = formatPrice(cart.total);
 
             // Update subtotal in summary
-            const subtotalEl = document.querySelector('.summary-card .d-flex:first-child .fw-bold');
-            if (subtotalEl) {
-                subtotalEl.textContent = formatPrice(cart.subtotal);
+            const subtotalDisplayEl = document.getElementById('subtotalDisplay');
+            if (subtotalDisplayEl) {
+                subtotalDisplayEl.textContent = formatPrice(cart.subtotal);
             }
 
             // Update promotion discount
@@ -578,6 +597,36 @@
                 document.getElementById('promotionDiscount').textContent = '-' + formatPrice(cart.promotionDiscount);
             } else {
                 document.getElementById('promotionDiscount').textContent = '-0 ₫';
+            }
+
+            // Update shipping fee display
+            const shippingFeeEl = document.getElementById('shippingFeeAmount');
+            const freeShippingMsg = document.getElementById('freeShippingMessage');
+            const freeShippingRemaining = document.getElementById('freeShippingRemaining');
+
+            if (shippingFeeEl) {
+                const shippingFee = cart.shippingFee || 0;
+                if (shippingFee > 0) {
+                    shippingFeeEl.textContent = formatPrice(shippingFee);
+                    shippingFeeEl.classList.remove('text-success', 'fw-bold');
+                } else {
+                    shippingFeeEl.textContent = 'Miễn phí';
+                    shippingFeeEl.classList.add('text-success', 'fw-bold');
+                }
+            }
+
+            // Update free shipping message
+            if (freeShippingMsg && freeShippingRemaining) {
+                const subtotal = cart.subtotal || 0;
+                const threshold = cart.freeShippingThreshold || FREE_SHIPPING_THRESHOLD;
+                const remaining = threshold - subtotal;
+
+                if (remaining > 0) {
+                    freeShippingRemaining.textContent = formatPrice(remaining);
+                    freeShippingMsg.style.display = 'block';
+                } else {
+                    freeShippingMsg.style.display = 'none';
+                }
             }
 
             // Update individual item quantities and subtotals

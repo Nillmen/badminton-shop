@@ -63,8 +63,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByOrderOrderIdAndStatus(Long orderId, PaymentStatus status);
 
     // Find pending VNPay payments older than specified time (for cleanup)
+    // Uses COALESCE to handle old records without createdAt (fallback to order.createdAt)
     @Query("SELECT p FROM Payment p JOIN FETCH p.order o LEFT JOIN FETCH o.items " +
            "WHERE p.status = 'PENDING' AND p.paymentMethod = 'VNPAY' " +
-           "AND p.paidAt IS NULL AND o.createdAt < :timeout")
+           "AND p.paidAt IS NULL AND COALESCE(p.createdAt, o.createdAt) < :timeout")
     List<Payment> findPendingVNPayPaymentsOlderThan(@Param("timeout") LocalDateTime timeout);
 }

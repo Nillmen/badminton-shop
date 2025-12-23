@@ -135,9 +135,11 @@ public class OrderService {
             subtotal = subtotal.add(orderItem.getTotalPrice());
         }
 
-        // 7. Calculate totals (apply coupon discount)
+        // 7. Calculate shipping fee and totals
         order.setSubtotal(subtotal);
-        BigDecimal totalAfterDiscount = subtotal.add(order.getShippingFee()).subtract(order.getDiscountAmount());
+        BigDecimal shippingFee = cartService.calculateShippingFee(subtotal);
+        order.setShippingFee(shippingFee);
+        BigDecimal totalAfterDiscount = subtotal.add(shippingFee).subtract(order.getDiscountAmount());
         if (totalAfterDiscount.compareTo(BigDecimal.ZERO) < 0) {
             totalAfterDiscount = BigDecimal.ZERO;
         }
@@ -350,6 +352,14 @@ public class OrderService {
 
         // Update status
         order.updateStatus(newStatus);
+        
+        // Auto-mark COD payment as PAID when order is DELIVERED
+        if (newStatus == OrderStatus.DELIVERED && order.getPaymentMethod() == PaymentMethod.COD) {
+            order.setPaymentStatus(PaymentStatus.PAID);
+            order.setPaidAt(LocalDateTime.now());
+            log.info("COD order {} auto-marked as PAID upon delivery", order.getOrderNumber());
+        }
+        
         orderRepository.save(order);
 
         // Create history

@@ -184,12 +184,9 @@
                                     <label class="form-label">Loại sản phẩm</label>
                                     <select class="form-select" id="productType">
                                         <option value="RACKET">Vợt cầu lông</option>
-                                        <option value="SHUTTLECOCK">Cầu lông</option>
                                         <option value="SHOES">Giày</option>
-                                        <option value="CLOTHING">Quần áo</option>
-                                        <option value="BAGS">Túi/Bao</option>
-                                        <option value="STRING">Dây cước</option>
-                                        <option value="ACCESSORIES">Phụ kiện</option>
+                                        <option value="APPAREL">Quần áo</option>
+                                        <option value="ACCESSORY">Phụ kiện</option>
                                     </select>
                                 </div>
                             </div>
@@ -434,16 +431,18 @@
             async function saveProduct() {
                 const categoryId = document.getElementById('categoryId').value;
                 const basePrice = document.getElementById('sellingPrice').value;
+                const statusVal = document.getElementById('status').value;
+                const productTypeVal = document.getElementById('productType').value;
 
                 const data = {
                     name: document.getElementById('productName').value,
                     sku: document.getElementById('productSku').value,
                     categoryId: categoryId ? parseInt(categoryId) : null,
                     brandId: document.getElementById('brandId').value ? parseInt(document.getElementById('brandId').value) : null,
-                    productType: document.getElementById('productType').value,
+                    productType: productTypeVal || null,
                     compareAtPrice: document.getElementById('originalPrice').value ? parseFloat(document.getElementById('originalPrice').value) : null,
                     basePrice: basePrice ? parseFloat(basePrice) : null,
-                    status: document.getElementById('status').value,
+                    status: statusVal || null,
                     shortDescription: document.getElementById('shortDescription').value || null,
                     fullDescription: document.getElementById('description').value || null
                 };
