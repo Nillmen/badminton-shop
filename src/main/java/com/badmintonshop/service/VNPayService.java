@@ -36,16 +36,16 @@ public class VNPayService {
     private final OrderRepository orderRepository;
     private final InventoryService inventoryService;
 
-    @Value("${vnpay.tmn-code:VNPAY_TMN}")
+    @Value("${vnpay.tmnCode:VNPAY_TMN}")
     private String vnpTmnCode;
 
-    @Value("${vnpay.hash-secret:VNPAY_SECRET}")
+    @Value("${vnpay.hashSecret:VNPAY_SECRET}")
     private String vnpHashSecret;
 
-    @Value("${vnpay.url:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
+    @Value("${vnpay.payUrl:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
     private String vnpPayUrl;
 
-    @Value("${vnpay.return-url:http://localhost:8080/api/payments/vnpay/callback}")
+    @Value("${vnpay.returnUrl:http://localhost:8080/api/payment/vnpay-return}")
     private String vnpReturnUrl;
 
     @Value("${vnpay.version:2.1.0}")
@@ -107,12 +107,16 @@ public class VNPayService {
             String key = entry.getKey();
             String value = entry.getValue();
             if (value != null && !value.isEmpty()) {
-                // Build hash data (no encoding)
-                hashData.append(key).append('=').append(value);
-                // Build query (with encoding)
-                query.append(URLEncoder.encode(key, StandardCharsets.US_ASCII.toString()))
-                        .append('=')
-                        .append(URLEncoder.encode(value, StandardCharsets.US_ASCII.toString()));
+                // Build hash data
+                hashData.append(key);
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(value, StandardCharsets.US_ASCII.toString()));
+                
+                // Build query
+                query.append(URLEncoder.encode(key, StandardCharsets.US_ASCII.toString()));
+                query.append('=');
+                query.append(URLEncoder.encode(value, StandardCharsets.US_ASCII.toString()));
+                
                 if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
@@ -150,7 +154,15 @@ public class VNPayService {
             String fieldName = itr.next();
             String fieldValue = paramsToHash.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=').append(fieldValue);
+                // Build hash data
+                hashData.append(fieldName);
+                hashData.append('=');
+                try {
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                
                 if (itr.hasNext()) {
                     hashData.append('&');
                 }
