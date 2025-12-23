@@ -121,8 +121,8 @@
             // Group settings by category
             const settingGroups = {
                 general: ['site_name', 'site_description', 'site_logo'],
-                contact: ['contact_phone', 'contact_email', 'contact_address'],
-                business: ['free_shipping_threshold', 'tax_rate', 'default_stringing_time', 'max_cart_items']
+                contact: ['contact_phone', 'contact_email', 'contact_address', 'business_hours', 'facebook_url', 'instagram_url', 'youtube_url', 'tiktok_url'],
+                business: ['free_shipping_threshold', 'default_shipping_fee']
             };
 
             // Labels for settings
@@ -133,10 +133,13 @@
                 'contact_phone': 'Số điện thoại',
                 'contact_email': 'Email liên hệ',
                 'contact_address': 'Địa chỉ',
+                'business_hours': 'Giờ làm việc',
+                'facebook_url': 'Link Facebook',
+                'instagram_url': 'Link Instagram',
+                'youtube_url': 'Link YouTube',
+                'tiktok_url': 'Link TikTok',
                 'free_shipping_threshold': 'Miễn phí ship từ (VNĐ)',
-                'tax_rate': 'Thuế VAT (%)',
-                'default_stringing_time': 'Thời gian đan vợt (phút)',
-                'max_cart_items': 'Số SP tối đa trong giỏ'
+                'default_shipping_fee': 'Phí ship mặc định (VNĐ)'
             };
 
             document.addEventListener('DOMContentLoaded', function () {
@@ -189,7 +192,7 @@
 
             function createSettingItem(setting) {
                 const label = settingLabels[setting.settingKey] || setting.settingKey;
-                const isNumber = ['free_shipping_threshold', 'tax_rate', 'default_stringing_time', 'max_cart_items'].includes(setting.settingKey);
+                const isNumber = ['free_shipping_threshold', 'default_shipping_fee'].includes(setting.settingKey);
 
                 return `
                     <div class="setting-item">

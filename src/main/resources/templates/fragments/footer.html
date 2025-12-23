@@ -8,23 +8,29 @@
             <!-- About -->
             <div class="col-lg-4 col-md-6 mb-4">
                 <h5>
-                    <i class="fas fa-shuttlecock me-2"></i>Badminton Shop
+                    <i class="fas fa-shuttlecock me-2"></i><span
+                        th:text="${@systemSettingService.getValue('site_name', 'Badminton Shop')}">Badminton Shop</span>
                 </h5>
-                <p class="mb-3">
+                <p class="mb-3"
+                    th:text="${@systemSettingService.getValue('site_description', 'Cửa hàng chuyên cung cấp vợt, giày, cước và phụ kiện cầu lông chính hãng. Dịch vụ đan vợt chuyên nghiệp.')}">
                     Cửa hàng chuyên cung cấp vợt, giày, cước và phụ kiện cầu lông chính hãng.
                     Dịch vụ đan vợt chuyên nghiệp.
                 </p>
                 <div class="d-flex gap-2">
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle">
+                    <a th:href="${@systemSettingService.getValue('facebook_url', '#')}"
+                        class="btn btn-outline-light btn-sm rounded-circle" target="_blank">
                         <i class="fab fa-facebook-f"></i>
                     </a>
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle">
+                    <a th:href="${@systemSettingService.getValue('instagram_url', '#')}"
+                        class="btn btn-outline-light btn-sm rounded-circle" target="_blank">
                         <i class="fab fa-instagram"></i>
                     </a>
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle">
+                    <a th:href="${@systemSettingService.getValue('youtube_url', '#')}"
+                        class="btn btn-outline-light btn-sm rounded-circle" target="_blank">
                         <i class="fab fa-youtube"></i>
                     </a>
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle">
+                    <a th:href="${@systemSettingService.getValue('tiktok_url', '#')}"
+                        class="btn btn-outline-light btn-sm rounded-circle" target="_blank">
                         <i class="fab fa-tiktok"></i>
                     </a>
                 </div>
@@ -61,19 +67,26 @@
                 <ul class="list-unstyled">
                     <li class="mb-2">
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        123 Đường ABC, Quận 1, TP.HCM
+                        <span
+                            th:text="${@systemSettingService.getValue('contact_address', '123 Đường ABC, Quận 1, TP.HCM')}">123
+                            Đường ABC, Quận 1, TP.HCM</span>
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-phone me-2"></i>
-                        <a href="tel:0909123456">0909 123 456</a>
+                        <a th:href="'tel:' + ${@systemSettingService.getValue('contact_phone', '0909123456')}"
+                            th:text="${@systemSettingService.getValue('contact_phone', '0909 123 456')}">0909 123
+                            456</a>
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-envelope me-2"></i>
-                        <a href="mailto:contact@badmintonshop.vn">contact@badmintonshop.vn</a>
+                        <a th:href="'mailto:' + ${@systemSettingService.getValue('contact_email', 'contact@badmintonshop.vn')}"
+                            th:text="${@systemSettingService.getValue('contact_email', 'contact@badmintonshop.vn')}">contact@badmintonshop.vn</a>
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-clock me-2"></i>
-                        8:00 - 21:00 (T2 - CN)
+                        <span
+                            th:text="${@systemSettingService.getValue('business_hours', '8:00 - 21:00 (T2 - CN)')}">8:00
+                            - 21:00 (T2 - CN)</span>
                     </li>
                 </ul>
             </div>
@@ -82,7 +95,8 @@
         <!-- Bottom -->
         <div class="footer-bottom text-center">
             <p class="mb-0">
-                &copy; 2024 Badminton Shop. All rights reserved.
+                &copy; 2024 <span th:text="${@systemSettingService.getValue('site_name', 'Badminton Shop')}">Badminton
+                    Shop</span>. All rights reserved.
             </p>
         </div>
     </div>

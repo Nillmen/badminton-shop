@@ -30,12 +30,29 @@ public class CartService {
     private final StringingServiceRepository stringingServiceRepository;
     private final StringProductRepository stringProductRepository;
     private final InventoryRepository inventoryRepository;
+    private final SystemSettingService systemSettingService;
 
     private static final int CART_EXPIRY_DAYS = 7;
     
-    // Shipping fee configuration
-    private static final BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("500000"); // 500k VND
-    private static final BigDecimal DEFAULT_SHIPPING_FEE = new BigDecimal("30000"); // 30k VND
+    // Default shipping fee configuration (fallback if settings not found)
+    private static final String DEFAULT_FREE_SHIPPING_THRESHOLD = "500000"; // 500k VND
+    private static final String DEFAULT_SHIPPING_FEE_VALUE = "30000"; // 30k VND
+    
+    /**
+     * Get free shipping threshold from system settings
+     */
+    private BigDecimal getFreeShippingThreshold() {
+        String value = systemSettingService.getValue("free_shipping_threshold", DEFAULT_FREE_SHIPPING_THRESHOLD);
+        return new BigDecimal(value);
+    }
+    
+    /**
+     * Get default shipping fee from system settings
+     */
+    private BigDecimal getDefaultShippingFee() {
+        String value = systemSettingService.getValue("default_shipping_fee", DEFAULT_SHIPPING_FEE_VALUE);
+        return new BigDecimal(value);
+    }
 
     /**
      * Get or create cart for logged-in user
@@ -431,7 +448,7 @@ public class CartService {
                 .discount(couponDiscount) // Coupon discount from cart
                 .promotionDiscount(totalPromotionDiscount)
                 .couponCode(cart.getCouponCode())
-                .freeShippingThreshold(FREE_SHIPPING_THRESHOLD)
+                .freeShippingThreshold(getFreeShippingThreshold())
                 .total(total) // After promotion, coupon and shipping
                 .isEmpty(items.isEmpty())
                 .build();
@@ -439,20 +456,21 @@ public class CartService {
 
     /**
      * Calculate shipping fee based on subtotal
-     * Free shipping for orders >= 500k VND, otherwise 30k VND
+     * Free shipping for orders >= threshold, otherwise default shipping fee
      */
     public BigDecimal calculateShippingFee(BigDecimal subtotal) {
-        if (subtotal.compareTo(FREE_SHIPPING_THRESHOLD) >= 0) {
+        BigDecimal threshold = getFreeShippingThreshold();
+        if (subtotal.compareTo(threshold) >= 0) {
             return BigDecimal.ZERO;
         }
-        return DEFAULT_SHIPPING_FEE;
+        return getDefaultShippingFee();
     }
 
     /**
-     * Get free shipping threshold for display
+     * Get free shipping threshold for display (public method)
      */
-    public BigDecimal getFreeShippingThreshold() {
-        return FREE_SHIPPING_THRESHOLD;
+    public BigDecimal getPublicFreeShippingThreshold() {
+        return getFreeShippingThreshold();
     }
 
     private CartItemDTO mapItemToDTO(CartItem item) {

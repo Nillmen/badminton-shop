@@ -7,7 +7,8 @@
         <!-- Logo -->
         <a class="navbar-brand" th:href="@{/}">
             <i class="fas fa-shuttlecock me-2" style="color: var(--primary)"></i>
-            <span class="fw-bold">Badminton Shop</span>
+            <span class="fw-bold" th:text="${@systemSettingService.getValue('site_name', 'Badminton Shop')}">Badminton
+                Shop</span>
         </a>
 
         <!-- Mobile Toggle -->
