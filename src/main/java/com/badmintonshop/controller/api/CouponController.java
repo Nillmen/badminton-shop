@@ -136,6 +136,24 @@ public class CouponController {
                     "message", "Đã hủy mã giảm giá"));
         }
     }
+    
+    /**
+     * Clear coupon (for sendBeacon - POST method only)
+     * POST /api/coupons/clear
+     */
+    @PostMapping("/clear")
+    public ResponseEntity<?> clearCoupon(HttpSession session) {
+        Long userId = getCurrentUserId();
+        String sessionId = getOrCreateGuestSession(session);
+
+        try {
+            cartService.removeCouponFromCart(userId, sessionId);
+            log.info("Coupon cleared from cart by user/session {}/{} (page unload)", userId, sessionId);
+        } catch (Exception e) {
+            log.debug("Error clearing coupon on page unload: {}", e.getMessage());
+        }
+        return ResponseEntity.ok().build();
+    }
 
     // Helper to get or create guest session ID
     private String getOrCreateGuestSession(HttpSession session) {

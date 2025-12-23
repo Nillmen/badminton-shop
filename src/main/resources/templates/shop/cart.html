@@ -424,16 +424,52 @@
             }
 
             function removeCoupon() {
-                appliedCoupon = null;
-                document.getElementById('couponCode').value = '';
-                document.getElementById('couponCode').disabled = false;
-                document.getElementById('couponMessage').innerHTML = '';
-                document.getElementById('appliedCouponDisplay').style.display = 'none';
+                // Call API to remove coupon from backend
+                fetch('/api/coupons/remove', { method: 'DELETE' })
+                    .then(() => {
+                        appliedCoupon = null;
+                        const couponInput = document.getElementById('couponCode');
+                        const couponMessage = document.getElementById('couponMessage');
+                        const appliedCouponDisplay = document.getElementById('appliedCouponDisplay');
 
-                // Restore original total
-                loadCart();
-                showToast('Đã hủy mã giảm giá', 'success');
+                        if (couponInput) {
+                            couponInput.value = '';
+                            couponInput.disabled = false;
+                        }
+                        if (couponMessage) couponMessage.innerHTML = '';
+                        if (appliedCouponDisplay) appliedCouponDisplay.style.display = 'none';
+
+                        // Restore original total
+                        loadCart();
+                        showToast('Đã hủy mã giảm giá', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Error removing coupon:', error);
+                    });
             }
+
+            // Clear coupon when leaving page (unless going to checkout)
+            let isNavigatingToCheckout = false;
+
+            function checkout() {
+                isNavigatingToCheckout = true;
+                window.location.href = '/checkout';
+            }
+
+            // Handle page unload - clear coupon if not going to checkout
+            window.addEventListener('beforeunload', function (e) {
+                if (appliedCoupon && !isNavigatingToCheckout) {
+                    // Use sendBeacon for reliable delivery even on page close
+                    navigator.sendBeacon('/api/coupons/clear', '');
+                }
+            });
+
+            // Also handle page visibility change (for mobile)
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden' && appliedCoupon && !isNavigatingToCheckout) {
+                    navigator.sendBeacon('/api/coupons/clear', '');
+                }
+            });
         </script>
     </th:block>
 </body>
