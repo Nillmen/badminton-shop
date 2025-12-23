@@ -13,7 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/admin/warranties")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('warranties.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF')")
 public class AdminWarrantyController {
 
     private final WarrantyService warrantyService;

@@ -22,7 +22,7 @@ import java.util.Map;
 @RequestMapping("/admin/api/promotions")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('promotions.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('promotions.view')")
 public class AdminPromotionApiController {
 
     private final PromotionService promotionService;
@@ -60,7 +60,7 @@ public class AdminPromotionApiController {
      * POST /admin/api/promotions
      */
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('promotions.create')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('promotions.create')")
     public ResponseEntity<?> createPromotion(@RequestBody PromotionDTO promotionDTO) {
         try {
             PromotionDTO created = promotionService.createPromotion(promotionDTO);
@@ -76,7 +76,7 @@ public class AdminPromotionApiController {
      * PUT /admin/api/promotions/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('promotions.update')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('promotions.update')")
     public ResponseEntity<?> updatePromotion(@PathVariable Long id, @RequestBody PromotionDTO promotionDTO) {
         try {
             PromotionDTO updated = promotionService.updatePromotion(id, promotionDTO);
@@ -92,7 +92,7 @@ public class AdminPromotionApiController {
      * DELETE /admin/api/promotions/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('promotions.delete')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('promotions.delete')")
     public ResponseEntity<?> deletePromotion(@PathVariable Long id) {
         try {
             promotionService.deletePromotion(id);

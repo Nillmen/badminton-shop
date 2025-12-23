@@ -23,7 +23,7 @@ import java.util.Map;
 @RequestMapping("/admin/api/banners")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('banners.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('banners.view')")
 public class AdminBannerApiController {
 
     private final BannerService bannerService;
@@ -67,7 +67,7 @@ public class AdminBannerApiController {
      * POST /admin/api/banners
      */
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('banners.create')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('banners.create')")
     public ResponseEntity<?> createBanner(@RequestBody BannerDTO dto) {
         try {
             BannerDTO created = bannerService.createBanner(dto);
@@ -83,7 +83,7 @@ public class AdminBannerApiController {
      * PUT /admin/api/banners/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('banners.update')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('banners.update')")
     public ResponseEntity<?> updateBanner(@PathVariable Long id, @RequestBody BannerDTO dto) {
         try {
             BannerDTO updated = bannerService.updateBanner(id, dto);
@@ -99,7 +99,7 @@ public class AdminBannerApiController {
      * DELETE /admin/api/banners/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('banners.delete')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('banners.delete')")
     public ResponseEntity<?> deleteBanner(@PathVariable Long id) {
         try {
             bannerService.deleteBanner(id);

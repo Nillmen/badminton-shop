@@ -22,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/api/coupons")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('coupons.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('coupons.view')")
 public class AdminCouponApiController {
 
     private final CouponService couponService;
@@ -65,7 +65,7 @@ public class AdminCouponApiController {
      * POST /admin/api/coupons
      */
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('coupons.create')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('coupons.create')")
     public ResponseEntity<?> createCoupon(@Valid @RequestBody AdminCouponDTO dto) {
         try {
             AdminCouponDTO created = couponService.createCoupon(dto);
@@ -80,7 +80,7 @@ public class AdminCouponApiController {
      * PUT /admin/api/coupons/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('coupons.update')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('coupons.update')")
     public ResponseEntity<?> updateCoupon(@PathVariable Long id, @Valid @RequestBody AdminCouponDTO dto) {
         try {
             AdminCouponDTO updated = couponService.updateCoupon(id, dto);
@@ -95,7 +95,7 @@ public class AdminCouponApiController {
      * DELETE /admin/api/coupons/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('coupons.delete')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('coupons.delete')")
     public ResponseEntity<?> deleteCoupon(@PathVariable Long id) {
         try {
             couponService.deleteCoupon(id);

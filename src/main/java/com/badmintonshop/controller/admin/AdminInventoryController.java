@@ -25,7 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/api/inventory")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('inventory.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'WAREHOUSE_STAFF')")
 public class AdminInventoryController {
 
     private final InventoryService inventoryService;

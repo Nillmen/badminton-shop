@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Admin - Activity Logs", description = "APIs for viewing staff activity logs")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF', 'STRINGING_STAFF', 'WAREHOUSE_STAFF', 'CONTENT_STAFF')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class AdminActivityLogController {
 
     private final AuditService auditService;

@@ -7,12 +7,15 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 /**
  * Admin page controller for blogs
  */
 @Controller
 @RequestMapping("/admin/blogs")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('blogs.view')")
 public class AdminBlogController {
 
     private final BlogService blogService;

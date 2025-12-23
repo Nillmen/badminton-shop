@@ -30,7 +30,7 @@ public class AdminFAQApiController {
      * GET /admin/api/faq
      */
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('faq.read')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('faqs.view')")
     public ResponseEntity<Page<FAQDTO>> getAllFAQs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -45,7 +45,7 @@ public class AdminFAQApiController {
      * GET /admin/api/faq/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('faq.read')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('faqs.view')")
     public ResponseEntity<FAQDTO> getFAQById(@PathVariable Long id) {
         return faqService.getFAQById(id)
                 .map(ResponseEntity::ok)
@@ -57,7 +57,7 @@ public class AdminFAQApiController {
      * POST /admin/api/faq
      */
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('faq.create')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('faqs.create')")
     public ResponseEntity<?> createFAQ(@RequestBody FAQDTO dto) {
         try {
             FAQDTO created = faqService.createFAQ(dto);
@@ -73,7 +73,7 @@ public class AdminFAQApiController {
      * PUT /admin/api/faq/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('faq.update')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('faqs.update')")
     public ResponseEntity<?> updateFAQ(
             @PathVariable Long id,
             @RequestBody FAQDTO dto) {
@@ -92,7 +92,7 @@ public class AdminFAQApiController {
      * DELETE /admin/api/faq/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('faq.delete')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('faqs.delete')")
     public ResponseEntity<?> deleteFAQ(@PathVariable Long id) {
         try {
             faqService.deleteFAQ(id);
@@ -107,7 +107,7 @@ public class AdminFAQApiController {
      * PUT /admin/api/faq/{id}/toggle-active
      */
     @PutMapping("/{id}/toggle-active")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('faq.update')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('faqs.update')")
     public ResponseEntity<?> toggleActive(@PathVariable Long id) {
         try {
             FAQDTO faq = faqService.toggleActive(id);

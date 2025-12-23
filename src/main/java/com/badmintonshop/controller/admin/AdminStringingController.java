@@ -2,6 +2,8 @@ package com.badmintonshop.controller.admin;
 
 import com.badmintonshop.entity.Staff;
 import com.badmintonshop.entity.enums.StaffRole;
+
+import java.util.List;
 import com.badmintonshop.entity.enums.StringingStatus;
 import com.badmintonshop.repository.OrderItemRepository;
 import com.badmintonshop.repository.StaffRepository;
@@ -20,11 +22,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 
+/**
+ * Stringing Controller
+ * SALE_STAFF: Can assign work, STRINGING_STAFF: Can do assigned work
+ */
 @Controller
 @RequestMapping("/admin/stringing")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF', 'STRINGING_STAFF')")
 public class AdminStringingController {
 
     private final OrderItemRepository orderItemRepository;

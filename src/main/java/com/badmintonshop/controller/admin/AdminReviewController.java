@@ -24,7 +24,7 @@ import java.util.Map;
 @RequestMapping("/admin")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('content.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF')")
 public class AdminReviewController {
 
     private final ReviewService reviewService;

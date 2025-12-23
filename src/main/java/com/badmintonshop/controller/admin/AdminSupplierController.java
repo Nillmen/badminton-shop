@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/api")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('inventory.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'WAREHOUSE_STAFF')")
 public class AdminSupplierController {
 
     private final SupplierService supplierService;

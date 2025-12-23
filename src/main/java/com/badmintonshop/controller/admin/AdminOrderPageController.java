@@ -9,12 +9,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 /**
  * Admin Order Page Controller (renders HTML pages)
+ * SALE_STAFF: Full access, WAREHOUSE_STAFF: View only for packing
  */
 @Controller
 @RequestMapping("/admin/orders")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF', 'WAREHOUSE_STAFF')")
 public class AdminOrderPageController {
 
     private final OrderRepository orderRepository;

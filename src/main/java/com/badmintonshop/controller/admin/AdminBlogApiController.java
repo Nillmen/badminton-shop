@@ -33,7 +33,7 @@ public class AdminBlogApiController {
      * GET /admin/api/blogs
      */
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('blogs.read')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('blogs.view')")
     public ResponseEntity<Page<BlogPostDTO>> getAllBlogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -48,7 +48,7 @@ public class AdminBlogApiController {
      * GET /admin/api/blogs/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('blogs.read')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('blogs.view')")
     public ResponseEntity<BlogPostDTO> getBlogById(@PathVariable Long id) {
         return blogService.getBlogById(id)
                 .map(ResponseEntity::ok)
@@ -60,7 +60,7 @@ public class AdminBlogApiController {
      * POST /admin/api/blogs
      */
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('blogs.create')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('blogs.create')")
     public ResponseEntity<?> createBlog(
             @RequestBody BlogPostDTO dto,
             @AuthenticationPrincipal StaffUserDetails currentStaff) {
@@ -79,7 +79,7 @@ public class AdminBlogApiController {
      * PUT /admin/api/blogs/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('blogs.update')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('blogs.update')")
     public ResponseEntity<?> updateBlog(
             @PathVariable Long id,
             @RequestBody BlogPostDTO dto) {
@@ -98,7 +98,7 @@ public class AdminBlogApiController {
      * DELETE /admin/api/blogs/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('blogs.delete')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('blogs.delete')")
     public ResponseEntity<?> deleteBlog(@PathVariable Long id) {
         try {
             blogService.deleteBlog(id);
@@ -113,7 +113,7 @@ public class AdminBlogApiController {
      * PUT /admin/api/blogs/{id}/publish
      */
     @PutMapping("/{id}/publish")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('blogs.update')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CONTENT_STAFF') or hasAuthority('blogs.update')")
     public ResponseEntity<?> publishBlog(@PathVariable Long id) {
         try {
             BlogPostDTO published = blogService.publishBlog(id);

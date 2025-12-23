@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -22,11 +23,13 @@ import java.util.Map;
 
 /**
  * REST API Controller for Admin Order Management
+ * SALE_STAFF: Full access, WAREHOUSE_STAFF: View only
  */
 @RestController
 @RequestMapping("/admin/api/orders")
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF', 'WAREHOUSE_STAFF')")
 public class AdminOrderController {
 
     private final OrderService orderService;

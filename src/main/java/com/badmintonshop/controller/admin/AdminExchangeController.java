@@ -13,7 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/admin/exchanges")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('exchanges.view')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF')")
 public class AdminExchangeController {
 
     private final ExchangeService exchangeService;

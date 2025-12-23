@@ -32,7 +32,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Admin - System Settings", description = "APIs for managing system settings")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SALE_STAFF', 'STRINGING_STAFF', 'WAREHOUSE_STAFF', 'CONTENT_STAFF')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class AdminSystemController {
 
     private final SystemSettingService settingService;

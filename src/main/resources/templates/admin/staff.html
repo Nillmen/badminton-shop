@@ -230,76 +230,273 @@
 
         <!-- Permissions Modal -->
         <div class="modal fade" id="permissionsModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Phân quyền - <span id="permStaffName"></span></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                         <input type="hidden" id="permStaffId">
-                        <div class="mb-3">
-                            <h6>Sản phẩm</h6>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="products.view" id="perm_products_view"><label class="form-check-label"
-                                    for="perm_products_view">Xem</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="products.create" id="perm_products_create"><label class="form-check-label"
-                                    for="perm_products_create">Tạo</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="products.update" id="perm_products_update"><label class="form-check-label"
-                                    for="perm_products_update">Sửa</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="products.delete" id="perm_products_delete"><label class="form-check-label"
-                                    for="perm_products_delete">Xóa</label></div>
+
+                        <!-- Quick Select by Role -->
+                        <div class="mb-3 p-2 bg-light rounded">
+                            <label class="form-label fw-bold">Chọn nhanh theo vai trò:</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                    onclick="applyRoleDefaults('SALE_STAFF')">Bán hàng</button>
+                                <button type="button" class="btn btn-sm btn-outline-warning"
+                                    onclick="applyRoleDefaults('WAREHOUSE_STAFF')">Kho</button>
+                                <button type="button" class="btn btn-sm btn-outline-info"
+                                    onclick="applyRoleDefaults('STRINGING_STAFF')">Thợ đan</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="applyRoleDefaults('CONTENT_STAFF')">Nội dung</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    onclick="applyRoleDefaults('SUPER_ADMIN')">Tất cả</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    onclick="clearAllPermissions()">Bỏ chọn</button>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <h6>Đơn hàng</h6>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="orders.view" id="perm_orders_view"><label class="form-check-label"
-                                    for="perm_orders_view">Xem</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="orders.update" id="perm_orders_update"><label class="form-check-label"
-                                    for="perm_orders_update">Cập nhật</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="orders.cancel" id="perm_orders_cancel"><label class="form-check-label"
-                                    for="perm_orders_cancel">Hủy</label></div>
-                        </div>
-                        <div class="mb-3">
-                            <h6>Đan vợt</h6>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="stringing.view" id="perm_stringing_view"><label class="form-check-label"
-                                    for="perm_stringing_view">Xem</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="stringing.update" id="perm_stringing_update"><label class="form-check-label"
-                                    for="perm_stringing_update">Cập nhật</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="stringing.assign" id="perm_stringing_assign"><label class="form-check-label"
-                                    for="perm_stringing_assign">Phân công</label></div>
-                        </div>
-                        <div class="mb-3">
-                            <h6>Khách hàng</h6>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="customers.view" id="perm_customers_view"><label class="form-check-label"
-                                    for="perm_customers_view">Xem</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="customers.update" id="perm_customers_update"><label class="form-check-label"
-                                    for="perm_customers_update">Cập nhật</label></div>
-                        </div>
-                        <div class="mb-3">
-                            <h6>Nhân viên</h6>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="staff.view" id="perm_staff_view"><label class="form-check-label"
-                                    for="perm_staff_view">Xem</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="staff.create" id="perm_staff_create"><label class="form-check-label"
-                                    for="perm_staff_create">Tạo</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="staff.update" id="perm_staff_update"><label class="form-check-label"
-                                    for="perm_staff_update">Sửa</label></div>
-                            <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
-                                    value="staff.delete" id="perm_staff_delete"><label class="form-check-label"
-                                    for="perm_staff_delete">Xóa</label></div>
+
+                        <div class="row">
+                            <!-- Column 1 -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>📦 Sản phẩm</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="products.view" id="perm_products_view"><label
+                                            class="form-check-label" for="perm_products_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="products.create" id="perm_products_create"><label
+                                            class="form-check-label" for="perm_products_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="products.update" id="perm_products_update"><label
+                                            class="form-check-label" for="perm_products_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="products.delete" id="perm_products_delete"><label
+                                            class="form-check-label" for="perm_products_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>📋 Đơn hàng</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="orders.view" id="perm_orders_view"><label class="form-check-label"
+                                            for="perm_orders_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="orders.update" id="perm_orders_update"><label
+                                            class="form-check-label" for="perm_orders_update">Cập nhật</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="orders.cancel" id="perm_orders_cancel"><label
+                                            class="form-check-label" for="perm_orders_cancel">Hủy</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>🏸 Đan vợt</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="stringing.view" id="perm_stringing_view"><label
+                                            class="form-check-label" for="perm_stringing_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="stringing.update" id="perm_stringing_update"><label
+                                            class="form-check-label" for="perm_stringing_update">Cập nhật</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="stringing.assign" id="perm_stringing_assign"><label
+                                            class="form-check-label" for="perm_stringing_assign">Phân công</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>📦 Tồn kho</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="inventory.view" id="perm_inventory_view"><label
+                                            class="form-check-label" for="perm_inventory_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="inventory.update" id="perm_inventory_update"><label
+                                            class="form-check-label" for="perm_inventory_update">Cập nhật</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="inventory.import" id="perm_inventory_import"><label
+                                            class="form-check-label" for="perm_inventory_import">Nhập kho</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="inventory.export" id="perm_inventory_export"><label
+                                            class="form-check-label" for="perm_inventory_export">Xuất kho</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>🏭 Nhà cung cấp</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="suppliers.view" id="perm_suppliers_view"><label
+                                            class="form-check-label" for="perm_suppliers_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="suppliers.create" id="perm_suppliers_create"><label
+                                            class="form-check-label" for="perm_suppliers_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="suppliers.update" id="perm_suppliers_update"><label
+                                            class="form-check-label" for="perm_suppliers_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="suppliers.delete" id="perm_suppliers_delete"><label
+                                            class="form-check-label" for="perm_suppliers_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>👥 Khách hàng</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="customers.view" id="perm_customers_view"><label
+                                            class="form-check-label" for="perm_customers_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="customers.update" id="perm_customers_update"><label
+                                            class="form-check-label" for="perm_customers_update">Cập nhật</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>🔄 Đổi/trả hàng</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="exchanges.view" id="perm_exchanges_view"><label
+                                            class="form-check-label" for="perm_exchanges_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="exchanges.approve" id="perm_exchanges_approve"><label
+                                            class="form-check-label" for="perm_exchanges_approve">Duyệt</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="exchanges.reject" id="perm_exchanges_reject"><label
+                                            class="form-check-label" for="perm_exchanges_reject">Từ chối</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>🛡️ Bảo hành</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="warranties.view" id="perm_warranties_view"><label
+                                            class="form-check-label" for="perm_warranties_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="warranties.update" id="perm_warranties_update"><label
+                                            class="form-check-label" for="perm_warranties_update">Cập nhật</label></div>
+                                </div>
+                            </div>
+
+                            <!-- Column 2 -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>⭐ Đánh giá</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="reviews.view" id="perm_reviews_view"><label class="form-check-label"
+                                            for="perm_reviews_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="reviews.approve" id="perm_reviews_approve"><label
+                                            class="form-check-label" for="perm_reviews_approve">Duyệt</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="reviews.hide" id="perm_reviews_hide"><label class="form-check-label"
+                                            for="perm_reviews_hide">Ẩn</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>🎫 Mã giảm giá</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="coupons.view" id="perm_coupons_view"><label class="form-check-label"
+                                            for="perm_coupons_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="coupons.create" id="perm_coupons_create"><label
+                                            class="form-check-label" for="perm_coupons_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="coupons.update" id="perm_coupons_update"><label
+                                            class="form-check-label" for="perm_coupons_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="coupons.delete" id="perm_coupons_delete"><label
+                                            class="form-check-label" for="perm_coupons_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>🎉 Khuyến mãi</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="promotions.view" id="perm_promotions_view"><label
+                                            class="form-check-label" for="perm_promotions_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="promotions.create" id="perm_promotions_create"><label
+                                            class="form-check-label" for="perm_promotions_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="promotions.update" id="perm_promotions_update"><label
+                                            class="form-check-label" for="perm_promotions_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="promotions.delete" id="perm_promotions_delete"><label
+                                            class="form-check-label" for="perm_promotions_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>📝 Blog</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="blogs.view" id="perm_blogs_view"><label class="form-check-label"
+                                            for="perm_blogs_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="blogs.create" id="perm_blogs_create"><label class="form-check-label"
+                                            for="perm_blogs_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="blogs.update" id="perm_blogs_update"><label class="form-check-label"
+                                            for="perm_blogs_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="blogs.delete" id="perm_blogs_delete"><label class="form-check-label"
+                                            for="perm_blogs_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>🖼️ Banner</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="banners.view" id="perm_banners_view"><label class="form-check-label"
+                                            for="perm_banners_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="banners.create" id="perm_banners_create"><label
+                                            class="form-check-label" for="perm_banners_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="banners.update" id="perm_banners_update"><label
+                                            class="form-check-label" for="perm_banners_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="banners.delete" id="perm_banners_delete"><label
+                                            class="form-check-label" for="perm_banners_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>❓ FAQ</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="faqs.view" id="perm_faqs_view"><label class="form-check-label"
+                                            for="perm_faqs_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="faqs.create" id="perm_faqs_create"><label class="form-check-label"
+                                            for="perm_faqs_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="faqs.update" id="perm_faqs_update"><label class="form-check-label"
+                                            for="perm_faqs_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="faqs.delete" id="perm_faqs_delete"><label class="form-check-label"
+                                            for="perm_faqs_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>👨‍💼 Nhân viên</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="staff.view" id="perm_staff_view"><label class="form-check-label"
+                                            for="perm_staff_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="staff.create" id="perm_staff_create"><label class="form-check-label"
+                                            for="perm_staff_create">Tạo</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="staff.update" id="perm_staff_update"><label class="form-check-label"
+                                            for="perm_staff_update">Sửa</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="staff.delete" id="perm_staff_delete"><label class="form-check-label"
+                                            for="perm_staff_delete">Xóa</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>⚙️ Cài đặt hệ thống</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="settings.view" id="perm_settings_view"><label
+                                            class="form-check-label" for="perm_settings_view">Xem</label></div>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="settings.update" id="perm_settings_update"><label
+                                            class="form-check-label" for="perm_settings_update">Cập nhật</label></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>📊 Thống kê</h6>
+                                    <div class="form-check"><input class="form-check-input perm-check" type="checkbox"
+                                            value="statistics.view" id="perm_statistics_view"><label
+                                            class="form-check-label" for="perm_statistics_view">Xem</label></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -593,6 +790,35 @@
 
                     const result = await response.json();
                     if (result.success) {
+                        // Auto-assign default permissions for new staff (not editing)
+                        if (!id && result.data && result.data.staffId) {
+                            const newStaffId = result.data.staffId;
+                            const role = data.role;
+
+                            // Get default permissions for this role
+                            let defaultPerms = [];
+                            if (role === 'SUPER_ADMIN') {
+                                // All permissions for super admin
+                                defaultPerms = Array.from(document.querySelectorAll('.perm-check')).map(cb => cb.value);
+                            } else if (rolePermissions[role]) {
+                                defaultPerms = rolePermissions[role];
+                            }
+
+                            // Assign permissions if any
+                            if (defaultPerms.length > 0) {
+                                try {
+                                    await fetch(`/admin/api/staff/${newStaffId}/permissions`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ permissions: defaultPerms })
+                                    });
+                                    console.log('Auto-assigned permissions for new staff:', defaultPerms);
+                                } catch (permError) {
+                                    console.error('Error auto-assigning permissions:', permError);
+                                }
+                            }
+                        }
+
                         if (staffModal) staffModal.hide();
                         loadStaff(currentPage);
                         alert(result.message || 'Lưu thành công!');
@@ -704,6 +930,56 @@
                 } catch (error) {
                     console.error('Error:', error);
                 }
+            }
+
+            // Permission role defaults
+            const rolePermissions = {
+                SALE_STAFF: [
+                    'orders.view', 'orders.update', 'orders.cancel',
+                    'customers.view', 'customers.update',
+                    'exchanges.view', 'exchanges.approve', 'exchanges.reject',
+                    'warranties.view', 'warranties.update',
+                    'reviews.view', 'reviews.approve', 'reviews.hide',
+                    'stringing.view', 'stringing.assign'
+                ],
+                WAREHOUSE_STAFF: [
+                    'inventory.view', 'inventory.update', 'inventory.import', 'inventory.export',
+                    'suppliers.view', 'suppliers.create', 'suppliers.update', 'suppliers.delete',
+                    'products.view',
+                    'orders.view'
+                ],
+                STRINGING_STAFF: [
+                    'stringing.view', 'stringing.update'
+                ],
+                CONTENT_STAFF: [
+                    'blogs.view', 'blogs.create', 'blogs.update', 'blogs.delete',
+                    'banners.view', 'banners.create', 'banners.update', 'banners.delete',
+                    'faqs.view', 'faqs.create', 'faqs.update', 'faqs.delete',
+                    'coupons.view', 'coupons.create', 'coupons.update', 'coupons.delete',
+                    'promotions.view', 'promotions.create', 'promotions.update', 'promotions.delete'
+                ],
+                SUPER_ADMIN: [] // Will select all
+            };
+
+            function applyRoleDefaults(role) {
+                // First clear all
+                document.querySelectorAll('.perm-check').forEach(cb => cb.checked = false);
+
+                if (role === 'SUPER_ADMIN') {
+                    // Select all for SUPER_ADMIN
+                    document.querySelectorAll('.perm-check').forEach(cb => cb.checked = true);
+                } else {
+                    // Apply specific role permissions
+                    const perms = rolePermissions[role] || [];
+                    perms.forEach(p => {
+                        const cb = document.querySelector(`.perm-check[value="${p}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+            }
+
+            function clearAllPermissions() {
+                document.querySelectorAll('.perm-check').forEach(cb => cb.checked = false);
             }
         </script>
     </div>

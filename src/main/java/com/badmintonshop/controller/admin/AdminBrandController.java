@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/api/brands")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('products.view')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class AdminBrandController {
 
     private final BrandService brandService;

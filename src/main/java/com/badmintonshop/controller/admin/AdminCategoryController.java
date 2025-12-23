@@ -26,7 +26,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/api/categories")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('products.view')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class AdminCategoryController {
 
     private final CategoryService categoryService;
