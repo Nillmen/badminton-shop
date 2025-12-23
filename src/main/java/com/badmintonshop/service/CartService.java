@@ -409,17 +409,30 @@ public class CartService {
         BigDecimal totalPromotionDiscount = BigDecimal.ZERO;
 
         for (CartItemDTO item : items) {
+            BigDecimal itemTotal;
+            
             if (item.getPromotionPrice() != null) {
-                // Use promotion price if available
-                subtotal = subtotal.add(item.getPromotionPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                // Use promotion price for product
+                itemTotal = item.getPromotionPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
                 if (item.getPromotionDiscount() != null) {
                     totalPromotionDiscount = totalPromotionDiscount.add(
                             item.getPromotionDiscount().multiply(BigDecimal.valueOf(item.getQuantity())));
                 }
             } else {
-                // Use original subtotal
-                subtotal = subtotal.add(item.getSubtotal());
+                // Use original unit price
+                itemTotal = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
             }
+            
+            // Add stringing service price if applicable
+            if (item.getStringingPrice() != null) {
+                itemTotal = itemTotal.add(item.getStringingPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            }
+            // Add string product price if applicable
+            if (item.getStringPrice() != null) {
+                itemTotal = itemTotal.add(item.getStringPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            }
+            
+            subtotal = subtotal.add(itemTotal);
         }
 
         int totalQuantity = cart.getItems().stream()
