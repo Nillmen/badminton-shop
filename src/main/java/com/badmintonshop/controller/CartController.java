@@ -24,16 +24,19 @@ public class CartController {
     private final StringProductRepository stringProductRepository;
     private final UserRepository userRepository;
 
+    private static final String GUEST_SESSION_KEY = "GUEST_CART_SESSION";
+
     @GetMapping
     public String viewCart(Model model, Principal principal, HttpSession session) {
         try {
             User user = getUser(principal);
-            String sessionId = session.getId();
-
+            
             // Use CartResponse for promotion data
             if (user != null) {
                 model.addAttribute("cart", cartService.getCartResponse(user.getUserId()));
             } else {
+                // Use same session key as API controller for consistency
+                String sessionId = getOrCreateGuestSession(session);
                 model.addAttribute("cart", cartService.getGuestCartResponse(sessionId));
             }
             model.addAttribute("stringingServices", stringingServiceRepository.findAllActive());
@@ -45,6 +48,16 @@ public class CartController {
             model.addAttribute("error", e.getMessage());
             return "cart/index";
         }
+    }
+
+    // Helper method to get or create guest session ID (same as API controller)
+    private String getOrCreateGuestSession(HttpSession session) {
+        String sessionId = (String) session.getAttribute(GUEST_SESSION_KEY);
+        if (sessionId == null) {
+            sessionId = java.util.UUID.randomUUID().toString();
+            session.setAttribute(GUEST_SESSION_KEY, sessionId);
+        }
+        return sessionId;
     }
 
     @PostMapping("/add")

@@ -91,6 +91,42 @@ public class CouponService {
     }
 
     /**
+     * Record coupon usage when order is placed
+     * - Creates CouponUsage record
+     * - Increments timesUsed counter on Coupon
+     */
+    @Transactional
+    public void recordCouponUsage(String couponCode, com.badmintonshop.entity.User user, 
+                                   com.badmintonshop.entity.Order order, BigDecimal discountAmount) {
+        if (couponCode == null || couponCode.isEmpty()) {
+            return;
+        }
+
+        Coupon coupon = couponRepository.findByCodeIgnoreCase(couponCode).orElse(null);
+        if (coupon == null) {
+            log.warn("Coupon not found for recording usage: {}", couponCode);
+            return;
+        }
+
+        // Create usage record
+        CouponUsage usage = CouponUsage.builder()
+                .coupon(coupon)
+                .user(user)
+                .order(order)
+                .discountAmount(discountAmount)
+                .usedAt(java.time.LocalDateTime.now())
+                .build();
+        couponUsageRepository.save(usage);
+
+        // Increment times used
+        coupon.setTimesUsed(coupon.getTimesUsed() + 1);
+        couponRepository.save(coupon);
+
+        log.info("Recorded coupon usage: {} for order {} by user {}, discount: {}", 
+                couponCode, order.getOrderNumber(), user.getUserId(), discountAmount);
+    }
+
+    /**
      * Get coupon by code
      */
     @Transactional(readOnly = true)
@@ -353,8 +389,11 @@ public class CouponService {
                 .build();
     }
 
-    private String formatPrice(BigDecimal price) {
-        return String.format("%,d₫", price.longValue());
+    public String formatPrice(BigDecimal price) {
+        if (price == null) return "0 ₫";
+        java.text.NumberFormat formatter = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("vi", "VN"));
+        String formatted = formatter.format(price);
+        return formatted.replace(" ", " ").replace("₫", " ₫"); // Ensure consistent spacing
     }
 
     // ==================== TRASH METHODS ====================

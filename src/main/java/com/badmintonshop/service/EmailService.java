@@ -147,4 +147,40 @@ public class EmailService {
             String message, String actionUrl) {
         sendPromotionEmail(toEmail, userName, title, message, "PROMOTION", null, null, null, actionUrl);
     }
+
+    /**
+     * Send order confirmation email
+     */
+    @Async("emailExecutor")
+    public void sendOrderConfirmation(String toEmail, String customerName, String orderNumber,
+            String orderDate, String paymentMethod, java.util.List<java.util.Map<String, String>> orderItems,
+            String subtotal, String discount, String shippingFee, String totalAmount,
+            String recipientName, String recipientPhone, String shippingAddress, String orderDetailLink) {
+        try {
+            Context context = new Context();
+            context.setVariable("customerName", customerName);
+            context.setVariable("orderNumber", orderNumber);
+            context.setVariable("orderDate", orderDate);
+            context.setVariable("paymentMethod", paymentMethod);
+            context.setVariable("orderItems", orderItems);
+            context.setVariable("subtotal", subtotal);
+            context.setVariable("discount", discount);
+            context.setVariable("shippingFee", shippingFee);
+            context.setVariable("totalAmount", totalAmount);
+            context.setVariable("recipientName", recipientName);
+            context.setVariable("recipientPhone", recipientPhone);
+            context.setVariable("shippingAddress", shippingAddress);
+            context.setVariable("orderDetailLink", orderDetailLink != null ? 
+                    (orderDetailLink.startsWith("/") ? baseUrl + orderDetailLink : orderDetailLink) : 
+                    baseUrl + "/account/orders");
+            context.setVariable("baseUrl", baseUrl);
+
+            String htmlContent = templateEngine.process("email/order-confirmation", context);
+            sendHtmlEmail(toEmail, "Xác nhận đơn hàng #" + orderNumber + " - Badminton Shop", htmlContent);
+            log.info("Order confirmation email sent to: {} for order {}", toEmail, orderNumber);
+
+        } catch (Exception e) {
+            log.error("Failed to send order confirmation email to: {} for order {}", toEmail, orderNumber, e);
+        }
+    }
 }

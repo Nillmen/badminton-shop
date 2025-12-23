@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/admin}">
+
+<head>
+    <title>Chi tiết đơn hàng - Admin</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        Đơn hàng <span class="text-primary" th:text="${order.orderNumber}">ORD123</span>
+                    </h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/admin/orders">Đơn hàng</a></li>
+                            <li class="breadcrumb-item active" th:text="${order.orderNumber}">Chi tiết</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="/admin/orders" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
+                        <i class="fas fa-edit me-2"></i>Cập nhật trạng thái
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-lg-8">
+                    <!-- Order Status Timeline -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-history me-2"></i>Trạng thái đơn hàng</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge fs-6" th:classappend="${order.status.name() == 'DELIVERED' ? 'bg-success' : 
+                                (order.status.name() == 'CANCELLED' ? 'bg-danger' : 
+                                (order.status.name() == 'PENDING' ? 'bg-warning text-dark' : 'bg-primary'))}"
+                                    th:text="${order.status.name()}">PENDING</span>
+                                <span class="text-muted"
+                                    th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                            </div>
+
+                            <!-- Status History -->
+                            <div id="statusHistory" class="mt-3">
+                                <small class="text-muted">Đang tải lịch sử...</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Items -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-box me-2"></i>Sản phẩm</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Sản phẩm</th>
+                                            <th>Đơn giá</th>
+                                            <th>SL</th>
+                                            <th class="text-end pe-4">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="item : ${order.items}">
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-center">
+                                                    <img th:src="${item.productImage}"
+                                                        style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;"
+                                                        onerror="this.src='/images/no-image.png'">
+                                                    <div class="ms-3">
+                                                        <div class="fw-semibold" th:text="${item.productName}">Product
+                                                        </div>
+                                                        <small class="text-muted"
+                                                            th:text="${item.variantName}">Variant</small>
+                                                        <div th:if="${item.hasStringingService}" class="mt-1">
+                                                            <span class="badge bg-info text-dark">
+                                                                <i class="fas fa-tools me-1"></i>Đan vợt
+                                                            </span>
+                                                            <small class="ms-1"
+                                                                th:text="${item.stringingServiceName}"></small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td
+                                                th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">
+                                            </td>
+                                            <td th:text="${item.quantity}">1</td>
+                                            <td class="text-end pe-4 fw-bold"
+                                                th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tracking Info -->
+                    <div class="card border-0 shadow-sm" th:if="${order.tracking != null}">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-truck me-2"></i>Thông tin vận chuyển</h5>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#trackingModal">
+                                <i class="fas fa-edit"></i> Cập nhật
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Đơn vị vận chuyển:</strong></p>
+                                    <p th:text="${order.tracking.carrier ?: 'Chưa cập nhật'}">GHN</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Mã vận đơn:</strong></p>
+                                    <p th:text="${order.tracking.trackingNumber ?: 'Chưa cập nhật'}">123456</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-lg-4">
+                    <!-- Order Summary -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-receipt me-2"></i>Tổng quan</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Tạm tính:</span>
+                                <span
+                                    th:text="${#numbers.formatDecimal(order.subtotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" th:if="${order.discountAmount > 0}">
+                                <span class="text-muted">Giảm giá:</span>
+                                <span class="text-success"
+                                    th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Phí ship:</span>
+                                <span
+                                    th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <strong>Tổng cộng:</strong>
+                                <strong class="text-primary fs-5"
+                                    th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong>
+                            </div>
+
+                            <hr>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Phương thức:</span>
+                                <span th:text="${order.paymentMethod}">COD</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Trạng thái TT:</span>
+                                <span class="badge"
+                                    th:classappend="${order.paymentStatus.name() == 'PAID' ? 'bg-success' : 'bg-warning text-dark'}"
+                                    th:text="${order.paymentStatus.name() == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Customer Info -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-user me-2"></i>Khách hàng</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1 fw-semibold" th:text="${order.user.fullName}">Nguyen Van A</p>
+                            <p class="mb-1"><i class="fas fa-envelope me-2 text-muted"></i><span
+                                    th:text="${order.user.email}"></span></p>
+                            <p class="mb-0"><i class="fas fa-phone me-2 text-muted"></i><span
+                                    th:text="${order.user.phone}"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ giao hàng</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1 fw-semibold" th:text="${order.shippingRecipientName}">Nguyen Van A</p>
+                            <p class="mb-1"><i class="fas fa-phone me-2 text-muted"></i><span
+                                    th:text="${order.shippingPhone}"></span></p>
+                            <p class="mb-0 text-muted" th:text="${order.fullShippingAddress}">Address</p>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="card border-0 shadow-sm mt-4"
+                        th:if="${order.customerNotes != null and !order.customerNotes.isEmpty()}">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-sticky-note me-2"></i>Ghi chú</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0" th:text="${order.customerNotes}">Notes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Update Modal -->
+        <div class="modal fade" id="statusModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cập nhật trạng thái</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái mới</label>
+                            <select class="form-select" id="newStatus">
+                                <option value="CONFIRMED">Xác nhận đơn hàng</option>
+                                <option value="PROCESSING">Bắt đầu xử lý</option>
+                                <option value="STRINGING">Đang đan vợt</option>
+                                <option value="READY_TO_SHIP">Sẵn sàng giao hàng</option>
+                                <option value="SHIPPED">Đã giao cho vận chuyển</option>
+                                <option value="DELIVERED">Đã giao thành công</option>
+                                <option value="CANCELLED">Hủy đơn hàng</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea class="form-control" id="statusNotes" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary" onclick="updateStatus()">Cập nhật</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracking Update Modal -->
+        <div class="modal fade" id="trackingModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cập nhật vận chuyển</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Đơn vị vận chuyển</label>
+                            <input type="text" class="form-control" id="carrier" th:value="${order.tracking?.carrier}"
+                                placeholder="VD: Giao Hàng Nhanh">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mã vận đơn</label>
+                            <input type="text" class="form-control" id="trackingNumber"
+                                th:value="${order.tracking?.trackingNumber}" placeholder="VD: GHN123456">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <input type="text" class="form-control" id="trackingStatus"
+                                th:value="${order.tracking?.currentStatus}" placeholder="VD: Đang giao hàng">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary" onclick="updateTracking()">Cập nhật</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            const orderId = /*[[${order.orderId}]]*/ 0;
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+
+            document.addEventListener('DOMContentLoaded', function () {
+                loadStatusHistory();
+            });
+
+            function loadStatusHistory() {
+                fetch(`/admin/api/orders/${orderId}/history`, {
+                    headers: { [csrfHeader]: csrfToken }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        const container = document.getElementById('statusHistory');
+                        if (!data || data.length === 0) {
+                            container.innerHTML = '<small class="text-muted">Chưa có lịch sử</small>';
+                            return;
+                        }
+                        container.innerHTML = data.map(h => `
+                <div class="d-flex align-items-start mb-2 border-start border-2 border-primary ps-3">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${h.toStatus}</div>
+                        <small class="text-muted">${h.notes || 'Không có ghi chú'}</small>
+                    </div>
+                    <small class="text-muted">${new Date(h.changedAt).toLocaleString('vi-VN')}</small>
+                </div>
+            `).join('');
+                    });
+            }
+
+            function updateStatus() {
+                const newStatus = document.getElementById('newStatus').value;
+                const notes = document.getElementById('statusNotes').value;
+
+                fetch(`/admin/api/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify({ newStatus, notes })
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Failed');
+                        return res.json();
+                    })
+                    .then(() => {
+                        location.reload();
+                    })
+                    .catch(err => alert('Lỗi: ' + err.message));
+            }
+
+            function updateTracking() {
+                const data = {
+                    carrier: document.getElementById('carrier').value,
+                    trackingNumber: document.getElementById('trackingNumber').value,
+                    currentStatus: document.getElementById('trackingStatus').value
+                };
+
+                fetch(`/admin/api/orders/${orderId}/tracking`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Failed');
+                        return res.json();
+                    })
+                    .then(() => {
+                        location.reload();
+                    })
+                    .catch(err => alert('Lỗi: ' + err.message));
+            }
+        </script>
+    </th:block>
+</body>
+
+</html>

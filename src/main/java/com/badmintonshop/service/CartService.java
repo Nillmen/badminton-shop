@@ -68,11 +68,16 @@ public class CartService {
      */
     @Transactional(readOnly = true)
     public CartResponse getCartResponse(Long userId) {
+        log.info("getCartResponse called for userId: {}", userId);
         Optional<Cart> cartOpt = cartRepository.findByUserWithItems(userId);
         if (cartOpt.isEmpty()) {
+            log.info("No cart found for userId: {}", userId);
             return buildEmptyCartResponse();
         }
-        return mapToResponse(cartOpt.get());
+        Cart cart = cartOpt.get();
+        log.info("Found cart {} for userId: {}, items count: {}", 
+                cart.getCartId(), userId, cart.getItems().size());
+        return mapToResponse(cart);
     }
 
     /**
@@ -91,11 +96,14 @@ public class CartService {
      * Add item to cart
      */
     public CartResponse addToCart(Long userId, String sessionId, AddToCartRequest request) {
+        log.info("addToCart called - userId: {}, sessionId: {}", userId, sessionId);
         Cart cart;
         if (userId != null) {
             cart = getOrCreateCart(userId);
+            log.info("Got/Created cart {} for userId: {}", cart.getCartId(), userId);
         } else if (sessionId != null) {
             cart = getOrCreateGuestCart(sessionId);
+            log.info("Got/Created cart {} for sessionId: {}", cart.getCartId(), sessionId);
         } else {
             throw new IllegalArgumentException("Either userId or sessionId must be provided");
         }
@@ -159,15 +167,18 @@ public class CartService {
     }
 
     /**
-     * Update cart item quantity
+     * Update cart item quantity - supports both logged-in users and guests
      */
-    public CartResponse updateCartItem(Long cartItemId, Long userId, Integer quantity) {
+    public CartResponse updateCartItem(Long cartItemId, Long userId, String sessionId, Integer quantity) {
         CartItem item = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
 
         // Verify ownership
         Cart cart = item.getCart();
-        if (cart.getUser() != null && !cart.getUser().getUserId().equals(userId)) {
+        if (cart.getUser() != null && userId != null && !cart.getUser().getUserId().equals(userId)) {
+            throw new IllegalStateException("You don't have permission to modify this cart");
+        }
+        if (cart.getUser() == null && sessionId != null && !cart.getSessionId().equals(sessionId)) {
             throw new IllegalStateException("You don't have permission to modify this cart");
         }
 
@@ -370,6 +381,13 @@ public class CartService {
                 .mapToInt(CartItem::getQuantity)
                 .sum();
 
+        // Get coupon discount from cart
+        BigDecimal couponDiscount = cart.getCouponDiscount() != null ? cart.getCouponDiscount() : BigDecimal.ZERO;
+        BigDecimal total = subtotal.subtract(couponDiscount);
+        if (total.compareTo(BigDecimal.ZERO) < 0) {
+            total = BigDecimal.ZERO;
+        }
+
         return CartResponse.builder()
                 .cartId(cart.getCartId())
                 .userId(cart.getUser() != null ? cart.getUser().getUserId() : null)
@@ -379,9 +397,10 @@ public class CartService {
                 .totalQuantity(totalQuantity)
                 .subtotal(subtotal)
                 .shippingFee(BigDecimal.ZERO) // TODO: Calculate based on shipping rules
-                .discount(BigDecimal.ZERO) // Coupon discounts (applied separately at checkout)
+                .discount(couponDiscount) // Coupon discount from cart
                 .promotionDiscount(totalPromotionDiscount)
-                .total(subtotal) // After promotion, before coupon
+                .couponCode(cart.getCouponCode())
+                .total(total) // After promotion and coupon
                 .isEmpty(items.isEmpty())
                 .build();
     }
@@ -415,6 +434,7 @@ public class CartService {
                 .productName(product.getName())
                 .productSlug(product.getSlug())
                 .productImage(primaryImage != null ? primaryImage.getImageUrl() : null)
+                .categorySlug(product.getCategory() != null ? product.getCategory().getSlug() : null)
                 .variantId(item.getVariant() != null ? item.getVariant().getVariantId() : null)
                 .variantName(item.getVariant() != null ? item.getVariant().getVariantName() : null)
                 .quantity(item.getQuantity())
@@ -561,11 +581,62 @@ public class CartService {
 
     /**
      * Clear cart for User or session (for page-based controller)
+     * Also clears applied coupon
      */
     public void clearCart(User user, String sessionId) {
         Cart cart = getCart(user, sessionId);
         cart.clear();
+        cart.setCouponCode(null);
+        cart.setCouponDiscount(null);
         cartRepository.save(cart);
-        log.info("Cleared cart {}", cart.getCartId());
+        log.info("Cleared cart {} (including coupon)", cart.getCartId());
+    }
+
+    /**
+     * Apply coupon to cart
+     */
+    @Transactional
+    public CartResponse applyCouponToCart(Long userId, String sessionId, String couponCode, BigDecimal discountAmount) {
+        Cart cart;
+        if (userId != null) {
+            cart = cartRepository.findByUserWithItems(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
+        } else if (sessionId != null) {
+            cart = cartRepository.findBySessionWithItems(sessionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
+        } else {
+            throw new IllegalArgumentException("UserId hoặc sessionId phải được cung cấp");
+        }
+
+        cart.setCouponCode(couponCode);
+        cart.setCouponDiscount(discountAmount);
+        cartRepository.save(cart);
+
+        log.info("Applied coupon {} to cart {}, discount: {}", couponCode, cart.getCartId(), discountAmount);
+        return mapToResponse(cart);
+    }
+
+    /**
+     * Remove coupon from cart
+     */
+    @Transactional
+    public CartResponse removeCouponFromCart(Long userId, String sessionId) {
+        Cart cart;
+        if (userId != null) {
+            cart = cartRepository.findByUserWithItems(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
+        } else if (sessionId != null) {
+            cart = cartRepository.findBySessionWithItems(sessionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
+        } else {
+            throw new IllegalArgumentException("UserId hoặc sessionId phải được cung cấp");
+        }
+
+        cart.setCouponCode(null);
+        cart.setCouponDiscount(null);
+        cartRepository.save(cart);
+
+        log.info("Removed coupon from cart {}", cart.getCartId());
+        return mapToResponse(cart);
     }
 }

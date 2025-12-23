@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin chuyển khoản - Badminton Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f3f6fd;
+        }
+
+        .bank-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bank-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .info-label {
+            color: #6b7280;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);
+            color: white;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px dashed #e2e8f0;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container my-5">
+        <div class="bank-card">
+            <div class="bank-icon">
+                <i class="fas fa-university fa-2x text-white"></i>
+            </div>
+
+            <h2 class="text-center mb-2">Thông tin chuyển khoản</h2>
+            <p class="text-center text-muted mb-4">
+                Vui lòng chuyển khoản theo thông tin bên dưới
+            </p>
+
+            <!-- Order Number -->
+            <div class="alert alert-info text-center">
+                <strong>Mã đơn hàng:</strong> <span th:text="${orderNumber}">ORD123</span>
+            </div>
+
+            <!-- Bank Info -->
+            <div class="info-row">
+                <span class="info-label">Ngân hàng</span>
+                <span class="info-value" th:text="${bankName}">Vietcombank</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Số tài khoản</span>
+                <span class="info-value">
+                    <span id="accountNumber" th:text="${accountNumber}">1234567890</span>
+                    <button class="copy-btn" onclick="copyText('accountNumber')" title="Sao chép">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Tên tài khoản</span>
+                <span class="info-value" th:text="${accountName}">BADMINTON SHOP</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Nội dung chuyển khoản</span>
+                <span class="info-value">
+                    <span id="transferContent" th:text="${transferContent}">Thanh toan ORD123</span>
+                    <button class="copy-btn" onclick="copyText('transferContent')" title="Sao chép">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </span>
+            </div>
+
+            <!-- QR Code placeholder -->
+            <div class="qr-container my-4">
+                <i class="fas fa-qrcode fa-4x text-muted mb-3"></i>
+                <p class="text-muted mb-0">QR Code thanh toán</p>
+                <small class="text-muted">(Quét mã để thanh toán nhanh)</small>
+            </div>
+
+            <!-- Important notes -->
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Lưu ý quan trọng:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>Nhập đúng nội dung chuyển khoản để đơn hàng được xử lý nhanh hơn</li>
+                    <li>Đơn hàng sẽ được xác nhận trong vòng 24h sau khi nhận được thanh toán</li>
+                    <li>Liên hệ hotline nếu cần hỗ trợ: <strong>0909 123 456</strong></li>
+                </ul>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-center mt-4">
+                <a th:href="@{/orders}" class="btn btn-gradient">
+                    <i class="fas fa-list me-2"></i>Xem đơn hàng của tôi
+                </a>
+                <a href="/products" class="btn btn-outline-primary">
+                    <i class="fas fa-shopping-bag me-2"></i>Tiếp tục mua sắm
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                // Show toast or alert
+                alert('Đã sao chép: ' + text);
+            });
+        }
+    </script>
+</body>
+
+</html>

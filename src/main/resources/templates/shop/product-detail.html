@@ -667,7 +667,7 @@
                     data.variantId = parseInt(variantId);
                 }
 
-                fetch('/api/cart/add', {
+                fetch('/api/cart/items', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -677,11 +677,10 @@
                     .then(response => {
                         if (response.ok) {
                             return response.json();
-                        } else if (response.status === 401) {
-                            window.location.href = '/login';
-                            throw new Error('Unauthorized');
                         }
-                        throw new Error('Failed to add to cart');
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Failed to add to cart');
+                        });
                     })
                     .then(data => {
                         showToast('Đã thêm sản phẩm vào giỏ hàng!', 'success');
@@ -689,9 +688,8 @@
                         updateCartCount();
                     })
                     .catch(error => {
-                        if (error.message !== 'Unauthorized') {
-                            showToast('Không thể thêm vào giỏ hàng. Vui lòng thử lại.', 'error');
-                        }
+                        console.error('Add to cart error:', error);
+                        showToast(error.message || 'Không thể thêm vào giỏ hàng. Vui lòng thử lại.', 'error');
                     });
             }
 

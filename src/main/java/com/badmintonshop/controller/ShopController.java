@@ -216,15 +216,7 @@ public class ShopController {
         return "shop/wishlist";
     }
 
-    /**
-     * Checkout page
-     * GET /checkout
-     */
-    @GetMapping("/checkout")
-    public String checkoutPage() {
-        log.info("Loading checkout page");
-        return "shop/checkout";
-    }
+    // NOTE: Checkout page is handled by CheckoutController at /checkout
 
     // ==================== COUPONS & PROMOTIONS ====================
 

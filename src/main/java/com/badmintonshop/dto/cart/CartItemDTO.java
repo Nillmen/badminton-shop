@@ -17,6 +17,7 @@ public class CartItemDTO {
     private String productName;
     private String productSlug;
     private String productImage;
+    private String categorySlug; // To identify racket products for stringing
     private Long variantId;
     private String variantName;
     private Integer quantity;

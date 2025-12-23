@@ -116,7 +116,7 @@
             function renderWishlist(items) {
                 const container = document.getElementById('wishlistContent');
                 const countEl = document.getElementById('wishlistCount');
-                
+
                 countEl.textContent = `${items.length} sản phẩm`;
 
                 if (items.length === 0) {
@@ -185,7 +185,7 @@
             }
 
             function addToCart(productId) {
-                fetch('/api/cart/add', {
+                fetch('/api/cart/items', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ productId: productId, quantity: 1 })
@@ -194,6 +194,10 @@
                         if (response.ok) {
                             showToast('Đã thêm vào giỏ hàng', 'success');
                             updateCartCount();
+                        } else {
+                            response.json().then(err => {
+                                showToast(err.message || 'Không thể thêm vào giỏ', 'error');
+                            });
                         }
                     })
                     .catch(error => console.error('Error:', error));

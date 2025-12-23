@@ -232,8 +232,9 @@
                                     </button>
                                 </div>
 
-                                <!-- Need Stringing Button -->
-                                <div th:if="${item.stringingServiceId == null}" class="mt-2">
+                                <!-- Need Stringing Button - Only for racket products -->
+                                <div th:if="${item.stringingServiceId == null and (item.categorySlug != null and (item.categorySlug.contains('vot') or item.categorySlug.contains('racket')))}"
+                                    class="mt-2">
                                     <button class="btn btn-stringing w-100"
                                         th:onclick="'openStringingModal(' + ${item.cartItemId} + ')'">
                                         <i class="fas fa-tools me-2"></i>Nhu cầu đan vợt
@@ -243,18 +244,27 @@
 
                             <div class="col-md-3 text-center">
                                 <div class="input-group input-group-sm justify-content-center"
-                                    style="width: 120px; margin: 0 auto;">
-                                    <button class="btn btn-outline-secondary">-</button>
-                                    <input type="text" class="form-control text-center" th:value="${item.quantity}">
-                                    <button class="btn btn-outline-secondary">+</button>
+                                    style="width: 140px; margin: 0 auto;">
+                                    <button class="btn btn-outline-secondary btn-qty-minus" type="button"
+                                        th:data-item-id="${item.cartItemId}" th:data-current-qty="${item.quantity}"
+                                        onclick="updateQuantity(this, -1)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="text" class="form-control text-center qty-input"
+                                        th:id="'qty-' + ${item.cartItemId}" th:value="${item.quantity}" readonly>
+                                    <button class="btn btn-outline-secondary btn-qty-plus" type="button"
+                                        th:data-item-id="${item.cartItemId}" th:data-current-qty="${item.quantity}"
+                                        onclick="updateQuantity(this, 1)">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="col-md-2 text-end">
-                                <form th:action="@{/cart/remove}" method="post">
-                                    <input type="hidden" name="cartItemId" th:value="${item.cartItemId}">
-                                    <button class="btn btn-link text-danger"><i class="fas fa-trash"></i></button>
-                                </form>
-                                <div class="fw-bold mt-2"
+                                <button class="btn btn-link text-danger p-0" type="button"
+                                    th:data-item-id="${item.cartItemId}" onclick="removeItem(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <div class="fw-bold mt-2 item-subtotal" th:id="'subtotal-' + ${item.cartItemId}"
                                     th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
                                 </div>
                             </div>
@@ -300,7 +310,8 @@
                     <div class="mb-3">
                         <label class="form-label small fw-medium">Mã giảm giá</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="couponCode" placeholder="Nhập mã giảm giá">
+                            <input type="text" class="form-control" id="couponCode" placeholder="Nhập mã giảm giá"
+                                onkeypress="if(event.key === 'Enter') { event.preventDefault(); applyCoupon(); }">
                             <button class="btn btn-outline-primary" type="button" onclick="applyCoupon()">Áp
                                 dụng</button>
                         </div>
@@ -314,14 +325,16 @@
                                         class="fas fa-times"></i></button>
                             </div>
                         </div>
+                        <!-- Hidden input for coupon code -->
+                        <input type="hidden" id="hiddenCouponCode" name="couponCode" value="">
                     </div>
 
-                    <form th:action="@{/checkout/place}" method="post" id="checkoutForm">
-                        <input type="hidden" name="couponCode" id="hiddenCouponCode">
-                        <button type="submit" class="btn btn-gradient w-100 py-3 shadow-lg">
-                            Thanh toán ngay <i class="fas fa-arrow-right ms-2"></i>
-                        </button>
-                    </form>
+                    <a th:href="@{/checkout}" class="btn btn-gradient w-100 py-3 shadow-lg">
+                        Thanh toán ngay <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                    <a href="/products" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-left me-2"></i>Tiếp tục mua sắm
+                    </a>
                 </div>
             </div>
         </div>
@@ -395,7 +408,14 @@
             return new Intl.NumberFormat('vi-VN').format(price) + ' ₫';
         }
 
+        let isApplyingCoupon = false; // Prevent double calls
+
         async function applyCoupon() {
+            if (isApplyingCoupon) {
+                console.log('Already applying coupon, ignoring duplicate call');
+                return;
+            }
+
             const code = document.getElementById('couponCode').value.trim();
             const messageDiv = document.getElementById('couponMessage');
 
@@ -404,35 +424,44 @@
                 return;
             }
 
+            isApplyingCoupon = true;
+            messageDiv.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i>Đang kiểm tra...</span>';
+
             try {
-                const response = await fetch(`/api/coupons/validate?code=${encodeURIComponent(code)}&orderTotal=${cartTotal}`, {
+                // Use /api/coupons/apply to persist coupon to cart
+                const response = await fetch(`/api/coupons/apply?code=${encodeURIComponent(code)}&orderTotal=${cartTotal}`, {
                     method: 'POST'
                 });
 
+                console.log('Coupon API response status:', response.status);
                 const result = await response.json();
+                console.log('Coupon API result:', result);
 
-                if (result.valid) {
-                    messageDiv.innerHTML = `<span class="text-success"><i class="fas fa-check-circle me-1"></i>Giảm ${formatPrice(result.discountAmount)}</span>`;
-
+                if (response.ok && result.success) {
                     // Update display
                     document.getElementById('totalDisplay').textContent = formatPrice(result.newTotal);
                     document.getElementById('couponDiscountAmount').textContent = '-' + formatPrice(result.discountAmount);
                     document.getElementById('couponDiscountRow').style.display = 'flex';
 
                     // Show applied coupon
-                    document.getElementById('appliedCouponCode').textContent = result.code;
+                    document.getElementById('appliedCouponCode').textContent = result.couponCode;
                     document.getElementById('appliedCouponDisplay').style.display = 'block';
 
                     // Disable input and set hidden field
                     document.getElementById('couponCode').disabled = true;
-                    document.getElementById('hiddenCouponCode').value = result.code;
+                    document.getElementById('hiddenCouponCode').value = result.couponCode;
+
+                    // Clear message (success shown in green badge)
+                    messageDiv.innerHTML = '';
 
                 } else {
-                    messageDiv.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${result.errorMessage}</span>`;
+                    messageDiv.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${result.message || 'Mã không hợp lệ'}</span>`;
                 }
             } catch (error) {
-                console.error('Error validating coupon:', error);
+                console.error('Error applying coupon:', error);
                 messageDiv.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Có lỗi xảy ra</span>';
+            } finally {
+                isApplyingCoupon = false;
             }
         }
 
@@ -444,6 +473,136 @@
             document.getElementById('couponDiscountRow').style.display = 'none';
             document.getElementById('hiddenCouponCode').value = '';
             document.getElementById('totalDisplay').textContent = formatPrice(cartTotal);
+        }
+
+        // ===== CART QUANTITY & REMOVE HANDLING =====
+
+        async function updateQuantity(button, delta) {
+            const itemId = button.dataset.itemId;
+            const qtyInput = document.getElementById('qty-' + itemId);
+            const currentQty = parseInt(qtyInput.value);
+            const newQty = currentQty + delta;
+
+            if (newQty < 1) {
+                // Remove item if quantity goes to 0
+                if (confirm('Bạn có muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+                    removeItem(button);
+                }
+                return;
+            }
+
+            // Disable buttons during update
+            button.disabled = true;
+
+            try {
+                const response = await fetch(`/api/cart/items/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity: newQty })
+                });
+
+                if (response.ok) {
+                    const cart = await response.json();
+                    refreshCartDisplay(cart);
+                } else if (response.status === 401) {
+                    alert('Vui lòng đăng nhập để thực hiện chức năng này');
+                    window.location.href = '/login';
+                } else {
+                    const error = await response.json();
+                    alert(error.message || 'Có lỗi xảy ra khi cập nhật giỏ hàng');
+                }
+            } catch (error) {
+                console.error('Error updating quantity:', error);
+                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function removeItem(button) {
+            const itemId = button.dataset.itemId;
+
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+                return;
+            }
+
+            button.disabled = true;
+
+            try {
+                const response = await fetch(`/api/cart/items/${itemId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    const cart = await response.json();
+                    if (cart.isEmpty) {
+                        window.location.reload();
+                    } else {
+                        // Remove the item row from DOM
+                        const itemRow = button.closest('.cart-item');
+                        if (itemRow) {
+                            itemRow.style.transition = 'opacity 0.3s';
+                            itemRow.style.opacity = '0';
+                            setTimeout(() => {
+                                itemRow.remove();
+                                refreshCartDisplay(cart);
+                            }, 300);
+                        }
+                    }
+                } else {
+                    alert('Có lỗi xảy ra khi xóa sản phẩm');
+                }
+            } catch (error) {
+                console.error('Error removing item:', error);
+                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function refreshCartDisplay(cart) {
+            // Update totals
+            cartTotal = cart.total;
+            document.getElementById('totalDisplay').textContent = formatPrice(cart.total);
+
+            // Update subtotal in summary
+            const subtotalEl = document.querySelector('.summary-card .d-flex:first-child .fw-bold');
+            if (subtotalEl) {
+                subtotalEl.textContent = formatPrice(cart.subtotal);
+            }
+
+            // Update promotion discount
+            if (cart.promotionDiscount && cart.promotionDiscount > 0) {
+                document.getElementById('promotionDiscount').textContent = '-' + formatPrice(cart.promotionDiscount);
+            } else {
+                document.getElementById('promotionDiscount').textContent = '-0 ₫';
+            }
+
+            // Update individual item quantities and subtotals
+            cart.items.forEach(item => {
+                const qtyInput = document.getElementById('qty-' + item.cartItemId);
+                const subtotalEl = document.getElementById('subtotal-' + item.cartItemId);
+
+                if (qtyInput) qtyInput.value = item.quantity;
+                if (subtotalEl) subtotalEl.textContent = formatPrice(item.subtotal);
+
+                // Update data attributes on buttons
+                const row = qtyInput?.closest('.cart-item');
+                if (row) {
+                    row.querySelectorAll('[data-item-id]').forEach(btn => {
+                        btn.dataset.currentQty = item.quantity;
+                    });
+                }
+            });
+
+            // Update cart badge in navbar
+            const badgeEl = document.querySelector('.navbar .badge');
+            if (badgeEl) {
+                badgeEl.textContent = cart.totalItems;
+                badgeEl.style.display = cart.totalItems > 0 ? 'inline' : 'none';
+            }
         }
     </script>
 </body>

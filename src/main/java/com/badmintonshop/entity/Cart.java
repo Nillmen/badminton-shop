@@ -52,6 +52,13 @@ public class Cart {
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 
+    // Coupon applied to cart
+    @Column(name = "coupon_code", length = 50)
+    private String couponCode;
+
+    @Column(name = "coupon_discount", precision = 15, scale = 2)
+    private java.math.BigDecimal couponDiscount;
+
     // Helper methods
     public boolean isGuestCart() {
         return user == null;

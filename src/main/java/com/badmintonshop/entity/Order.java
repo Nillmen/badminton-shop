@@ -88,6 +88,9 @@ public class Order {
     @Column(name = "shipping_phone", nullable = false, length = 20)
     private String shippingPhone;
 
+    @Column(name = "shipping_email", length = 100)
+    private String shippingEmail;
+
     @Column(name = "shipping_address", nullable = false, length = 500)
     private String shippingAddress;
 

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán - Badminton Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #ff0080;
+            --dark-bg: #f3f6fd;
+            --card-radius: 16px;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--dark-bg);
+            color: #2d3748;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 60px 0;
+            color: white;
+            margin-bottom: 40px;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
+        }
+
+        .checkout-card {
+            background: white;
+            border-radius: var(--card-radius);
+            border: none;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .checkout-card .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-weight: 600;
+            padding: 15px 20px;
+            border: none;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 28px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);
+            color: white;
+        }
+
+        .payment-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-option:hover {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .payment-option.selected {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .payment-option input[type="radio"] {
+            display: none;
+        }
+
+        .order-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .summary-row.total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+
+        .stringing-badge {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .step.active .step-number {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #38ef7d;
+            color: white;
+        }
+
+        .step:not(.active):not(.completed) .step-number {
+            background: #e2e8f0;
+            color: #718096;
+        }
+
+        .step-line {
+            width: 60px;
+            height: 3px;
+            background: #e2e8f0;
+            margin: 0 15px;
+        }
+
+        .step.completed+.step-line {
+            background: #38ef7d;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Include header fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="step-indicator">
+                <div class="step completed">
+                    <div class="step-number"><i class="fas fa-check"></i></div>
+                    <span>Giỏ hàng</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step active">
+                    <div class="step-number">2</div>
+                    <span>Thanh toán</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <span>Hoàn tất</span>
+                </div>
+            </div>
+            <h1 class="text-center mb-0"><i class="fas fa-credit-card me-3"></i>Thanh toán</h1>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <!-- Empty cart check -->
+        <div th:if="${cart == null or cart.items.empty}" class="text-center py-5">
+            <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
+            <h3>Giỏ hàng trống</h3>
+            <p class="text-muted">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
+            <a href="/products" class="btn btn-gradient mt-3">
+                <i class="fas fa-shopping-bag me-2"></i>Tiếp tục mua sắm
+            </a>
+        </div>
+
+        <!-- Checkout form -->
+        <form th:if="${cart != null and not cart.items.empty}" id="checkoutForm" method="post" action="/checkout/place">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="row g-4">
+                <!-- Left Column: Shipping & Payment -->
+                <div class="col-lg-7">
+                    <!-- Shipping Information -->
+                    <div class="checkout-card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-truck me-2"></i>Thông tin giao hàng
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Họ và tên *</label>
+                                    <input type="text" class="form-control" name="recipientName"
+                                        th:value="${user?.fullName}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Số điện thoại *</label>
+                                    <input type="tel" class="form-control" name="phone" th:value="${user?.phone}"
+                                        required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Email * <small class="text-muted">(Để nhận thông báo đơn
+                                            hàng)</small></label>
+                                    <input type="email" class="form-control" name="email" th:value="${user?.email}"
+                                        required placeholder="example@email.com">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Địa chỉ *</label>
+                                    <input type="text" class="form-control" name="address"
+                                        placeholder="Số nhà, tên đường" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Phường/Xã</label>
+                                    <input type="text" class="form-control" name="ward">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Quận/Huyện *</label>
+                                    <input type="text" class="form-control" name="district" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Tỉnh/Thành phố *</label>
+                                    <input type="text" class="form-control" name="city" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Ghi chú</label>
+                                    <textarea class="form-control" name="customerNotes" rows="2"
+                                        placeholder="Ghi chú cho đơn hàng (nếu có)"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="checkout-card">
+                        <div class="card-header">
+                            <i class="fas fa-wallet me-2"></i>Phương thức thanh toán
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="payment-option d-flex align-items-center selected" data-method="COD">
+                                        <input type="radio" name="paymentMethod" value="COD" checked>
+                                        <i class="fas fa-money-bill-wave fa-2x text-success me-3"></i>
+                                        <div>
+                                            <strong>Thanh toán khi nhận hàng (COD)</strong>
+                                            <div class="text-muted small">Thanh toán bằng tiền mặt khi nhận hàng</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-12">
+                                    <label class="payment-option d-flex align-items-center" data-method="VNPAY">
+                                        <input type="radio" name="paymentMethod" value="VNPAY">
+                                        <img src="/images/vnpay-logo.png" alt="VNPay" style="height: 40px;" class="me-3"
+                                            onerror="this.src='https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png'; this.style.height='40px'">
+                                        <div>
+                                            <strong>Thanh toán qua VNPay</strong>
+                                            <div class="text-muted small">ATM, Visa, MasterCard, QR Code</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-12">
+                                    <label class="payment-option d-flex align-items-center" data-method="BANK_TRANSFER">
+                                        <input type="radio" name="paymentMethod" value="BANK_TRANSFER">
+                                        <i class="fas fa-university fa-2x text-primary me-3"></i>
+                                        <div>
+                                            <strong>Chuyển khoản ngân hàng</strong>
+                                            <div class="text-muted small">Chuyển khoản trực tiếp qua ngân hàng</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Order Summary -->
+                <div class="col-lg-5">
+                    <div class="checkout-card sticky-top" style="top: 100px;">
+                        <div class="card-header">
+                            <i class="fas fa-receipt me-2"></i>Đơn hàng của bạn
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Order Items -->
+                            <div class="order-items mb-4">
+                                <div th:each="item : ${cart.items}" class="order-item d-flex align-items-center">
+                                    <img th:src="${item.productImage}" th:alt="${item.productName}"
+                                        style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"
+                                        onerror="this.src='/images/no-image.png'">
+                                    <div class="ms-3 flex-grow-1">
+                                        <div class="fw-semibold" th:text="${item.productName}">Product Name</div>
+                                        <div class="small text-muted" th:if="${item.variantName}"
+                                            th:text="${item.variantName}">Variant</div>
+                                        <div th:if="${item.stringingServiceName}" class="mt-1">
+                                            <span class="stringing-badge">
+                                                <i class="fas fa-tools me-1"></i>
+                                                <span th:text="${item.stringingServiceName}">Stringing</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-semibold"
+                                            th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'">
+                                            Price</div>
+                                        <div class="small text-muted">x<span th:text="${item.quantity}">1</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Summary -->
+                            <div class="summary">
+                                <div class="summary-row">
+                                    <span class="text-muted">Tạm tính:</span>
+                                    <span
+                                        th:text="${#numbers.formatDecimal(cart.subtotal, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                                </div>
+                                <div class="summary-row"
+                                    th:if="${cart.promotionDiscount != null and cart.promotionDiscount > 0}">
+                                    <span class="text-muted">Giảm giá SP:</span>
+                                    <span class="text-success"
+                                        th:text="'-' + ${#numbers.formatDecimal(cart.promotionDiscount, 0, 'COMMA', 0, 'POINT')} + 'đ'">-0đ</span>
+                                </div>
+                                <div class="summary-row" th:if="${cart.discount != null and cart.discount > 0}">
+                                    <span class="text-muted">
+                                        <i class="fas fa-tag me-1"></i>Mã giảm giá
+                                        <small th:if="${cart.couponCode != null}"
+                                            th:text="'(' + ${cart.couponCode} + ')'"></small>:
+                                    </span>
+                                    <span class="text-success"
+                                        th:text="'-' + ${#numbers.formatDecimal(cart.discount, 0, 'COMMA', 0, 'POINT')} + 'đ'">-0đ</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="text-muted">Phí vận chuyển:</span>
+                                    <span th:if="${cart.shippingFee == 0}" class="text-success">Miễn phí</span>
+                                    <span th:if="${cart.shippingFee > 0}"
+                                        th:text="${#numbers.formatDecimal(cart.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span>Tổng cộng:</span>
+                                    <span class="text-primary"
+                                        th:text="${#numbers.formatDecimal(cart.total, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-gradient w-100 mt-4" id="submitBtn">
+                                <i class="fas fa-lock me-2"></i>Đặt hàng
+                            </button>
+
+                            <p class="text-center text-muted small mt-3 mb-0">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Thông tin của bạn được bảo mật an toàn
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Include footer fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Payment option selection
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function () {
+                document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+            });
+        });
+
+        // Form submission
+        document.getElementById('checkoutForm')?.addEventListener('submit', function (e) {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+        });
+    </script>
+</body>
+
+</html>

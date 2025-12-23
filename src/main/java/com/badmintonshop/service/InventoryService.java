@@ -398,6 +398,57 @@ public class InventoryService {
                 }
         }
 
+        /**
+         * Restore stock for an order (when payment fails or order is cancelled)
+         * This reverses the stock reduction done during order creation
+         */
+        @Transactional
+        public void restoreStockForOrder(com.badmintonshop.entity.Order order) {
+                if (order == null || order.getItems() == null) {
+                        log.warn("restoreStockForOrder: Order or items is null");
+                        return;
+                }
+
+                for (var orderItem : order.getItems()) {
+                        try {
+                                Long productId = orderItem.getProduct().getProductId();
+                                Long variantId = orderItem.getVariant() != null ? orderItem.getVariant().getVariantId() : null;
+                                int quantity = orderItem.getQuantity();
+
+                                // Find inventory for this product/variant
+                                Inventory inventory;
+                                if (variantId != null) {
+                                        inventory = inventoryRepository.findByVariantVariantId(variantId).orElse(null);
+                                } else {
+                                        inventory = inventoryRepository.findByProductProductIdAndVariantIsNull(productId).orElse(null);
+                                }
+
+                                if (inventory != null) {
+                                        int previousQty = inventory.getQuantityAvailable();
+                                        inventory.restock(quantity);
+                                        inventoryRepository.save(inventory);
+
+                                        // Record transaction
+                                        createTransaction(inventory, previousQty, inventory.getQuantityAvailable(), quantity,
+                                                        TransactionType.RETURN, "Hoàn kho - Payment failed/cancelled", "order", order.getOrderId());
+
+                                        log.info("Restored {} units for product {} variant {} (order {})",
+                                                        quantity, productId, variantId, order.getOrderNumber());
+
+                                        // Update status if needed
+                                        checkAndUpdateProductStatus(productId);
+                                        checkAndUpdateVariantStatus(inventory);
+                                } else {
+                                        log.warn("Inventory not found for product {} variant {}", productId, variantId);
+                                }
+                        } catch (Exception e) {
+                                log.error("Failed to restore stock for order item: {}", e.getMessage(), e);
+                        }
+                }
+
+                log.info("Completed stock restoration for order {}", order.getOrderNumber());
+        }
+
         @lombok.Builder
         @lombok.Getter
         public static class InventoryStats {

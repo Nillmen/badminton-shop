@@ -23,6 +23,7 @@ public class CartResponse {
     private BigDecimal shippingFee;
     private BigDecimal discount;
     private BigDecimal promotionDiscount;
+    private String couponCode;
     private BigDecimal total;
     private Boolean isEmpty;
 }
