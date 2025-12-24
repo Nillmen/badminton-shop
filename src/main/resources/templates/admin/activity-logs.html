@@ -117,11 +117,20 @@
                     <select class="form-select" id="filterEntityType">
                         <option value="">Tất cả</option>
                         <option value="Product">Sản phẩm</option>
+                        <option value="ProductVariant">Biến thể SP</option>
+                        <option value="Category">Danh mục</option>
+                        <option value="Brand">Thương hiệu</option>
+                        <option value="StringProduct">Cước vợt</option>
                         <option value="Order">Đơn hàng</option>
+                        <option value="Coupon">Mã giảm giá</option>
+                        <option value="Promotion">Khuyến mãi</option>
                         <option value="User">Khách hàng</option>
+                        <option value="Staff">Nhân viên</option>
+                        <option value="Supplier">Nhà cung cấp</option>
+                        <option value="Banner">Banner</option>
+                        <option value="Inventory">Tồn kho</option>
                         <option value="SystemSetting">Cài đặt</option>
                         <option value="EmailTemplate">Mẫu email</option>
-                        <option value="Coupon">Mã giảm giá</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -131,8 +140,10 @@
                         <option value="CREATE">Tạo mới</option>
                         <option value="UPDATE">Cập nhật</option>
                         <option value="DELETE">Xóa</option>
-                        <option value="VIEW">Xem</option>
                         <option value="LOGIN">Đăng nhập</option>
+                        <option value="LOGOUT">Đăng xuất</option>
+                        <option value="EXPORT">Xuất dữ liệu</option>
+                        <option value="IMPORT">Nhập dữ liệu</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -198,9 +209,10 @@
                 'CREATE': { icon: 'plus', class: 'create', label: 'Tạo mới' },
                 'UPDATE': { icon: 'edit', class: 'update', label: 'Cập nhật' },
                 'DELETE': { icon: 'trash', class: 'delete', label: 'Xóa' },
-                'VIEW': { icon: 'eye', class: 'view', label: 'Xem' },
                 'LOGIN': { icon: 'sign-in-alt', class: 'login', label: 'Đăng nhập' },
-                'LOGOUT': { icon: 'sign-out-alt', class: 'view', label: 'Đăng xuất' }
+                'LOGOUT': { icon: 'sign-out-alt', class: 'view', label: 'Đăng xuất' },
+                'EXPORT': { icon: 'file-export', class: 'view', label: 'Xuất dữ liệu' },
+                'IMPORT': { icon: 'file-import', class: 'create', label: 'Nhập dữ liệu' }
             };
 
             document.addEventListener('DOMContentLoaded', function () {
@@ -210,8 +222,30 @@
                 document.getElementById('filterTo').value = formatDate(today);
                 document.getElementById('filterFrom').value = formatDate(weekAgo);
 
+                // Load staff list for filter dropdown
+                loadStaffList();
+
                 loadLogs();
             });
+
+            async function loadStaffList() {
+                try {
+                    const response = await fetch('/admin/api/staff?size=100');
+                    const result = await response.json();
+
+                    if (result.success && result.data && result.data.content) {
+                        const select = document.getElementById('filterStaff');
+                        result.data.content.forEach(staff => {
+                            const option = document.createElement('option');
+                            option.value = staff.staffId;
+                            option.textContent = staff.fullName + (staff.role ? ` (${staff.role})` : '');
+                            select.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading staff list:', error);
+                }
+            }
 
             function formatDate(date) {
                 return date.toISOString().split('T')[0];

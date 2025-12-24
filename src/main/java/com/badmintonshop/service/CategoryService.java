@@ -7,6 +7,8 @@ import com.badmintonshop.entity.enums.CategoryStatus;
 import com.badmintonshop.entity.enums.CategoryType;
 import com.badmintonshop.repository.CategoryRepository;
 import com.badmintonshop.repository.ProductRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -117,6 +119,7 @@ public class CategoryService {
      * Create new category
      */
     @Transactional
+    @Auditable(entityType = "Category", action = ActivityAction.CREATE, description = "Created category: {0}")
     public CategoryDTO createCategory(CategoryDTO dto) {
         // Generate slug if not provided
         String slug = dto.getSlug();
@@ -158,6 +161,7 @@ public class CategoryService {
      * Update category
      */
     @Transactional
+    @Auditable(entityType = "Category", action = ActivityAction.UPDATE, description = "Updated category ID: {0}")
     public CategoryDTO updateCategory(Long id, CategoryDTO dto) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục: " + id));
@@ -207,6 +211,7 @@ public class CategoryService {
      * Delete category (soft delete)
      */
     @Transactional
+    @Auditable(entityType = "Category", action = ActivityAction.DELETE, description = "Soft deleted category ID: {0}")
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục: " + id));
@@ -300,6 +305,7 @@ public class CategoryService {
      * Restore category from trash
      */
     @Transactional
+    @Auditable(entityType = "Category", action = ActivityAction.UPDATE, description = "Restored category ID: {0}")
     public void restoreCategory(Long id) {
         Category category = categoryRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục: " + id));
@@ -315,6 +321,7 @@ public class CategoryService {
      * Hard delete category (permanently)
      */
     @Transactional
+    @Auditable(entityType = "Category", action = ActivityAction.DELETE, description = "Hard deleted category ID: {0}")
     public void hardDeleteCategory(Long id) {
         Category category = categoryRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục: " + id));

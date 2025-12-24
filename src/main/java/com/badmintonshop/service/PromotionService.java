@@ -5,6 +5,8 @@ import com.badmintonshop.entity.Promotion;
 import com.badmintonshop.entity.enums.DiscountType;
 import com.badmintonshop.entity.enums.PromotionType;
 import com.badmintonshop.repository.PromotionRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -122,6 +124,7 @@ public class PromotionService {
      * Create new promotion
      */
     @Transactional
+    @Auditable(entityType = "Promotion", action = ActivityAction.CREATE, description = "Created promotion: {0}")
     public PromotionDTO createPromotion(PromotionDTO dto) {
         if (dto.getStartsAt() == null || dto.getEndsAt() == null) {
             throw new IllegalArgumentException("Ngày bắt đầu và kết thúc là bắt buộc");
@@ -160,6 +163,7 @@ public class PromotionService {
      * Update promotion
      */
     @Transactional
+    @Auditable(entityType = "Promotion", action = ActivityAction.UPDATE, description = "Updated promotion ID: {0}")
     public PromotionDTO updatePromotion(Long id, PromotionDTO dto) {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khuyến mãi"));
@@ -195,6 +199,7 @@ public class PromotionService {
      * Delete promotion (soft delete)
      */
     @Transactional
+    @Auditable(entityType = "Promotion", action = ActivityAction.DELETE, description = "Soft deleted promotion ID: {0}")
     public void deletePromotion(Long id) {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khuyến mãi"));
@@ -268,6 +273,7 @@ public class PromotionService {
      * Restore promotion from trash
      */
     @Transactional
+    @Auditable(entityType = "Promotion", action = ActivityAction.UPDATE, description = "Restored promotion ID: {0}")
     public void restorePromotion(Long id) {
         Promotion promotion = promotionRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Khuyến mãi không tồn tại: " + id));
@@ -285,6 +291,7 @@ public class PromotionService {
      * Hard delete promotion (permanently)
      */
     @Transactional
+    @Auditable(entityType = "Promotion", action = ActivityAction.DELETE, description = "Hard deleted promotion ID: {0}")
     public void hardDeletePromotion(Long id) {
         Promotion promotion = promotionRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Khuyến mãi không tồn tại: " + id));

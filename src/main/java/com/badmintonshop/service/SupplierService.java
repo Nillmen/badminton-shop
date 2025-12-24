@@ -7,6 +7,8 @@ import com.badmintonshop.entity.Supplier;
 import com.badmintonshop.repository.ProductRepository;
 import com.badmintonshop.repository.ProductSupplierRepository;
 import com.badmintonshop.repository.SupplierRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -68,6 +70,7 @@ public class SupplierService {
      * Create new supplier
      */
     @Transactional
+    @Auditable(entityType = "Supplier", action = ActivityAction.CREATE, description = "Created supplier: {0}")
     public SupplierDTO createSupplier(SupplierDTO dto) {
         if (supplierRepository.existsByName(dto.getName())) {
             throw new IllegalArgumentException("Tên nhà cung cấp đã tồn tại: " + dto.getName());
@@ -104,6 +107,7 @@ public class SupplierService {
      * Update supplier
      */
     @Transactional
+    @Auditable(entityType = "Supplier", action = ActivityAction.UPDATE, description = "Updated supplier ID: {0}")
     public SupplierDTO updateSupplier(Long id, SupplierDTO dto) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy nhà cung cấp: " + id));
@@ -145,6 +149,7 @@ public class SupplierService {
      * Delete supplier
      */
     @Transactional
+    @Auditable(entityType = "Supplier", action = ActivityAction.DELETE, description = "Deleted supplier ID: {0}")
     public void deleteSupplier(Long id) {
         if (!supplierRepository.existsById(id)) {
             throw new IllegalArgumentException("Không tìm thấy nhà cung cấp: " + id);

@@ -7,6 +7,8 @@ import com.badmintonshop.exception.BadRequestException;
 import com.badmintonshop.exception.InsufficientStockException;
 import com.badmintonshop.exception.ResourceNotFoundException;
 import com.badmintonshop.repository.*;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -53,8 +55,7 @@ public class OrderService {
             OrderStatus.SHIPPED, Set.of(OrderStatus.DELIVERED, OrderStatus.REFUNDED),
             OrderStatus.DELIVERED, Set.of(OrderStatus.REFUNDED),
             OrderStatus.CANCELLED, Set.of(),
-            OrderStatus.REFUNDED, Set.of()
-    );
+            OrderStatus.REFUNDED, Set.of());
 
     // =============================================
     // CUSTOMER APIs
@@ -64,6 +65,7 @@ public class OrderService {
      * Create order from cart with full transaction safety
      */
     @Transactional(rollbackFor = Exception.class)
+    @Auditable(entityType = "Order", action = ActivityAction.CREATE, description = "Created order for userId: {0}")
     public OrderResponse createOrder(Long userId, String sessionId, OrderRequest request) {
         log.info("Creating order for userId: {}, sessionId: {}", userId, sessionId);
 
@@ -84,8 +86,7 @@ public class OrderService {
             boolean success = decreaseInventory(
                     item.getProduct().getProductId(),
                     item.getVariant() != null ? item.getVariant().getVariantId() : null,
-                    item.getQuantity()
-            );
+                    item.getQuantity());
             if (!success) {
                 throw new InsufficientStockException(
                         item.getProduct().getProductId(),
@@ -144,13 +145,13 @@ public class OrderService {
             totalAfterDiscount = BigDecimal.ZERO;
         }
         order.setTotalAmount(totalAfterDiscount);
-        
+
         // Store coupon code in admin notes for tracking
         if (couponCode != null && !couponCode.isEmpty()) {
             order.setAdminNotes("Coupon applied: " + couponCode);
             log.info("Applied coupon {} to order {} with discount {}", couponCode, orderNumber, couponDiscount);
         }
-        
+
         orderRepository.save(order);
 
         // 8. Record coupon usage (increment times_used, create CouponUsage record)
@@ -173,17 +174,19 @@ public class OrderService {
             for (OrderItem item : order.getItems()) {
                 java.util.Map<String, String> itemMap = new java.util.HashMap<>();
                 itemMap.put("productName", item.getProduct() != null ? item.getProduct().getName() : "Sản phẩm");
-                
+
                 String variantInfo = "";
                 if (item.getVariant() != null) {
                     variantInfo = item.getVariant().getVariantName();
                 }
                 if (item.getHasStringingService() && item.getStringingService() != null) {
-                   if (!variantInfo.isEmpty()) variantInfo += ", ";
-                   variantInfo += "Đan vợt: " + item.getStringingService().getServiceName() + " (" + item.getTension() + "kg)";
+                    if (!variantInfo.isEmpty())
+                        variantInfo += ", ";
+                    variantInfo += "Đan vợt: " + item.getStringingService().getServiceName() + " (" + item.getTension()
+                            + "kg)";
                 }
                 itemMap.put("variantInfo", variantInfo);
-                
+
                 itemMap.put("quantity", String.valueOf(item.getQuantity()));
                 itemMap.put("totalPrice", couponService.formatPrice(item.getTotalPrice()));
                 orderItemsMap.add(itemMap);
@@ -199,9 +202,9 @@ public class OrderService {
             };
 
             String emailToSend = order.getShippingEmail();
-             if (emailToSend == null && user != null) {
-                 emailToSend = user.getEmail();
-             }
+            if (emailToSend == null && user != null) {
+                emailToSend = user.getEmail();
+            }
 
             if (emailToSend != null && !emailToSend.isEmpty()) {
                 emailService.sendOrderConfirmation(
@@ -218,8 +221,7 @@ public class OrderService {
                         order.getShippingRecipientName(),
                         order.getShippingPhone(),
                         order.getFullShippingAddress(),
-                        "/account/orders/" + order.getOrderNumber()
-                );
+                        "/account/orders/" + order.getOrderNumber());
             } else {
                 log.warn("No email found for order confirmation: {}", order.getOrderNumber());
             }
@@ -319,7 +321,8 @@ public class OrderService {
             LocalDateTime toDate,
             String search,
             Pageable pageable) {
-        Page<Order> orders = orderRepository.findAllWithFilters(status, paymentStatus, fromDate, toDate, search, pageable);
+        Page<Order> orders = orderRepository.findAllWithFilters(status, paymentStatus, fromDate, toDate, search,
+                pageable);
         return orders.map(this::mapToOrderListDTO);
     }
 
@@ -337,6 +340,7 @@ public class OrderService {
      * Update order status (admin)
      */
     @Transactional(rollbackFor = Exception.class)
+    @Auditable(entityType = "Order", action = ActivityAction.UPDATE, description = "Updated order status ID: {0}")
     public OrderResponse updateOrderStatus(Long orderId, UpdateOrderStatusRequest request, Long staffId) {
         Order order = orderRepository.findByIdWithDetails(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại"));
@@ -352,20 +356,20 @@ public class OrderService {
 
         // Update status
         order.updateStatus(newStatus);
-        
+
         // Auto-mark COD payment as PAID when order is DELIVERED
         if (newStatus == OrderStatus.DELIVERED && order.getPaymentMethod() == PaymentMethod.COD) {
             order.setPaymentStatus(PaymentStatus.PAID);
             order.setPaidAt(LocalDateTime.now());
             log.info("COD order {} auto-marked as PAID upon delivery", order.getOrderNumber());
         }
-        
+
         orderRepository.save(order);
 
         // Create history
         createStatusHistory(order, currentStatus, newStatus, request.getNotes(), ChangedByType.STAFF, staffId);
 
-        log.info("Order {} status updated from {} to {} by staff {}", 
+        log.info("Order {} status updated from {} to {} by staff {}",
                 order.getOrderNumber(), currentStatus, newStatus, staffId);
 
         return mapToOrderResponse(order);
@@ -447,7 +451,8 @@ public class OrderService {
                 List<Inventory> inventories = inventoryRepository.findByProductProductId(productId);
                 int remaining = quantity;
                 for (Inventory inv : inventories) {
-                    if (remaining <= 0) break;
+                    if (remaining <= 0)
+                        break;
                     int canReserve = Math.min(inv.getActualAvailable(), remaining);
                     inv.setQuantityReserved(inv.getQuantityReserved() + canReserve);
                     inventoryRepository.save(inv);
@@ -494,7 +499,8 @@ public class OrderService {
                 .productSku(cartItem.getProduct().getSku())
                 .variantName(cartItem.getVariant() != null ? cartItem.getVariant().getVariantName() : null)
                 .productImage(cartItem.getProduct().getPrimaryImage() != null
-                        ? cartItem.getProduct().getPrimaryImage().getImageUrl() : null)
+                        ? cartItem.getProduct().getPrimaryImage().getImageUrl()
+                        : null)
                 .quantity(cartItem.getQuantity())
                 .unitPrice(cartItem.getPriceAtAdd())
                 .subtotal(cartItem.getSubtotal())
@@ -522,7 +528,7 @@ public class OrderService {
     }
 
     private void createStatusHistory(Order order, OrderStatus fromStatus, OrderStatus toStatus,
-                                     String notes, ChangedByType changedByType, Long changedById) {
+            String notes, ChangedByType changedByType, Long changedById) {
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .order(order)
                 .fromStatus(fromStatus != null ? fromStatus.name() : null)
@@ -611,7 +617,8 @@ public class OrderService {
                 .subtotal(item.getSubtotal())
                 .totalPrice(item.getTotalPrice())
                 .hasStringingService(item.getHasStringingService() != null && item.getHasStringingService())
-                .stringingServiceId(item.getStringingService() != null ? item.getStringingService().getServiceId() : null)
+                .stringingServiceId(
+                        item.getStringingService() != null ? item.getStringingService().getServiceId() : null)
                 .stringingServiceName(item.getStringingServiceName())
                 .stringingServicePrice(item.getStringingServicePrice())
                 .stringProductId(item.getStringProduct() != null ? item.getStringProduct().getStringId() : null)

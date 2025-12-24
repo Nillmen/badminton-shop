@@ -143,7 +143,8 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
                             <li><a class="dropdown-item" href="/users/profile"><i
                                         class="fas fa-user me-2 text-muted"></i>Tài khoản</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-shopping-bag me-2 text-muted"></i>Đơn
+                            <li><a class="dropdown-item" href="/orders"><i
+                                        class="fas fa-shopping-bag me-2 text-muted"></i>Đơn
                                     hàng</a></li>
                             <li>
                                 <hr class="dropdown-divider">
@@ -166,9 +167,10 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center">
-                    <img th:src="${profile.avatarUrl ?: 'https://via.placeholder.com/150'}" alt="Avatar"
-                        class="rounded-circle me-4"
-                        style="width: 80px; height: 80px; object-fit: cover; border: 3px solid var(--primary);">
+                    <div class="rounded-circle me-4 d-flex align-items-center justify-content-center"
+                        style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                        <i class="fas fa-user fa-2x text-white"></i>
+                    </div>
                     <div>
                         <h4 class="mb-1" th:text="${profile.fullName}">User Name</h4>
                         <p class="text-muted mb-0" th:text="${profile.email}">user@example.com</p>
@@ -311,10 +313,8 @@
                                     <label class="form-label">Trọng lượng vợt ưa thích</label>
                                     <select class="form-select" name="preferredRacketWeight">
                                         <option value="">-- Chọn trọng lượng --</option>
-                                        <option th:each="w : ${ {'2U','3U','4U','5U'} }"
-                                                th:value="${w}"
-                                                th:text="${w}"
-                                                th:selected="${profile.preferredRacketWeight == w}">
+                                        <option th:each="w : ${ {'2U','3U','4U','5U'} }" th:value="${w}" th:text="${w}"
+                                            th:selected="${profile.preferredRacketWeight == w}">
                                         </option>
                                     </select>
                                 </div>

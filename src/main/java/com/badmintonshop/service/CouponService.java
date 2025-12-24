@@ -9,6 +9,8 @@ import com.badmintonshop.entity.enums.ApplicableTo;
 import com.badmintonshop.entity.enums.CouponType;
 import com.badmintonshop.repository.CouponRepository;
 import com.badmintonshop.repository.CouponUsageRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -96,8 +98,8 @@ public class CouponService {
      * - Increments timesUsed counter on Coupon
      */
     @Transactional
-    public void recordCouponUsage(String couponCode, com.badmintonshop.entity.User user, 
-                                   com.badmintonshop.entity.Order order, BigDecimal discountAmount) {
+    public void recordCouponUsage(String couponCode, com.badmintonshop.entity.User user,
+            com.badmintonshop.entity.Order order, BigDecimal discountAmount) {
         if (couponCode == null || couponCode.isEmpty()) {
             return;
         }
@@ -122,7 +124,7 @@ public class CouponService {
         coupon.setTimesUsed(coupon.getTimesUsed() + 1);
         couponRepository.save(coupon);
 
-        log.info("Recorded coupon usage: {} for order {} by user {}, discount: {}", 
+        log.info("Recorded coupon usage: {} for order {} by user {}, discount: {}",
                 couponCode, order.getOrderNumber(), user.getUserId(), discountAmount);
     }
 
@@ -217,6 +219,7 @@ public class CouponService {
      * Create new coupon
      */
     @Transactional
+    @Auditable(entityType = "Coupon", action = ActivityAction.CREATE, description = "Created coupon: {0}")
     public AdminCouponDTO createCoupon(AdminCouponDTO dto) {
         // Validate code uniqueness
         if (couponRepository.existsByCode(dto.getCode())) {
@@ -264,6 +267,7 @@ public class CouponService {
      * Update existing coupon
      */
     @Transactional
+    @Auditable(entityType = "Coupon", action = ActivityAction.UPDATE, description = "Updated coupon ID: {0}")
     public AdminCouponDTO updateCoupon(Long id, AdminCouponDTO dto) {
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá"));
@@ -307,6 +311,7 @@ public class CouponService {
      * Delete coupon (soft delete)
      */
     @Transactional
+    @Auditable(entityType = "Coupon", action = ActivityAction.DELETE, description = "Soft deleted coupon ID: {0}")
     public void deleteCoupon(Long id) {
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá"));
@@ -390,7 +395,8 @@ public class CouponService {
     }
 
     public String formatPrice(BigDecimal price) {
-        if (price == null) return "0 ₫";
+        if (price == null)
+            return "0 ₫";
         java.text.NumberFormat formatter = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("vi", "VN"));
         String formatted = formatter.format(price);
         return formatted.replace(" ", " ").replace("₫", " ₫"); // Ensure consistent spacing
@@ -410,6 +416,7 @@ public class CouponService {
      * Restore coupon from trash
      */
     @Transactional
+    @Auditable(entityType = "Coupon", action = ActivityAction.UPDATE, description = "Restored coupon ID: {0}")
     public void restoreCoupon(Long id) {
         Coupon coupon = couponRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Coupon không tồn tại: " + id));
@@ -427,6 +434,7 @@ public class CouponService {
      * Hard delete coupon (permanently)
      */
     @Transactional
+    @Auditable(entityType = "Coupon", action = ActivityAction.DELETE, description = "Hard deleted coupon ID: {0}")
     public void hardDeleteCoupon(Long id) {
         Coupon coupon = couponRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Coupon không tồn tại: " + id));

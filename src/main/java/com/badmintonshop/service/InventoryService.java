@@ -12,6 +12,8 @@ import com.badmintonshop.repository.InventoryRepository;
 import com.badmintonshop.repository.InventoryTransactionRepository;
 import com.badmintonshop.repository.ProductRepository;
 import com.badmintonshop.repository.ProductVariantRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -94,6 +96,7 @@ public class InventoryService {
          * Update stock quantity (set absolute value)
          */
         @Transactional
+        @Auditable(entityType = "Inventory", action = ActivityAction.UPDATE, description = "Updated inventory ID: {0}")
         public InventoryDTO updateStock(Long inventoryId, int newQuantity, String reason) {
                 Inventory inventory = inventoryRepository.findById(inventoryId)
                                 .orElseThrow(() -> new IllegalArgumentException(
@@ -126,6 +129,7 @@ public class InventoryService {
          * Adjust stock quantity (atomic operation with race condition handling)
          */
         @Transactional
+        @Auditable(entityType = "Inventory", action = ActivityAction.UPDATE, description = "Adjusted inventory ID: {0}")
         public InventoryDTO adjustStock(InventoryAdjustRequest request) {
                 Long inventoryId = request.getInventoryId();
                 int adjustment = request.getAdjustment();
@@ -234,6 +238,7 @@ public class InventoryService {
          * Restock inventory
          */
         @Transactional
+        @Auditable(entityType = "Inventory", action = ActivityAction.UPDATE, description = "Restocked inventory ID: {0}")
         public InventoryDTO restock(Long inventoryId, int quantity, Long purchaseOrderId) {
                 Inventory inventory = inventoryRepository.findById(inventoryId)
                                 .orElseThrow(() -> new IllegalArgumentException(
@@ -412,7 +417,8 @@ public class InventoryService {
                 for (var orderItem : order.getItems()) {
                         try {
                                 Long productId = orderItem.getProduct().getProductId();
-                                Long variantId = orderItem.getVariant() != null ? orderItem.getVariant().getVariantId() : null;
+                                Long variantId = orderItem.getVariant() != null ? orderItem.getVariant().getVariantId()
+                                                : null;
                                 int quantity = orderItem.getQuantity();
 
                                 // Find inventory for this product/variant
@@ -420,7 +426,8 @@ public class InventoryService {
                                 if (variantId != null) {
                                         inventory = inventoryRepository.findByVariantVariantId(variantId).orElse(null);
                                 } else {
-                                        inventory = inventoryRepository.findByProductProductIdAndVariantIsNull(productId).orElse(null);
+                                        inventory = inventoryRepository
+                                                        .findByProductProductIdAndVariantIsNull(productId).orElse(null);
                                 }
 
                                 if (inventory != null) {
@@ -429,8 +436,10 @@ public class InventoryService {
                                         inventoryRepository.save(inventory);
 
                                         // Record transaction
-                                        createTransaction(inventory, previousQty, inventory.getQuantityAvailable(), quantity,
-                                                        TransactionType.RETURN, "Hoàn kho - Payment failed/cancelled", "order", order.getOrderId());
+                                        createTransaction(inventory, previousQty, inventory.getQuantityAvailable(),
+                                                        quantity,
+                                                        TransactionType.RETURN, "Hoàn kho - Payment failed/cancelled",
+                                                        "order", order.getOrderId());
 
                                         log.info("Restored {} units for product {} variant {} (order {})",
                                                         quantity, productId, variantId, order.getOrderNumber());

@@ -5,6 +5,8 @@ import com.badmintonshop.entity.Brand;
 import com.badmintonshop.entity.enums.BrandStatus;
 import com.badmintonshop.repository.BrandRepository;
 import com.badmintonshop.repository.ProductRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.badmintonshop.repository.StringProductRepository;
 
 /**
  * Service for Brand operations
@@ -32,6 +35,7 @@ public class BrandService {
 
     private final BrandRepository brandRepository;
     private final ProductRepository productRepository;
+    private final StringProductRepository stringProductRepository;
     private final JdbcTemplate jdbcTemplate;
 
     /**
@@ -79,6 +83,7 @@ public class BrandService {
      * Create new brand
      */
     @Transactional
+    @Auditable(entityType = "Brand", action = ActivityAction.CREATE, description = "Created brand: {0}")
     public BrandDTO createBrand(BrandDTO dto) {
         // Generate slug if not provided
         String slug = dto.getSlug();
@@ -117,6 +122,7 @@ public class BrandService {
      * Update brand
      */
     @Transactional
+    @Auditable(entityType = "Brand", action = ActivityAction.UPDATE, description = "Updated brand ID: {0}")
     public BrandDTO updateBrand(Long id, BrandDTO dto) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thương hiệu: " + id));
@@ -159,9 +165,10 @@ public class BrandService {
     }
 
     /**
-     * Delete brand (soft delete)
+     * Delete brand (soft delete) - blocks if has products or strings
      */
     @Transactional
+    @Auditable(entityType = "Brand", action = ActivityAction.DELETE, description = "Soft deleted brand ID: {0}")
     public void deleteBrand(Long id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thương hiệu: " + id));
@@ -175,6 +182,15 @@ public class BrandService {
                             brand.getName(), productCount));
         }
 
+        // Check if brand has associated strings
+        long stringCount = stringProductRepository.countByBrandBrandId(id);
+        if (stringCount > 0) {
+            throw new IllegalArgumentException(
+                    String.format("Không thể xóa thương hiệu '%s' vì có %d cước vợt đang liên kết. " +
+                            "Vui lòng chuyển hoặc xóa các cước vợt trước.",
+                            brand.getName(), stringCount));
+        }
+
         brand.setDeletedAt(LocalDateTime.now());
         brand.setIsActive(false);
         brand.setStatus(BrandStatus.INACTIVE);
@@ -183,9 +199,10 @@ public class BrandService {
     }
 
     /**
-     * Hard delete brand
+     * Hard delete brand - blocks if has products or strings (including in trash)
      */
     @Transactional
+    @Auditable(entityType = "Brand", action = ActivityAction.DELETE, description = "Hard deleted brand ID: {0}")
     public void hardDeleteBrand(Long id) {
         Brand brand = brandRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thương hiệu: " + id));
@@ -199,6 +216,17 @@ public class BrandService {
                                     +
                                     "Vui lòng xóa vĩnh viễn các sản phẩm trước.",
                             brand.getName(), productCount));
+        }
+
+        // Check if ANY strings (including deleted) reference this brand
+        long stringCount = stringProductRepository.countAllByBrandId(id);
+        if (stringCount > 0) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Không thể xóa vĩnh viễn thương hiệu '%s' vì có %d cước vợt đang liên kết (bao gồm cả cước trong thùng rác). "
+                                    +
+                                    "Vui lòng xóa vĩnh viễn các cước vợt trước.",
+                            brand.getName(), stringCount));
         }
 
         brandRepository.delete(brand);
@@ -267,6 +295,7 @@ public class BrandService {
      * Restore brand from trash
      */
     @Transactional
+    @Auditable(entityType = "Brand", action = ActivityAction.UPDATE, description = "Restored brand ID: {0}")
     public void restoreBrand(Long id) {
         Brand brand = brandRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thương hiệu: " + id));

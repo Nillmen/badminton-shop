@@ -135,6 +135,13 @@
                         id="promotionCount">0</span>
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="strings-tab" data-bs-toggle="tab" data-bs-target="#strings-content"
+                    type="button">
+                    <i class="fas fa-grip-lines me-1"></i>Cước vợt <span class="badge bg-secondary ms-1"
+                        id="stringCount">0</span>
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="trashTabContent">
@@ -171,6 +178,11 @@
             <!-- Promotions Tab -->
             <div class="tab-pane fade" id="promotions-content" role="tabpanel">
                 <div id="promotionsList"></div>
+            </div>
+
+            <!-- Strings Tab -->
+            <div class="tab-pane fade" id="strings-content" role="tabpanel">
+                <div id="stringsList"></div>
             </div>
         </div>
     </div>
@@ -227,6 +239,7 @@
                 loadVariants();
                 loadCoupons();
                 loadPromotions();
+                loadStrings();
 
                 const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
                 if (confirmDeleteBtn) {
@@ -478,6 +491,7 @@
                         else if (type === 'variants') loadVariants();
                         else if (type === 'coupons') loadCoupons();
                         else if (type === 'promotions') loadPromotions();
+                        else if (type === 'strings') loadStrings();
                     }
                 } catch (error) {
                     alert('Có lỗi xảy ra: ' + error.message);
@@ -514,6 +528,7 @@
                         else if (type === 'variants') loadVariants();
                         else if (type === 'coupons') loadCoupons();
                         else if (type === 'promotions') loadPromotions();
+                        else if (type === 'strings') loadStrings();
                     }
                 } catch (error) {
                     alert('Có lỗi xảy ra: ' + error.message);
@@ -649,6 +664,52 @@
                                 <i class="fas fa-undo me-1"></i>Khôi phục
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmHardDelete('promotions', ${p.promotionId}, '${safeName}')">
+                                <i class="fas fa-trash me-1"></i>Xóa vĩnh viễn
+                            </button>
+                        </div>
+                    </div>
+                `}).join('');
+            }
+
+            // ===== STRINGS (Cước vợt) =====
+            async function loadStrings() {
+                try {
+                    const response = await fetch('/admin/api/trash/strings');
+                    const data = await response.json();
+                    document.getElementById('stringCount').textContent = data.totalElements || 0;
+                    renderStrings(data.content || []);
+                } catch (error) {
+                    console.error('Error loading strings:', error);
+                }
+            }
+
+            function renderStrings(strings) {
+                const container = document.getElementById('stringsList');
+                if (strings.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-grip-lines"></i>
+                            <h5>Không có cước vợt nào trong thùng rác</h5>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = strings.map(s => {
+                    const safeName = (s.name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    return `
+                    <div class="trash-item">
+                        <div class="trash-item-info">
+                            <img src="${s.imageUrl || '/images/no-image.png'}" alt="">
+                            <div>
+                                <div class="trash-item-name">${escapeHtml(s.name)}</div>
+                                <div class="trash-item-meta">SKU: ${s.sku || 'N/A'} | ${s.brandName || 'Không có thương hiệu'}</div>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="restore('strings', ${s.stringId})">
+                                <i class="fas fa-undo me-1"></i>Khôi phục
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmHardDelete('strings', ${s.stringId}, '${safeName}')">
                                 <i class="fas fa-trash me-1"></i>Xóa vĩnh viễn
                             </button>
                         </div>

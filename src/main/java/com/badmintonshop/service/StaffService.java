@@ -9,6 +9,8 @@ import com.badmintonshop.entity.enums.StaffStatus;
 import com.badmintonshop.exception.ResourceNotFoundException;
 import com.badmintonshop.repository.StaffPermissionRepository;
 import com.badmintonshop.repository.StaffRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -63,6 +65,7 @@ public class StaffService {
      * Create new staff
      */
     @Transactional
+    @Auditable(entityType = "Staff", action = ActivityAction.CREATE, description = "Created staff: {0}")
     public StaffResponse create(StaffRequest request) {
         log.info("Creating new staff: {}", request.getEmail());
 
@@ -97,6 +100,7 @@ public class StaffService {
      * Update existing staff
      */
     @Transactional
+    @Auditable(entityType = "Staff", action = ActivityAction.UPDATE, description = "Updated staff ID: {0}")
     public StaffResponse update(Long id, StaffRequest request) {
         log.info("Updating staff: {}", id);
 
@@ -132,6 +136,7 @@ public class StaffService {
      * Soft delete staff
      */
     @Transactional
+    @Auditable(entityType = "Staff", action = ActivityAction.DELETE, description = "Soft deleted staff ID: {0}")
     public void softDelete(Long id) {
         log.info("Soft deleting staff: {}", id);
 
@@ -150,6 +155,7 @@ public class StaffService {
      * Replaces all existing permissions with new ones
      */
     @Transactional
+    @Auditable(entityType = "Staff", action = ActivityAction.UPDATE, description = "Updated permissions for staff ID: {0}")
     public StaffResponse updatePermissions(Long id, List<String> permissions) {
         log.info("Updating permissions for staff: {}", id);
 
@@ -178,6 +184,7 @@ public class StaffService {
      * Update staff status
      */
     @Transactional
+    @Auditable(entityType = "Staff", action = ActivityAction.UPDATE, description = "Updated status for staff ID: {0}")
     public StaffResponse updateStatus(Long id, StaffStatus status) {
         log.info("Updating status for staff {} to {}", id, status);
 

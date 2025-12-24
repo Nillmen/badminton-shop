@@ -37,4 +37,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
         long countByAssignedStaffAndStringingStatusIn(
                         @org.springframework.data.repository.query.Param("staff") Staff staff,
                         @org.springframework.data.repository.query.Param("statuses") java.util.Collection<StringingStatus> statuses);
+
+        /**
+         * Count order items referencing a specific string product
+         */
+        @Query("SELECT COUNT(oi) FROM OrderItem oi WHERE oi.stringProduct.stringId = :stringId")
+        long countByStringProductStringId(@org.springframework.data.repository.query.Param("stringId") Long stringId);
 }

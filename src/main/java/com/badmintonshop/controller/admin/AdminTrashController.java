@@ -11,6 +11,7 @@ import com.badmintonshop.service.CouponService;
 import com.badmintonshop.service.ProductService;
 import com.badmintonshop.service.ProductVariantService;
 import com.badmintonshop.service.PromotionService;
+import com.badmintonshop.service.StringProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,7 @@ public class AdminTrashController {
     private final ProductVariantService productVariantService;
     private final CouponService couponService;
     private final PromotionService promotionService;
+    private final StringProductService stringProductService;
 
     // ===== PRODUCTS =====
 
@@ -347,6 +349,50 @@ public class AdminTrashController {
         try {
             promotionService.hardDeletePromotion(id);
             return ResponseEntity.ok(Map.of("message", "Đã xóa vĩnh viễn khuyến mãi"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ===== STRINGS (Cước vợt) =====
+
+    /**
+     * Get deleted strings
+     * GET /admin/api/trash/strings
+     */
+    @GetMapping("/strings")
+    public ResponseEntity<?> getDeletedStrings() {
+        log.info("=== Trash API: Getting deleted strings ===");
+        var strings = stringProductService.getDeletedStrings();
+        log.info("=== Trash API: Returning {} deleted strings ===", strings.size());
+        return ResponseEntity.ok(Map.of(
+                "content", strings,
+                "totalElements", strings.size()));
+    }
+
+    /**
+     * Restore string from trash
+     * POST /admin/api/trash/strings/{id}/restore
+     */
+    @PostMapping("/strings/{id}/restore")
+    public ResponseEntity<?> restoreString(@PathVariable Long id) {
+        try {
+            stringProductService.restoreString(id);
+            return ResponseEntity.ok(Map.of("message", "Đã khôi phục cước vợt"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Hard delete string (permanently)
+     * DELETE /admin/api/trash/strings/{id}
+     */
+    @DeleteMapping("/strings/{id}")
+    public ResponseEntity<?> hardDeleteString(@PathVariable Long id) {
+        try {
+            stringProductService.hardDeleteString(id);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa vĩnh viễn cước vợt"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

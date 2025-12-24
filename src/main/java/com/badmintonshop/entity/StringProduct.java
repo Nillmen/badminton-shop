@@ -12,10 +12,10 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "strings", indexes = {
-    @Index(name = "idx_strings_brand", columnList = "brand_id"),
-    @Index(name = "idx_strings_type", columnList = "string_type"),
-    @Index(name = "idx_strings_active", columnList = "is_active"),
-    @Index(name = "idx_strings_deleted", columnList = "deleted_at")
+        @Index(name = "idx_strings_brand", columnList = "brand_id"),
+        @Index(name = "idx_strings_type", columnList = "string_type"),
+        @Index(name = "idx_strings_active", columnList = "is_active"),
+        @Index(name = "idx_strings_deleted", columnList = "deleted_at")
 })
 @Getter
 @Setter

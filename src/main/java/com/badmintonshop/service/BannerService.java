@@ -5,6 +5,8 @@ import com.badmintonshop.entity.Banner;
 import com.badmintonshop.entity.enums.BannerPosition;
 import com.badmintonshop.entity.enums.LinkTarget;
 import com.badmintonshop.repository.BannerRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -121,6 +123,7 @@ public class BannerService {
      * Create new banner
      */
     @Transactional
+    @Auditable(entityType = "Banner", action = ActivityAction.CREATE, description = "Created banner: {0}")
     public BannerDTO createBanner(BannerDTO dto) {
         // Use default image if not provided
         String imageUrl = dto.getImageUrl();
@@ -150,6 +153,7 @@ public class BannerService {
      * Update existing banner
      */
     @Transactional
+    @Auditable(entityType = "Banner", action = ActivityAction.UPDATE, description = "Updated banner ID: {0}")
     public BannerDTO updateBanner(Long id, BannerDTO dto) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner không tồn tại: " + id));
@@ -180,6 +184,7 @@ public class BannerService {
      * Delete banner (soft delete)
      */
     @Transactional
+    @Auditable(entityType = "Banner", action = ActivityAction.DELETE, description = "Soft deleted banner ID: {0}")
     public void deleteBanner(Long id) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner không tồn tại: " + id));
@@ -261,6 +266,7 @@ public class BannerService {
      * Restore banner from trash
      */
     @Transactional
+    @Auditable(entityType = "Banner", action = ActivityAction.UPDATE, description = "Restored banner ID: {0}")
     public void restoreBanner(Long id) {
         Banner banner = bannerRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner không tồn tại: " + id));
@@ -278,6 +284,7 @@ public class BannerService {
      * Hard delete banner (permanently)
      */
     @Transactional
+    @Auditable(entityType = "Banner", action = ActivityAction.DELETE, description = "Hard deleted banner ID: {0}")
     public void hardDeleteBanner(Long id) {
         Banner banner = bannerRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner không tồn tại: " + id));

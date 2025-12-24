@@ -8,6 +8,8 @@ import com.badmintonshop.entity.enums.VariantStatus;
 import com.badmintonshop.repository.InventoryRepository;
 import com.badmintonshop.repository.ProductRepository;
 import com.badmintonshop.repository.ProductVariantRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,6 +77,7 @@ public class ProductVariantService {
      * Admin should update inventory quantity separately after creating the variant.
      */
     @Transactional
+    @Auditable(entityType = "ProductVariant", action = ActivityAction.CREATE, description = "Created variant for product ID: {0}")
     public ProductVariantDTO createVariant(Long productId, ProductVariantDTO dto) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + productId));
@@ -127,6 +130,7 @@ public class ProductVariantService {
      * Update variant
      */
     @Transactional
+    @Auditable(entityType = "ProductVariant", action = ActivityAction.UPDATE, description = "Updated variant ID: {1} for product ID: {0}")
     public ProductVariantDTO updateVariant(Long productId, Long variantId, ProductVariantDTO dto) {
         ProductVariant variant = productVariantRepository.findById(variantId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy biến thể: " + variantId));
@@ -165,6 +169,7 @@ public class ProductVariantService {
      * Delete variant (soft delete)
      */
     @Transactional
+    @Auditable(entityType = "ProductVariant", action = ActivityAction.DELETE, description = "Soft deleted variant ID: {1} from product ID: {0}")
     public void deleteVariant(Long productId, Long variantId) {
         ProductVariant variant = productVariantRepository.findById(variantId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy biến thể: " + variantId));
@@ -183,6 +188,7 @@ public class ProductVariantService {
      * Hard delete variant - also deletes associated inventory
      */
     @Transactional
+    @Auditable(entityType = "ProductVariant", action = ActivityAction.DELETE, description = "Hard deleted variant ID: {1} from product ID: {0}")
     public void hardDeleteVariant(Long productId, Long variantId) {
         if (!productVariantRepository.existsByVariantIdAndProductProductId(variantId, productId)) {
             throw new IllegalArgumentException("Biến thể không thuộc sản phẩm này");
@@ -209,6 +215,7 @@ public class ProductVariantService {
      * Check if parent product is not soft-deleted
      */
     @Transactional
+    @Auditable(entityType = "ProductVariant", action = ActivityAction.UPDATE, description = "Restored variant ID: {0}")
     public void restoreVariant(Long variantId) {
         ProductVariant variant = productVariantRepository.findByIdIncludingDeleted(variantId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy biến thể: " + variantId));
@@ -234,6 +241,7 @@ public class ProductVariantService {
      * Hard delete variant from trash - also deletes associated inventory
      */
     @Transactional
+    @Auditable(entityType = "ProductVariant", action = ActivityAction.DELETE, description = "Hard deleted variant ID: {0}")
     public void hardDeleteVariantFromTrash(Long variantId) {
         ProductVariant variant = productVariantRepository.findByIdIncludingDeleted(variantId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy biến thể: " + variantId));

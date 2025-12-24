@@ -11,6 +11,7 @@ import java.util.*;
 /**
  * Service để gọi OpenRouter AI API
  * API key được lưu trong application-secrets.properties để bảo mật
+ * Sử dụng kiến thức động từ KnowledgeGeneratorService
  */
 @Service
 @Slf4j
@@ -26,44 +27,18 @@ public class ChatbotService {
     private String model;
 
     private final RestTemplate restTemplate;
-    private String knowledgeBase;
+    private final KnowledgeGeneratorService knowledgeGeneratorService;
 
-    public ChatbotService() {
+    public ChatbotService(KnowledgeGeneratorService knowledgeGeneratorService) {
         this.restTemplate = new RestTemplate();
-        this.knowledgeBase = loadKnowledgeBase();
+        this.knowledgeGeneratorService = knowledgeGeneratorService;
     }
 
-    private String loadKnowledgeBase() {
-        // Default knowledge base - có thể load từ file hoặc database
-        return """
-                # Thông tin cửa hàng Badminton Shop
-
-                ## Giới thiệu
-                Badminton Shop là cửa hàng chuyên cung cấp các sản phẩm cầu lông chính hãng.
-
-                ## Thông tin liên hệ
-                - Hotline: 1900 1234
-                - Email: support@badmintonshop.com
-                - Thời gian làm việc: 8:00 - 22:00 hàng ngày
-
-                ## Chính sách giao hàng
-                - Nội thành TP.HCM và Hà Nội: 1-2 ngày
-                - Các tỉnh khác: 2-5 ngày
-                - Miễn phí ship cho đơn từ 500.000đ
-
-                ## Chính sách đổi trả
-                - Đổi trả miễn phí trong 7 ngày nếu lỗi nhà sản xuất
-                - Sản phẩm còn nguyên tem, chưa qua sử dụng
-
-                ## Bảo hành
-                - Vợt cầu lông: 6-12 tháng
-                - Giày: 3 tháng
-                - Túi vợt: 6 tháng
-                """;
-    }
-
-    public void setKnowledgeBase(String knowledgeBase) {
-        this.knowledgeBase = knowledgeBase;
+    /**
+     * Lấy kiến thức động từ KnowledgeGeneratorService
+     */
+    private String getKnowledgeBase() {
+        return knowledgeGeneratorService.getKnowledge();
     }
 
     /**
@@ -83,11 +58,14 @@ public class ChatbotService {
         }
 
         try {
+            // Lấy kiến thức động từ database
+            String knowledgeBase = getKnowledgeBase();
+
             // Build system prompt
             String systemPrompt = String.format("""
                     Bạn là trợ lý AI thân thiện của Badminton Shop - cửa hàng cầu lông chính hãng.
 
-                    THÔNG TIN CỬA HÀNG:
+                    THÔNG TIN CỬA HÀNG (CẬP NHẬT THỜI GIAN THỰC):
                     %s
 
                     HƯỚNG DẪN:
@@ -95,6 +73,7 @@ public class ChatbotService {
                     - Sử dụng emoji phù hợp để tạo sự thân thiện
                     - Nếu không biết câu trả lời, hướng dẫn liên hệ hotline 1900 1234
                     - Trả lời ngắn gọn, dễ hiểu (tối đa 150 từ)
+                    - Ưu tiên giới thiệu sản phẩm và khuyến mãi đang có
                     """, knowledgeBase);
 
             // Build request body

@@ -17,6 +17,8 @@ import com.badmintonshop.repository.InventoryRepository;
 import com.badmintonshop.repository.ProductImageRepository;
 import com.badmintonshop.repository.ProductRepository;
 import com.badmintonshop.repository.ProductVariantRepository;
+import com.badmintonshop.security.Auditable;
+import com.badmintonshop.entity.enums.ActivityAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -188,6 +190,7 @@ public class ProductService {
      * Create new product
      */
     @Transactional
+    @Auditable(entityType = "Product", action = ActivityAction.CREATE, description = "Created product: {0}")
     public ProductResponse createProduct(ProductRequest request) {
         // Generate slug
         String slug = request.getSlug();
@@ -287,6 +290,7 @@ public class ProductService {
      * Update product
      */
     @Transactional
+    @Auditable(entityType = "Product", action = ActivityAction.UPDATE, description = "Updated product ID: {0}")
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + id));
@@ -392,6 +396,7 @@ public class ProductService {
      * Delete product (soft delete)
      */
     @Transactional
+    @Auditable(entityType = "Product", action = ActivityAction.DELETE, description = "Soft deleted product ID: {0}")
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + id));
@@ -610,6 +615,7 @@ public class ProductService {
      * Restore product from trash
      */
     @Transactional
+    @Auditable(entityType = "Product", action = ActivityAction.UPDATE, description = "Restored product ID: {0}")
     public void restoreProduct(Long id) {
         Product product = productRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + id));
@@ -649,6 +655,7 @@ public class ProductService {
      * Hard delete product (permanently)
      */
     @Transactional
+    @Auditable(entityType = "Product", action = ActivityAction.DELETE, description = "Hard deleted product ID: {0}")
     public void hardDeleteProduct(Long id) {
         Product product = productRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm: " + id));
